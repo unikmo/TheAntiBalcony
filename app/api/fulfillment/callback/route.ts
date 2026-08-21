@@ -19,6 +19,9 @@ function validateUrl(value?: string) {
   if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid asset URL.");
 }
 
+const VALID_STATUSES = ["ops_review", "scheduled", "live", "proof_ready", "failed"] as const;
+type FulfillmentStatus = typeof VALID_STATUSES[number];
+
 export async function POST(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
@@ -28,19 +31,28 @@ export async function POST(request: Request) {
       startupName?: string;
       email?: string;
       providerRef?: string;
-      status?: "scheduled" | "live" | "proof_ready" | "failed";
+      status?: FulfillmentStatus;
       proofUrl?: string;
       videoUrl?: string;
       liveStreamUrl?: string;
+      behindScenesUrl?: string;
+      pressKitUrl?: string;
+      prDistributionUrl?: string;
+      permitRef?: string;
+      insuranceRef?: string;
+      talentReleaseRef?: string;
     };
 
-    if (!body.ringId || !body.status || !["scheduled", "live", "proof_ready", "failed"].includes(body.status)) {
+    if (!body.ringId || !body.status || !VALID_STATUSES.includes(body.status)) {
       return NextResponse.json({ error: "ringId and a valid status are required." }, { status: 400 });
     }
 
     validateUrl(body.proofUrl);
     validateUrl(body.videoUrl);
     validateUrl(body.liveStreamUrl);
+    validateUrl(body.behindScenesUrl);
+    validateUrl(body.pressKitUrl);
+    validateUrl(body.prDistributionUrl);
 
     await handleFulfillmentCallback({
       ringId: body.ringId,
@@ -51,6 +63,12 @@ export async function POST(request: Request) {
       proofUrl: body.proofUrl,
       videoUrl: body.videoUrl,
       liveStreamUrl: body.liveStreamUrl,
+      behindScenesUrl: body.behindScenesUrl,
+      pressKitUrl: body.pressKitUrl,
+      prDistributionUrl: body.prDistributionUrl,
+      permitRef: body.permitRef,
+      insuranceRef: body.insuranceRef,
+      talentReleaseRef: body.talentReleaseRef,
     });
 
     return NextResponse.json({ ok: true });
