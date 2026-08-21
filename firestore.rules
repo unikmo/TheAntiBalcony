@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // The MVP intentionally exposes no direct browser access to Firestore.
+    // Next.js server routes use Firebase Admin, which is not governed by these rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
