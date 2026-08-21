@@ -8,7 +8,7 @@ export type Ring = {
   website?: string | null;
   tagline?: string | null;
   createdAt: string;
-  tier: "free" | "snapshot" | "video" | "live";
+  tier: "free" | "snapshot" | "video" | "takeover" | "vip";
   status: string;
 };
 
