@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, VT323 } from "next/font/google";
 import "./globals.css";
+import "./blue-theme.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070707",
+  themeColor: "#0b2341",
   colorScheme: "dark",
 };
 
