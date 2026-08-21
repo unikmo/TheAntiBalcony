@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type ProofTier = "snapshot" | "video" | "takeover" | "vip";
+type PricingTier = "free" | ProofTier;
 
 type Ring = {
   id: string;
@@ -10,31 +11,79 @@ type Ring = {
   website?: string | null;
   tagline?: string | null;
   createdAt: string;
-  tier?: "free" | ProofTier;
+  tier?: PricingTier;
   status?: string;
 };
 
 type ClaimResult = { ring: Ring; persisted: boolean };
 
+type Package = {
+  id: PricingTier;
+  name: string;
+  price: string;
+  scarcity: string;
+  kicker: string;
+  description: string;
+  includes: string[];
+  featured?: boolean;
+  elite?: boolean;
+};
+
 const NAV = [
-  ["RITUAL", "#ritual"],
-  ["PROOF DROP", "#proof"],
+  ["HOW IT WORKS", "#how"],
+  ["PACKAGES", "#packages"],
   ["RINGS", "#rings"],
   ["FAQ", "#faq"],
 ] as const;
 
-const PACKAGES: Array<{
-  id: ProofTier;
-  name: string;
-  price: string;
-  label: string;
-  includes: string;
-  concierge: boolean;
-}> = [
-  { id: "snapshot", name: "BILLBOARD SCREENSHOT", price: "$399", label: "STATIC PROOF", includes: "Times Square placement + provider-confirmed screenshot + share-ready social post", concierge: false },
-  { id: "video", name: "BILLBOARD VIDEO", price: "$799", label: "15-SECOND VIDEO", includes: "Everything in Screenshot + a reusable 15-second Times Square launch clip", concierge: false },
-  { id: "takeover", name: "TIMES SQUARE TAKEOVER", price: "$2,999", label: "2 PEOPLE + LIVE", includes: "Billboard + 2 on-site brand ambassadors + live link + edited launch video + BTS + press kit", concierge: true },
-  { id: "vip", name: "VIP TAKEOVER", price: "$9,999", label: "5 PEOPLE + PRO CREW", includes: "Takeover + 5 brand ambassadors + professional videographer + up to 60-minute live production window + PR workflow", concierge: true },
+const PACKAGES: Package[] = [
+  {
+    id: "free",
+    name: "THE RING",
+    price: "$0",
+    scarcity: "UNLIMITED",
+    kicker: "DIGITAL CEREMONY",
+    description: "Claim the moment. Ring the Internet Bell and create a public launch timestamp.",
+    includes: ["Digital bell ceremony", "Public ring timestamp", "Share-ready launch post"],
+  },
+  {
+    id: "snapshot",
+    name: "THE PROOF",
+    price: "$399",
+    scarcity: "UNLIMITED",
+    kicker: "TIMES SQUARE SCREENSHOT",
+    description: "Move the launch from your browser to a real Times Square screen and leave proof behind.",
+    includes: ["Times Square placement", "Provider-confirmed screenshot", "Share-ready social asset"],
+  },
+  {
+    id: "video",
+    name: "THE CLIP",
+    price: "$799",
+    scarcity: "10 / DAY",
+    kicker: "15-SECOND LAUNCH FILM",
+    description: "Turn the placement into a reusable launch asset built for LinkedIn, X, press and investor updates.",
+    includes: ["Everything in The Proof", "15-second Times Square video", "Social-ready launch edit"],
+    featured: true,
+  },
+  {
+    id: "takeover",
+    name: "THE MOMENT",
+    price: "$2,999",
+    scarcity: "1 / DAY",
+    kicker: "TIMES SQUARE TAKEOVER",
+    description: "A coordinated launch moment with people on the ground while your startup owns the screen.",
+    includes: ["2 on-site brand ambassadors", "Live-link capability", "Edited launch video", "BTS + press kit"],
+  },
+  {
+    id: "vip",
+    name: "THE LEGEND",
+    price: "$9,999",
+    scarcity: "1 / WEEK",
+    kicker: "ELITE TAKEOVER",
+    description: "The full launch ritual: crew, camera, live production, PR workflow and homepage feature.",
+    includes: ["5 brand ambassadors", "Professional videographer", "Up to 60-minute production window", "PR workflow + homepage feature"],
+    elite: true,
+  },
 ];
 
 function playBell() {
@@ -78,6 +127,14 @@ function formatRingTime(value: string) {
   }).format(date).toUpperCase();
 }
 
+function statusLabel(status?: string) {
+  if (status === "proof_ready") return "PROOF READY";
+  if (status === "live") return "LIVE";
+  if (status === "scheduled") return "SCHEDULED";
+  if (status === "ops_review") return "OPS REVIEW";
+  return "RUNG";
+}
+
 export function AntiBalcony() {
   const [phase, setPhase] = useState<"idle" | "ringing" | "claim" | "claimed">("idle");
   const [rings, setRings] = useState<Ring[]>([]);
@@ -111,14 +168,16 @@ export function AntiBalcony() {
   }, [phase]);
 
   const burst = useMemo(
-    () => Array.from({ length: 36 }, (_, index) => ({
-      angle: (index / 36) * 360,
-      distance: 86 + (index % 6) * 18,
-      delay: (index % 9) * 24,
-      glyph: index % 3 === 0 ? "+" : index % 3 === 1 ? "•" : "×",
+    () => Array.from({ length: 28 }, (_, index) => ({
+      angle: (index / 28) * 360,
+      distance: 88 + (index % 5) * 22,
+      delay: (index % 7) * 22,
+      glyph: index % 2 === 0 ? "+" : "•",
     })),
     [],
   );
+
+  const latestRing = rings[0];
 
   function ringBell() {
     if (phase !== "idle") return;
@@ -127,13 +186,17 @@ export function AntiBalcony() {
     setCheckoutError("");
     playBell();
     if (navigator.vibrate) navigator.vibrate([80, 45, 130]);
-    window.setTimeout(() => setPhase("claim"), 1450);
+    window.setTimeout(() => setPhase("claim"), 1150);
   }
 
   function closeModal() {
     setPhase("idle");
     setRing(null);
     setCheckoutError("");
+  }
+
+  function ringFromPackage() {
+    document.getElementById("ritual")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   async function claimRing(event: FormEvent<HTMLFormElement>) {
@@ -199,23 +262,58 @@ export function AntiBalcony() {
 
   return (
     <main className="site-shell">
-      <div className="noise" aria-hidden="true" />
       <header className="topbar">
-        <a className="wordmark" href="#top" aria-label="The Anti-Balcony home"><span className="slash">/</span>THE ANTI-BALCONY</a>
-        <nav aria-label="Main navigation">{NAV.map(([label, href]) => <a key={href} href={href}>{label}</a>)}</nav>
-        <span className="live-chip"><i /> INTERNET OPEN</span>
+        <a className="wordmark" href="#top" aria-label="The Anti-Balcony home">
+          <span className="mark">/</span><span>THE ANTI-BALCONY</span>
+        </a>
+        <nav aria-label="Main navigation">
+          {NAV.map(([label, href]) => <a key={href} href={href}>{label}</a>)}
+        </nav>
+        <a className="header-cta" href="#ritual">RING THE BELL</a>
       </header>
 
       <section className="hero" id="top">
-        <div className="hero-kicker">NYSE HAS A BALCONY. THE INTERNET HAS THIS.</div>
-        <h1>RING THE<br /><span>INTERNET BELL.</span></h1>
-        <p className="hero-copy">A launch ritual for startups that would rather make noise than ask permission.</p>
+        <div className="hero-ambient hero-ambient-one" />
+        <div className="hero-ambient hero-ambient-two" />
+        <div className="hero-content">
+          <div className="hero-copy-block">
+            <span className="eyebrow"><i /> THE LAUNCH RITUAL FOR THE INTERNET</span>
+            <h1>RING THE<br /><span>INTERNET BELL.</span></h1>
+            <p className="hero-subtitle">The anti-elitist launch ritual for startups that don’t need Wall Street.</p>
+            <div className="hero-actions">
+              <button className="primary-cta" onClick={ringBell} disabled={phase !== "idle"}>RING THE BELL <b>↗</b></button>
+              <a className="secondary-cta" href="#packages">SEE THE PACKAGES</a>
+            </div>
+            <div className="hero-trust">
+              <span><strong>$0</strong> to ring</span>
+              <span><strong>Times Square</strong> from $399</span>
+              <span><strong>1/week</strong> Elite slot</span>
+            </div>
+          </div>
 
-        <div className={`bell-stage ${phase === "ringing" ? "is-ringing" : ""}`} id="ritual">
-          <div className="orbit orbit-one" aria-hidden="true" />
-          <div className="orbit orbit-two" aria-hidden="true" />
-          <div className="crosshair horizontal" aria-hidden="true" />
-          <div className="crosshair vertical" aria-hidden="true" />
+          <div className="hero-stage" aria-label="Times Square launch preview">
+            <div className="stage-glass">
+              <div className="stage-toolbar"><span>LIVE LAUNCH PREVIEW</span><b>● SIGNAL READY</b></div>
+              <div className="times-square-scene">
+                <div className="city-column city-left"><i /><i /><i /><i /></div>
+                <div className="city-column city-right"><i /><i /><i /></div>
+                <div className="billboard">
+                  <span className="billboard-label">THE ANTI-BALCONY PRESENTS</span>
+                  <strong>{latestRing?.startupName || "YOUR STARTUP"}</strong>
+                  <em>{latestRing?.tagline || "JUST RANG THE INTERNET BELL"}</em>
+                  <div className="billboard-pulse"><i /> TIMES SQUARE</div>
+                </div>
+                <div className="street-glow" />
+              </div>
+              <div className="stage-caption">
+                <div><span>LATEST SIGNAL</span><strong>{latestRing?.startupName || "OPEN SLOT"}</strong></div>
+                <div><span>STATUS</span><strong>{latestRing ? statusLabel(latestRing.status) : "READY"}</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={`ceremony-dock ${phase === "ringing" ? "is-ringing" : ""}`} id="ritual">
           {phase === "ringing" && burst.map((piece, index) => (
             <span key={index} className="burst" aria-hidden="true" style={{
               "--angle": `${piece.angle}deg`,
@@ -223,79 +321,136 @@ export function AntiBalcony() {
               "--delay": `${piece.delay}ms`,
             } as React.CSSProperties}>{piece.glyph}</span>
           ))}
-          <button className="bell-button" onClick={ringBell} disabled={phase !== "idle"} aria-label="Ring the Internet Bell">
-            <span className="button-top">RING</span><span className="button-bottom">THE BELL</span>
+          <div className="ceremony-orbit" />
+          <button className="ceremony-button" onClick={ringBell} disabled={phase !== "idle"} aria-label="Ring the Internet Bell">
+            <span>RING</span><small>THE BELL</small>
           </button>
-          <span className="bell-instruction">NO IPO. NO INVITE. PRESS IT.</span>
-        </div>
-
-        <div className="manifesto-line" aria-label="Brand manifesto">
-          <span>01 / SHOW UP</span><b>→</b><span>02 / MAKE NOISE</span><b>→</b><span>03 / LEAVE PROOF</span>
+          <p>NO IPO. NO INVITE. JUST PRESS IT.</p>
         </div>
       </section>
 
-      <section className="split-section" id="proof">
-        <div className="section-number">02</div>
-        <div><span className="eyebrow">THE PROOF DROP</span><h2>FROM BROWSER TAB<br />TO <em>TIMES SQUARE.</em></h2></div>
-        <div className="proof-copy">
-          <p>Start with proof. Upgrade to presence. The premium packages put real human energy into the square while your launch is on-screen.</p>
-          <div className="proof-grid">
-            {PACKAGES.map((item) => (
-              <div key={item.id}><strong>{item.price}</strong><span>{item.name}<br />{item.label}</span></div>
-            ))}
+      <section className="moment-section" id="how">
+        <div className="section-heading centered">
+          <span className="eyebrow">FROM CLICK TO CULTURAL MOMENT</span>
+          <h2>YOU RING HERE.<br /><span>THE WORLD SEES IT THERE.</span></h2>
+          <p>One ritual, five levels of proof. Start digital. Scale all the way to a coordinated Times Square launch production.</p>
+        </div>
+        <div className="moment-flow">
+          <article><span>01</span><div className="flow-icon">●</div><h3>RING</h3><p>Create the public launch timestamp.</p></article>
+          <article><span>02</span><div className="flow-icon">▰</div><h3>LIGHT UP</h3><p>Move the signal onto a Times Square screen.</p></article>
+          <article><span>03</span><div className="flow-icon">▶</div><h3>LEAVE PROOF</h3><p>Receive the screenshot, film, stream or full launch package.</p></article>
+        </div>
+      </section>
+
+      <section className="packages-section" id="packages">
+        <div className="section-heading split-heading">
+          <div>
+            <span className="eyebrow">CHOOSE HOW LOUD</span>
+            <h2>FIVE WAYS TO<br /><span>MAKE ARRIVAL VISIBLE.</span></h2>
           </div>
-          <p><strong>THE PRODUCT CHANGES AT $2,999.</strong> Below it, you buy media proof. Above it, you buy a coordinated launch moment with people, screen, stream and reusable content.</p>
-          <a className="text-cta" href="#ritual">RING FIRST <span>↗</span></a>
+          <p>Below $2,999, you buy media proof. At $2,999 and above, The Anti-Balcony becomes a coordinated launch experience with real people, production and scarcity.</p>
+        </div>
+
+        <div className="package-grid">
+          {PACKAGES.map((item) => (
+            <article key={item.id} className={`package-card ${item.featured ? "featured" : ""} ${item.elite ? "elite" : ""}`}>
+              <div className="package-topline">
+                <span>{item.kicker}</span>
+                <b>{item.scarcity}</b>
+              </div>
+              <h3>{item.name}</h3>
+              <div className="package-price">{item.price}</div>
+              <p>{item.description}</p>
+              <ul>{item.includes.map((line) => <li key={line}><i>✓</i>{line}</li>)}</ul>
+              {item.id === "free" ? (
+                <button onClick={ringBell}>RING FOR FREE <span>↗</span></button>
+              ) : (
+                <button onClick={ringFromPackage}>{item.elite ? "APPLY FOR ELITE" : "RING TO RESERVE"} <span>↗</span></button>
+              )}
+              {item.featured && <div className="package-badge">MOST USEFUL LAUNCH ASSET</div>}
+              {item.elite && <div className="elite-glow" />}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="elite-feature">
+        <div className="elite-copy">
+          <span className="eyebrow">THE ELITE TAKEOVER</span>
+          <h2>ONE STARTUP.<br />ONE WEEK.<br /><span>ONE SQUARE.</span></h2>
+          <p>This is not a billboard package. It is a launch production built around scarcity, presence and a piece of media your team can keep using long after the screen goes dark.</p>
+          <div className="elite-meta"><span>5 PEOPLE</span><span>PRO VIDEO</span><span>LIVE PRODUCTION</span><span>PR WORKFLOW</span></div>
+          <button className="primary-cta" onClick={ringFromPackage}>START WITH THE BELL <b>↗</b></button>
+        </div>
+        <div className="elite-visual">
+          <div className="elite-frame">
+            <div className="elite-screen"><span>THIS WEEK’S</span><strong>ELITE TAKEOVER</strong><em>Reserved for the next launch worth remembering.</em></div>
+            <div className="crew-row"><i /><i /><i /><i /><i /></div>
+            <div className="camera-tag">REC ● 4K / TIMES SQUARE</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="proof-stack">
+        <div className="section-heading centered compact">
+          <span className="eyebrow">BUILT TO BECOME SOCIAL PROOF</span>
+          <h2>THE SCREEN IS THE MOMENT.<br /><span>THE ASSET IS WHAT TRAVELS.</span></h2>
+        </div>
+        <div className="proof-assets">
+          <article className="proof-asset screenshot-asset"><div className="asset-window"><span>PROVIDER CONFIRMED</span><strong>YOUR STARTUP<br />IN TIMES SQUARE</strong></div><h3>THE SCREENSHOT</h3><p>A clean proof asset for launch-day social and investor updates.</p></article>
+          <article className="proof-asset video-asset"><div className="asset-phone"><span>00:15</span><strong>YOUR<br />LAUNCH<br />FILM</strong><i>▶</i></div><h3>THE CLIP</h3><p>Fast, vertical-friendly footage designed to be reposted.</p></article>
+          <article className="proof-asset press-asset"><div className="asset-document"><span>PRESS KIT</span><strong>THE STORY<br />BEHIND THE<br />MOMENT.</strong><i>PDF + COPY + MEDIA</i></div><h3>THE PRESS PACKAGE</h3><p>Messaging and media packaged for outreach, not buried in a folder.</p></article>
         </div>
       </section>
 
       <section className="rings-section" id="rings">
-        <div className="section-heading">
-          <div><span className="eyebrow">PUBLIC SIGNAL</span><h2>LATEST RINGS</h2></div>
-          <span className="counter">{rings.length.toString().padStart(2, "0")} ON SCREEN</span>
+        <div className="section-heading rings-heading">
+          <div><span className="eyebrow">PUBLIC SIGNAL</span><h2>THE RING BOARD.</h2></div>
+          <span className="ring-count">{rings.length.toString().padStart(2, "0")} LIVE RECORDS</span>
         </div>
-        <div className="rings-grid">
-          {rings.length === 0 ? (
-            <div className="empty-ring"><span>00</span><p>No claimed rings yet. The first one gets the cleanest timestamp.</p></div>
-          ) : rings.map((item, index) => {
-            const hasProof = item.status === "live" || item.status === "proof_ready";
-            return (
-              <article className="ring-card" key={item.id}>
-                <span className="ring-index">{String(index + 1).padStart(2, "0")}</span>
+        {rings.length === 0 ? (
+          <div className="rings-empty">
+            <div><span>01</span><strong>OPEN</strong><p>The first public ring owns the first line.</p></div>
+            <div><span>02</span><strong>OPEN</strong><p>No fabricated logos. No fake social proof.</p></div>
+            <div><span>03</span><strong>OPEN</strong><p>Ring it and become the record.</p></div>
+          </div>
+        ) : (
+          <div className="rings-list">
+            {rings.slice(0, 8).map((item, index) => (
+              <article key={item.id}>
+                <span className="ring-rank">#{String(index + 1).padStart(2, "0")}</span>
                 <div><h3>{item.startupName}</h3><p>{item.tagline || "RANG THE INTERNET BELL"}</p></div>
-                <time dateTime={item.createdAt}>{formatRingTime(item.createdAt)}</time>
-                <span className={`status ${hasProof ? "live" : ""}`}>{item.status === "proof_ready" ? "PROOF READY" : item.status === "live" ? "LIVE" : item.status === "ops_review" ? "OPS REVIEW" : "RUNG"}</span>
+                <time>{formatRingTime(item.createdAt)}</time>
+                <span className={`ring-status ${item.status === "live" || item.status === "proof_ready" ? "active" : ""}`}>{statusLabel(item.status)}</span>
               </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="anti-section">
-        <p className="giant-quote">“THE BALCONY<br />WAS ALWAYS<br />A METAPHOR.”</p>
-        <div className="anti-copy">
-          <span className="eyebrow">WHY THIS EXISTS</span>
-          <p>Old launch rituals were designed to signal that a small room had approved of you. This one is designed for builders, customers, communities and the people watching from everywhere else.</p>
-          <p className="pink">STATUS SHOULD BE PARTICIPATORY.</p>
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="faq" id="faq">
-        <span className="eyebrow">NO FINE PRINT ENERGY</span>
-        <h2>QUESTIONS.</h2>
-        <details><summary>Is the digital bell actually free?<span>+</span></summary><p>Yes. Ringing and claiming a public timestamp costs nothing.</p></details>
-        <details><summary>What does $399 include?<span>+</span></summary><p>A real Times Square placement, provider-confirmed screenshot proof and a share-ready social post.</p></details>
-        <details><summary>Why is the $799 tier different?<span>+</span></summary><p>It adds a 15-second video clip—the reusable launch asset for LinkedIn, X, press outreach and investor updates.</p></details>
-        <details><summary>What makes the $2,999 Takeover different?<span>+</span></summary><p>It adds physical presence: two on-site brand ambassadors, coordinated branding, live-link capability, edited video, behind-the-scenes assets and a press kit. Because people are physically involved, the booking enters operations review before it is called scheduled.</p></details>
-        <details><summary>What does VIP add at $9,999?<span>+</span></summary><p>Five on-site brand ambassadors, a professional videographer, an extended live-production window, premium edit, press assets and a PR-distribution workflow.</p></details>
-        <details><summary>Why does a Takeover need operations review?<span>+</span></summary><p>Times Square filming and branded public-space activity can involve MOME, CECM/SAPO, insurance, location rules and talent releases depending on the exact setup. We confirm those requirements before scheduling the physical event.</p></details>
-        <details><summary>Do you promise “live” before the screen is confirmed?<span>+</span></summary><p>No. Media status and physical operations status are independently verified. The interface only says live after provider confirmation.</p></details>
+        <div className="faq-intro"><span className="eyebrow">THE USEFUL QUESTIONS</span><h2>BEFORE YOU<br />PRESS IT.</h2><p>The ritual is playful. The fulfillment is not. Paid placements only become “live” after provider confirmation, and physical Takeovers pass operations review before scheduling.</p></div>
+        <div className="faq-list">
+          <details><summary>Is the digital bell actually free?<span>+</span></summary><p>Yes. Ringing and claiming a public timestamp costs nothing.</p></details>
+          <details><summary>What does $399 include?<span>+</span></summary><p>A real Times Square placement, provider-confirmed screenshot proof and a share-ready social asset.</p></details>
+          <details><summary>Why is the $799 tier the default upgrade?<span>+</span></summary><p>Because the 15-second video is a reusable launch asset rather than a one-time proof image.</p></details>
+          <details><summary>What changes at $2,999?<span>+</span></summary><p>People enter the experience: two on-site brand ambassadors, coordinated branding, live-link capability, an edited launch video, BTS assets and press material.</p></details>
+          <details><summary>Why is Elite limited to one per week?<span>+</span></summary><p>The $9,999 package is a staffed production with five ambassadors, professional video, an extended production window, PR workflow and a homepage feature. Scarcity protects execution quality.</p></details>
+          <details><summary>Do you claim a billboard is live before confirmation?<span>+</span></summary><p>No. The interface only marks placements live after provider confirmation. Physical Takeovers also require operations clearance before scheduling.</p></details>
+        </div>
+      </section>
+
+      <section className="final-cta">
+        <span className="eyebrow">THE INTERNET DOESN’T HAVE A BALCONY</span>
+        <h2>SO WE BUILT<br /><span>A BELL.</span></h2>
+        <p>Your launch can stay in a tab, or it can become a moment people remember.</p>
+        <button className="primary-cta large" onClick={ringBell}>RING THE INTERNET BELL <b>↗</b></button>
       </section>
 
       <footer>
-        <a className="wordmark footer-mark" href="#top"><span className="slash">/</span>THE ANTI-BALCONY</a>
+        <a className="wordmark" href="#top"><span className="mark">/</span><span>THE ANTI-BALCONY</span></a>
         <p>BUILT FOR STARTUPS WITH MORE INTERNET THAN INSTITUTION.</p>
-        <span>© {new Date().getFullYear()} / ALL SIGNAL, NO BALCONY.</span>
+        <div><a href="#faq">FAQ</a><span>© {new Date().getFullYear()}</span></div>
       </footer>
 
       {(phase === "claim" || phase === "claimed") && (
@@ -304,45 +459,34 @@ export function AntiBalcony() {
             <button className="modal-close" onClick={closeModal} aria-label="Close">×</button>
             {phase === "claim" ? (
               <>
-                <span className="modal-code">SIGNAL / 001</span>
-                <h2 id="claim-title">THE BELL<br /><em>HEARD YOU.</em></h2>
-                <p>Claim the timestamp. Put a name on the noise.</p>
+                <span className="modal-kicker">THE BELL HEARD YOU</span>
+                <h2 id="claim-title">CLAIM THE<br /><span>MOMENT.</span></h2>
+                <p>Put a name on the ring. The public timestamp is free.</p>
                 <form onSubmit={claimRing}>
-                  <label>STARTUP NAME<input autoFocus value={startupName} onChange={(e) => setStartupName(e.target.value)} placeholder="YOUR COMPANY" maxLength={80} /></label>
+                  <label>STARTUP NAME<input autoFocus value={startupName} onChange={(e) => setStartupName(e.target.value)} placeholder="Your startup" maxLength={80} /></label>
                   <label>WEBSITE <small>OPTIONAL</small><input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" inputMode="url" /></label>
-                  <label>ONE-LINE SIGNAL <small>OPTIONAL</small><input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="WHAT JUST ARRIVED?" maxLength={120} /></label>
+                  <label>ONE-LINE SIGNAL <small>OPTIONAL</small><input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="What just launched?" maxLength={120} /></label>
                   {formError && <p className="form-error" role="alert">{formError}</p>}
-                  <button className="claim-submit" disabled={isSubmitting}>{isSubmitting ? "STAMPING…" : "CLAIM THIS RING →"}</button>
+                  <button className="claim-submit" disabled={isSubmitting}>{isSubmitting ? "STAMPING THE MOMENT…" : "CLAIM THIS RING →"}</button>
                 </form>
               </>
             ) : (
               <>
-                <span className="modal-code">TIMESTAMP CLAIMED</span>
-                <h2 id="claim-title">YOU<br /><em>RANG IT.</em></h2>
+                <span className="modal-kicker">PUBLIC TIMESTAMP CLAIMED</span>
+                <h2 id="claim-title">YOU<br /><span>RANG IT.</span></h2>
                 <p><strong>{ring?.startupName}</strong> is now part of the public signal.</p>
                 {!persisted && <p className="demo-warning">Firebase credentials are not connected yet, so this ring is visible in this session only.</p>}
-                <div className="claimed-actions">
-                  <button onClick={shareRing}>SHARE THE RING ↗</button>
-                  <div className="upgrade-box">
-                    <span>TAKE IT OFF-SCREEN</span>
-                    <strong>CHOOSE YOUR LAUNCH MOMENT</strong>
-                    <p>Digital proof can move directly into fulfillment. Physical Takeovers enter operations review before a date is confirmed.</p>
-                    <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="FOUNDER@STARTUP.COM" aria-label="Email for paid launch package" />
-                    <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 12 }}>
-                      <input type="checkbox" checked={allowSocial} onChange={(e) => setAllowSocial(e.target.checked)} style={{ width: 16, marginTop: 2 }} />
-                      Publish confirmed proof through The Anti-Balcony social workflow.
-                    </label>
-                    <div className="proof-grid package-grid">
-                      {PACKAGES.map((item) => (
-                        <div key={item.id}>
-                          <span>{item.label}</span>
-                          <strong>{item.price}</strong>
-                          <span>{item.includes}</span>
-                          {item.concierge && <span>CONCIERGE / DATE CONFIRMED AFTER OPS REVIEW</span>}
-                          <button className="paid-button" onClick={() => startPaidCheckout(item.id)}>{item.concierge ? "RESERVE" : "CHOOSE"} {item.name} →</button>
-                        </div>
-                      ))}
-                    </div>
+                <button className="share-button" onClick={shareRing}>SHARE THE RING ↗</button>
+                <div className="upgrade-panel">
+                  <div className="upgrade-heading"><span>TAKE IT TO TIMES SQUARE</span><strong>CHOOSE THE PROOF.</strong></div>
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="founder@startup.com" aria-label="Email for paid launch package" />
+                  <label className="consent-row"><input type="checkbox" checked={allowSocial} onChange={(e) => setAllowSocial(e.target.checked)} /> Publish confirmed proof through The Anti-Balcony social workflow.</label>
+                  <div className="upgrade-grid">
+                    {PACKAGES.filter((item): item is Package & { id: ProofTier } => item.id !== "free").map((item) => (
+                      <button key={item.id} onClick={() => startPaidCheckout(item.id)}>
+                        <span>{item.name}</span><strong>{item.price}</strong><small>{item.scarcity}</small>
+                      </button>
+                    ))}
                   </div>
                 </div>
                 {checkoutError && <p className="checkout-note" role="status">{checkoutError}</p>}
