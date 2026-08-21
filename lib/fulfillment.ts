@@ -1,24 +1,33 @@
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { Timestamp } from "firebase-admin/firestore";
+import { getFirebaseDb } from "@/lib/firebase";
 import { updateRingStatus } from "@/lib/rings";
-import { submitBillboardJob } from "@/lib/providers/billboard";
+import { submitBillboardJob, type ProofTier } from "@/lib/providers/billboard";
 import { requestProofCapture } from "@/lib/providers/proof";
 import { publishProofSocial } from "@/lib/providers/social";
 import { sendFounderEmail } from "@/lib/providers/email";
 
-type FulfillmentJobRow = {
-  startup_name: string;
+type FulfillmentJobDoc = {
+  ringId: string | null;
+  startupName: string;
   email: string;
-  allow_social: boolean;
-  provider_ref: string | null;
+  allowSocial: boolean;
+  providerRef: string | null;
+  tier: ProofTier;
+  status: string;
+  createdAt?: Timestamp;
 };
 
 export async function claimStripeEvent(eventId: string) {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return true;
-  const { error } = await supabase.from("fulfillment_events").insert({ event_id: eventId });
-  if (!error) return true;
-  if (error.code === "23505") return false;
-  throw error;
+  const db = getFirebaseDb();
+  if (!db) return true;
+
+  const ref = db.collection("fulfillmentEvents").doc(eventId);
+  return db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(ref);
+    if (existing.exists) return false;
+    transaction.create(ref, { eventId, createdAt: Timestamp.now() });
+    return true;
+  });
 }
 
 export async function beginPaidFulfillment(input: {
@@ -28,31 +37,35 @@ export async function beginPaidFulfillment(input: {
   email: string;
   stripeSessionId: string;
   allowSocial: boolean;
+  tier: ProofTier;
 }) {
   const result = await submitBillboardJob(input);
   const status = result.status === "submitted" ? "scheduled" : "manual_review";
-  const supabase = getSupabaseAdmin();
+  const db = getFirebaseDb();
 
-  if (supabase) {
-    await supabase.from("fulfillment_jobs").upsert({
-      stripe_session_id: input.stripeSessionId,
-      ring_id: input.ringId,
-      startup_name: input.startupName,
+  if (db) {
+    await db.collection("fulfillmentJobs").doc(input.stripeSessionId).set({
+      stripeSessionId: input.stripeSessionId,
+      ringId: input.ringId,
+      startupName: input.startupName,
       email: input.email,
-      allow_social: input.allowSocial,
-      provider_ref: result.providerRef ?? null,
-      scheduled_at: result.scheduledAt ?? null,
+      allowSocial: input.allowSocial,
+      providerRef: result.providerRef ?? null,
+      scheduledAt: result.scheduledAt ?? null,
+      tier: input.tier,
       status,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "stripe_session_id" });
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }, { merge: true });
   }
 
-  await updateRingStatus(input.ringId, status, "paid");
+  await updateRingStatus(input.ringId, status, input.tier);
   await sendFounderEmail({
     to: input.email,
-    subject: `Your Anti-Balcony proof drop is ${status === "scheduled" ? "in motion" : "reserved"}`,
-    html: `<p><strong>${escapeHtml(input.startupName)}</strong> rang the Internet Bell.</p><p>Your paid placement is now <strong>${status.replace("_", " ")}</strong>. We will only mark it live after provider confirmation.</p>`,
+    subject: `Your Anti-Balcony ${tierName(input.tier)} is ${status === "scheduled" ? "in motion" : "reserved"}`,
+    html: `<p><strong>${escapeHtml(input.startupName)}</strong> rang the Internet Bell.</p><p>Your ${escapeHtml(tierName(input.tier))} is now <strong>${status.replace("_", " ")}</strong>. We will only mark it live after provider confirmation.</p>`,
   });
+
   return { status, providerRef: result.providerRef };
 }
 
@@ -63,49 +76,72 @@ export async function handleFulfillmentCallback(input: {
   providerRef?: string | null;
   status: "scheduled" | "live" | "proof_ready" | "failed";
   proofUrl?: string | null;
+  videoUrl?: string | null;
+  liveStreamUrl?: string | null;
 }) {
-  const supabase = getSupabaseAdmin();
-  let job: FulfillmentJobRow | null = null;
+  const db = getFirebaseDb();
+  let job: FulfillmentJobDoc | null = null;
+  let jobId: string | null = null;
 
-  if (supabase) {
-    const { data } = await supabase
-      .from("fulfillment_jobs")
-      .select("startup_name,email,allow_social,provider_ref")
-      .eq("ring_id", input.ringId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    job = data as FulfillmentJobRow | null;
-    await supabase.from("fulfillment_jobs").update({
-      status: input.status,
-      provider_ref: input.providerRef ?? job?.provider_ref ?? null,
-      proof_url: input.proofUrl ?? null,
-      updated_at: new Date().toISOString(),
-    }).eq("ring_id", input.ringId);
+  if (db) {
+    const jobs = await db.collection("fulfillmentJobs").where("ringId", "==", input.ringId).limit(10).get();
+    const chosen = jobs.docs
+      .map((doc) => ({ id: doc.id, data: doc.data() as FulfillmentJobDoc }))
+      .sort((a, b) => (b.data.createdAt?.toMillis() ?? 0) - (a.data.createdAt?.toMillis() ?? 0))[0];
+
+    if (chosen) {
+      job = chosen.data;
+      jobId = chosen.id;
+      await db.collection("fulfillmentJobs").doc(jobId).set({
+        status: input.status,
+        providerRef: input.providerRef ?? job.providerRef ?? null,
+        proofUrl: input.proofUrl ?? null,
+        videoUrl: input.videoUrl ?? null,
+        liveStreamUrl: input.liveStreamUrl ?? null,
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+    }
   }
 
-  await updateRingStatus(input.ringId, input.status, "paid");
-  const startupName = input.startupName || job?.startup_name || "Your startup";
+  const tier = job?.tier || "snapshot";
+  await updateRingStatus(input.ringId, input.status, tier);
+
+  const startupName = input.startupName || job?.startupName || "Your startup";
   const email = input.email || job?.email;
-  const providerRef = input.providerRef || job?.provider_ref;
+  const providerRef = input.providerRef || job?.providerRef;
 
   if (input.status === "live" && !input.proofUrl) {
-    await requestProofCapture({ ringId: input.ringId, providerRef, startupName });
+    await requestProofCapture({ ringId: input.ringId, providerRef, startupName, tier });
     if (email) await sendFounderEmail({
       to: email,
       subject: `${startupName} is confirmed live`,
-      html: `<p><strong>${escapeHtml(startupName)}</strong> has been confirmed live by the placement provider.</p><p>Proof capture is now being prepared.</p>`,
+      html: `<p><strong>${escapeHtml(startupName)}</strong> has been confirmed live by the placement provider.</p><p>Your ${escapeHtml(tierName(tier))} assets are now being prepared.</p>`,
     });
   }
 
   if (input.status === "proof_ready" && input.proofUrl) {
-    if (job?.allow_social) await publishProofSocial({ startupName, proofUrl: input.proofUrl, ringId: input.ringId });
-    if (email) await sendFounderEmail({
-      to: email,
-      subject: `Your Times Square proof is ready`,
-      html: `<p><strong>${escapeHtml(startupName)}</strong> left proof.</p><p><a href="${escapeAttribute(input.proofUrl)}">Open your proof package</a></p>`,
-    });
+    if (job?.allowSocial) {
+      await publishProofSocial({ startupName, proofUrl: input.proofUrl, ringId: input.ringId });
+    }
+
+    if (email) {
+      const links = [
+        `<p><a href="${escapeAttribute(input.proofUrl)}">Open screenshot / proof</a></p>`,
+        input.videoUrl ? `<p><a href="${escapeAttribute(input.videoUrl)}">Open 15-second video</a></p>` : "",
+        input.liveStreamUrl ? `<p><a href="${escapeAttribute(input.liveStreamUrl)}">Open live-stream link</a></p>` : "",
+      ].join("");
+
+      await sendFounderEmail({
+        to: email,
+        subject: `Your Times Square proof is ready`,
+        html: `<p><strong>${escapeHtml(startupName)}</strong> left proof.</p>${links}`,
+      });
+    }
   }
+}
+
+function tierName(tier: ProofTier) {
+  return tier === "snapshot" ? "Signal Drop" : tier === "video" ? "Motion Drop" : "Live Takeover";
 }
 
 function escapeHtml(value: string) {
