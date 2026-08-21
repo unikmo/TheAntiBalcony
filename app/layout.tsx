@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, VT323 } from "next/font/google";
 import "./globals.css";
+import "./takeover-overrides.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
