@@ -7,6 +7,8 @@ import type { ProofTier } from "@/lib/providers/billboard";
 
 export const runtime = "nodejs";
 
+const VALID_TIERS: ProofTier[] = ["snapshot", "video", "takeover", "vip"];
+
 export async function POST(request: Request) {
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
     const metadata = session.metadata || {};
     const startupName = metadata.startupName;
     const email = session.customer_details?.email || metadata.email;
-    const tier = (["snapshot", "video", "live"].includes(metadata.tier || "") ? metadata.tier : "snapshot") as ProofTier;
+    const tier = (VALID_TIERS.includes(metadata.tier as ProofTier) ? metadata.tier : "snapshot") as ProofTier;
 
     if (!startupName || !email) {
       return NextResponse.json({ error: "Checkout metadata is incomplete." }, { status: 422 });
