@@ -1,32 +1,44 @@
 # The Anti-Balcony
 
-**Ring the Internet Bell.** The internet-native launch ritual for startups that would rather make noise than ask permission.
+**Ring the Internet Bell.** An internet-native launch ritual for startups that would rather make noise than ask permission.
 
-This repository is a production-minded implementation of the original Anti-Balcony concept. It keeps the brutalist/cyberpunk cultural idea, but replaces brittle "success theater" with a real fulfillment state machine.
+The product combines a free public launch ritual with a provider-confirmed Times Square proof product. The core rule is non-negotiable: **the UI and social automation never claim a placement is live until fulfillment has actually confirmed it.**
+
+## Commercial ladder
+
+| Tier | Price | Deliverables |
+| --- | ---: | --- |
+| **Signal Drop** | **$399** | Times Square placement + static screenshot + share-ready social post |
+| **Motion Drop** | **$799** | Signal Drop + 15-second video clip |
+| **Live Takeover** | **$1,499** | Motion Drop + live-stream link around the launch moment |
+
+Video is intentionally the middle/default value tier: it gives founders a reusable launch asset for social, press outreach, investor updates and their own website rather than a one-off screenshot.
+
+## Stack
+
+- Next.js 16 / React 19
+- Node 22+
+- Firebase Admin + Firestore (`theantibalcony`)
+- Stripe Checkout + verified webhooks
+- Zapier webhook orchestration for media fulfillment, proof and optional social posting
+- Optional Resend founder emails
+- Vercel-ready deployment
 
 ## What is implemented
 
-- Distinctive black / neon-pink / electric-green visual system using VT323 + Inter.
-- Giant interactive **RING THE BELL** ritual with synthesized bell audio, haptics and visual burst.
+- Black / neon-pink / electric-green Anti-Balcony visual system using VT323 + Inter.
+- Giant interactive Internet Bell with synthesized audio, haptics and burst animation.
 - Founder claim flow with startup name, website and launch signal.
-- Public latest-rings feed backed by Supabase when configured.
-- Native Web Share / clipboard share flow.
-- Stripe Checkout for the paid proof-drop tier.
-- Verified Stripe webhook processing with event idempotency.
-- Billboard fulfillment bridge with idempotency keys.
-- Explicit lifecycle: `rung → scheduled/manual_review → live → proof_ready`.
-- Authorized fulfillment callback endpoint.
-- Optional proof-capture bridge, social-publishing bridge and founder emails.
+- Firestore-backed latest-rings feed with a safe no-credentials demo fallback.
+- Native Web Share / clipboard sharing.
+- Three Stripe proof tiers: `snapshot`, `video`, `live`.
+- Stripe event idempotency stored in Firestore.
+- Provider-neutral billboard fulfillment bridge.
+- Lifecycle: `rung → scheduled/manual_review → live → proof_ready`.
+- Authenticated provider/Zapier callback endpoint.
+- Screenshot, video and live-stream asset callbacks.
+- Optional post-proof social automation gated by founder consent.
 - CI for typecheck, lint and production build.
-- Supabase schema with RLS enabled and no exposed public table policies.
-
-## Why the backend differs from the old blueprint
-
-The original spec used illustrative Adomni/EarthCam requests and immediately showed “YOUR BILLBOARD IS LIVE.” That is unsafe for a real product: DOOH inventory, creative approval, scheduling and proof are asynchronous, and vendor APIs/contracts change.
-
-This implementation uses **provider bridges** instead. Connect the bridge to Adomni, Broadsign, Zapier, Make, or a dedicated worker after you have the current commercial API contract and credentials. The UI only displays a live state after the provider callback confirms it.
-
-That gives you the brand magic without ever fabricating a Times Square moment.
 
 ## Local setup
 
@@ -36,121 +48,174 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+The visual ritual works with no service credentials. Without Firebase Admin credentials, claimed rings are session-only and the UI says so. Paid checkout remains disabled until Stripe prices exist.
 
-The visual ritual works with no services configured. In that mode, claimed rings are session-only and the UI says so. Paid checkout remains disabled until Stripe is configured.
+## Firebase / Firestore
 
-## Supabase
+The configured project ID is already:
 
-1. Create a Supabase project.
-2. Run `supabase/schema.sql` in the SQL editor.
-3. Add `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to your environment.
-4. Keep the service-role key server-side only.
+```text
+FIREBASE_PROJECT_ID=theantibalcony
+```
+
+Create/enable **Cloud Firestore** in the Firebase console, then create a server service account and add:
+
+```text
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+```
+
+The app creates these collections automatically as data arrives:
+
+- `rings`
+- `fulfillmentEvents`
+- `fulfillmentJobs`
+
+`firestore.rules` denies all direct client access. The application accesses Firestore only through Firebase Admin in server routes.
 
 ## Stripe
 
-Create a one-time Stripe Price for the paid placement product and set:
+Create three one-time Prices:
+
+```text
+STRIPE_PRICE_SNAPSHOT=   # $399
+STRIPE_PRICE_VIDEO=      # $799
+STRIPE_PRICE_LIVE=       # $1,499
+```
+
+Also configure:
 
 ```text
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
-STRIPE_PRICE_ID=
 ```
 
-Configure the Stripe webhook endpoint as:
+Webhook endpoint:
 
 ```text
 https://YOUR_DOMAIN/api/stripe/webhook
 ```
 
-The checkout session stores `ringId`, `startupName`, `email`, and social-consent state in Stripe metadata. Payment completion starts fulfillment; it does **not** claim the billboard is live.
+Stripe metadata carries `ringId`, `startupName`, `email`, `tier`, and `allowSocial`. Payment starts fulfillment; it does **not** mark a billboard live.
 
-## Billboard fulfillment contract
+## Zapier architecture
 
-Set `BILLBOARD_FULFILLMENT_WEBHOOK_URL` to a vetted worker or automation endpoint.
+Use **Webhooks by Zapier → Catch Hook** for each inbound workflow. Keep the generated Catch Hook URLs private and add them as server environment variables.
 
-The app sends a JSON payload similar to:
+### Zap 1 — Paid placement
+
+Environment variable:
+
+```text
+ZAPIER_BILLBOARD_WEBHOOK_URL=
+```
+
+Trigger payload includes:
 
 ```json
 {
   "source": "the-anti-balcony",
-  "eventId": "evt_...",
-  "ringId": "uuid",
+  "event": "paid-proof-drop",
+  "ringId": "...",
   "startupName": "Acme",
   "email": "founder@example.com",
   "stripeSessionId": "cs_...",
+  "tier": "video",
+  "deliverables": ["provider-confirmed placement", "static screenshot", "15-second video clip", "share-ready social post"],
   "callbackUrl": "https://YOUR_DOMAIN/api/fulfillment/callback"
 }
 ```
 
-The bridge should treat the `Idempotency-Key` header as unique and may return:
+Recommended Zap actions:
 
-```json
-{
-  "providerRef": "campaign_or_booking_id",
-  "scheduledAt": "2026-08-22T19:00:00Z"
-}
+1. Validate/normalize the startup creative request.
+2. Create or queue the DOOH booking with the contracted Times Square provider.
+3. Store the provider/campaign reference.
+4. POST `scheduled` back to `callbackUrl`.
+5. When provider evidence confirms playout, POST `live` back to the callback.
+
+### Zap 2 — Proof production
+
+Environment variable:
+
+```text
+ZAPIER_PROOF_WEBHOOK_URL=
 ```
 
-When the media provider changes state, call the callback with:
+This is triggered only after the placement is confirmed `live`. `requestedAssets` branches by tier:
+
+- `snapshot` → `screenshot`
+- `video` → `screenshot`, `video_15s`
+- `live` → `screenshot`, `video_15s`, `live_stream_link`
+
+When assets are available, POST:
 
 ```json
 {
-  "ringId": "uuid",
-  "providerRef": "campaign_or_booking_id",
-  "status": "live"
-}
-```
-
-or, once proof is available:
-
-```json
-{
-  "ringId": "uuid",
-  "providerRef": "campaign_or_booking_id",
+  "ringId": "...",
+  "providerRef": "...",
   "status": "proof_ready",
-  "proofUrl": "https://authorized-proof-host.example/proof/..."
+  "proofUrl": "https://.../screenshot",
+  "videoUrl": "https://.../video",
+  "liveStreamUrl": "https://.../live"
 }
 ```
 
-Authenticate callback requests with:
+Only send the fields included in that customer's tier.
+
+### Zap 3 — Confirmed social post
+
+Environment variable:
+
+```text
+ZAPIER_SOCIAL_WEBHOOK_URL=
+```
+
+This workflow is called only after `proof_ready` **and** only if the founder opted into publishing. The generated caption is:
+
+> We just lit up Times Square! 🚀 [Startup] x @TheAntiBalcony. #StartupLaunch
+
+The proof URL travels with the payload, so the post can attach/link the evidence rather than making an unsupported claim.
+
+## Callback security
+
+Every Zap/provider callback must send:
 
 ```text
 Authorization: Bearer $FULFILLMENT_CALLBACK_SECRET
 ```
 
-## Proof and social bridges
+Set a long random value in:
 
-- `PROOF_CAPTURE_WEBHOOK_URL`: use only an authorized/licensed camera or DOOH proof source.
-- `SOCIAL_PUBLISH_WEBHOOK_URL`: connect to Zapier/Make or your own X/LinkedIn publishing worker.
-- Automatic social posting is gated behind explicit founder consent in the backend metadata. Manual Web Share is always available.
+```text
+FULFILLMENT_CALLBACK_SECRET=
+```
 
-Do **not** scrape or redistribute a public webcam feed unless its terms explicitly permit the intended commercial use.
+## Proof-source rule
+
+Use only a licensed/authorized camera, DOOH proof feed or media-owner asset source. Do not scrape and commercially redistribute a public webcam unless its terms explicitly permit it.
 
 ## Email
 
-Founder updates use the Resend REST API when these are configured:
+Optional founder updates use Resend:
 
 ```text
 RESEND_API_KEY=
 RESEND_FROM=The Anti-Balcony <launch@yourdomain.com>
 ```
 
-If they are absent, fulfillment continues without email instead of failing the purchase.
+If absent, fulfillment continues without email rather than failing the purchase.
 
-## Deployment
+## Production checklist
 
-Designed for Vercel / Node 22. Add the environment variables to the deployment project and set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS domain.
-
-Recommended production controls before paid traffic:
-
-1. Add WAF/rate limiting to `/api/rings`, `/api/checkout`, and callbacks.
-2. Verify Stripe tax/refund policy and paid-media terms.
-3. Finalize the DOOH vendor contract and creative-spec validation.
-4. Use a licensed proof source.
-5. Add moderation for public startup names/taglines.
-6. Add observability/alerts for fulfillment jobs stuck in `scheduled` or `manual_review`.
-7. Add a retry/dead-letter worker for provider outages.
+1. Enable Firestore and add Firebase Admin credentials.
+2. Create the three Stripe Prices and webhook secret.
+3. Build the three Catch Hook Zaps and add their URLs.
+4. Set `FULFILLMENT_CALLBACK_SECRET` in both Vercel and Zapier callback actions.
+5. Finalize the Times Square DOOH vendor contract and current API/creative specs.
+6. Confirm legal rights to screenshot/video/live proof assets.
+7. Add rate limits/moderation before meaningful public traffic.
+8. Add monitoring for jobs stuck in `scheduled` or `manual_review`.
 
 ## Brand constants
 
