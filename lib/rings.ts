@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { Timestamp } from "firebase-admin/firestore";
+import { getFirebaseDb } from "@/lib/firebase";
 
 export type Ring = {
   id: string;
@@ -7,29 +8,34 @@ export type Ring = {
   website?: string | null;
   tagline?: string | null;
   createdAt: string;
-  tier: "free" | "paid";
+  tier: "free" | "snapshot" | "video" | "live";
   status: string;
 };
 
-type RingRow = {
-  id: string;
-  startup_name: string;
+type RingDoc = {
+  startupName: string;
   website: string | null;
   tagline: string | null;
-  created_at: string;
-  tier: "free" | "paid";
+  createdAt: Timestamp | Date | string;
+  tier: Ring["tier"];
   status: string;
 };
 
-function toRing(row: RingRow): Ring {
+function toIso(value: RingDoc["createdAt"]) {
+  if (value instanceof Timestamp) return value.toDate().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  return new Date(value).toISOString();
+}
+
+function toRing(id: string, doc: RingDoc): Ring {
   return {
-    id: row.id,
-    startupName: row.startup_name,
-    website: row.website,
-    tagline: row.tagline,
-    createdAt: row.created_at,
-    tier: row.tier,
-    status: row.status,
+    id,
+    startupName: doc.startupName,
+    website: doc.website,
+    tagline: doc.tagline,
+    createdAt: toIso(doc.createdAt),
+    tier: doc.tier || "free",
+    status: doc.status || "rung",
   };
 }
 
@@ -38,20 +44,18 @@ function normalizeWebsite(value?: string) {
   const raw = value.trim();
   const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   const url = new URL(candidate);
-  if (!['http:', 'https:'].includes(url.protocol)) throw new Error("Website must use HTTP or HTTPS.");
+  if (!["http:", "https:"].includes(url.protocol)) throw new Error("Website must use HTTP or HTTPS.");
   return url.toString();
 }
 
 export async function listRings(limit = 12): Promise<Ring[]> {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("rings")
-    .select("id,startup_name,website,tagline,created_at,tier,status")
-    .order("created_at", { ascending: false })
-    .limit(Math.min(limit, 50));
-  if (error) throw error;
-  return ((data ?? []) as RingRow[]).map(toRing);
+  const db = getFirebaseDb();
+  if (!db) return [];
+  const snapshot = await db.collection("rings")
+    .orderBy("createdAt", "desc")
+    .limit(Math.min(limit, 50))
+    .get();
+  return snapshot.docs.map((doc) => toRing(doc.id, doc.data() as RingDoc));
 }
 
 export async function createRing(input: { startupName: string; website?: string; tagline?: string }) {
@@ -59,32 +63,42 @@ export async function createRing(input: { startupName: string; website?: string;
   if (startupName.length < 2 || startupName.length > 80) throw new Error("Startup name must be 2–80 characters.");
   const tagline = input.tagline?.trim().replace(/\s+/g, " ").slice(0, 120) || null;
   const website = normalizeWebsite(input.website);
+  const id = randomUUID();
+  const createdAt = new Date();
   const fallback: Ring = {
-    id: randomUUID(),
+    id,
     startupName,
     website,
     tagline,
-    createdAt: new Date().toISOString(),
+    createdAt: createdAt.toISOString(),
     tier: "free",
     status: "rung",
   };
 
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return { ring: fallback, persisted: false };
-  const { data, error } = await supabase
-    .from("rings")
-    .insert({ startup_name: startupName, website, tagline, tier: "free", status: "rung" })
-    .select("id,startup_name,website,tagline,created_at,tier,status")
-    .single();
-  if (error) throw error;
-  return { ring: toRing(data as RingRow), persisted: true };
+  const db = getFirebaseDb();
+  if (!db) return { ring: fallback, persisted: false };
+
+  await db.collection("rings").doc(id).set({
+    startupName,
+    website,
+    tagline,
+    tier: "free",
+    status: "rung",
+    createdAt: Timestamp.fromDate(createdAt),
+  });
+
+  return { ring: fallback, persisted: true };
 }
 
-export async function updateRingStatus(ringId: string | null | undefined, status: string, tier?: "free" | "paid") {
+export async function updateRingStatus(
+  ringId: string | null | undefined,
+  status: string,
+  tier?: Ring["tier"],
+) {
   if (!ringId) return;
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return;
-  const patch: Record<string, string> = { status };
+  const db = getFirebaseDb();
+  if (!db) return;
+  const patch: Record<string, unknown> = { status, updatedAt: Timestamp.now() };
   if (tier) patch.tier = tier;
-  await supabase.from("rings").update(patch).eq("id", ringId);
+  await db.collection("rings").doc(ringId).set(patch, { merge: true });
 }
