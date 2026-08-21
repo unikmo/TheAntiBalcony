@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { beginPaidFulfillment, claimStripeEvent } from "@/lib/fulfillment";
+import type { ProofTier } from "@/lib/providers/billboard";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,12 @@ export async function POST(request: Request) {
     const metadata = session.metadata || {};
     const startupName = metadata.startupName;
     const email = session.customer_details?.email || metadata.email;
-    if (!startupName || !email) return NextResponse.json({ error: "Checkout metadata is incomplete." }, { status: 422 });
+    const tier = (["snapshot", "video", "live"].includes(metadata.tier || "") ? metadata.tier : "snapshot") as ProofTier;
+
+    if (!startupName || !email) {
+      return NextResponse.json({ error: "Checkout metadata is incomplete." }, { status: 422 });
+    }
+
     await beginPaidFulfillment({
       eventId: event.id,
       ringId: metadata.ringId || session.client_reference_id || null,
@@ -37,6 +43,7 @@ export async function POST(request: Request) {
       email,
       stripeSessionId: session.id,
       allowSocial: metadata.allowSocial === "true",
+      tier,
     });
   }
 
