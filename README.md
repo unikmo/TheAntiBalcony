@@ -2,17 +2,19 @@
 
 **Ring the Internet Bell.** An internet-native launch ritual for startups that would rather make noise than ask permission.
 
-The product combines a free public launch ritual with a provider-confirmed Times Square proof product. The core rule is non-negotiable: **the UI and social automation never claim a placement is live until fulfillment has actually confirmed it.**
+The Anti-Balcony starts as a free digital launch ritual and scales into provider-confirmed Times Square proof and coordinated physical launch experiences. The core rule is non-negotiable: **the UI and social automation never claim a placement is live until fulfillment has actually confirmed it.**
 
 ## Commercial ladder
 
 | Tier | Price | Deliverables |
 | --- | ---: | --- |
-| **Signal Drop** | **$399** | Times Square placement + static screenshot + share-ready social post |
-| **Motion Drop** | **$799** | Signal Drop + 15-second video clip |
-| **Live Takeover** | **$1,499** | Motion Drop + live-stream link around the launch moment |
+| **Digital Bell** | **$0** | Animated Internet Bell + public timestamp + manual social share |
+| **Billboard Screenshot** | **$399** | Times Square placement + provider-confirmed screenshot + share-ready social post |
+| **Billboard Video** | **$799** | Screenshot tier + reusable 15-second launch video |
+| **Times Square Takeover** | **$2,999** | Billboard + 2 on-site brand ambassadors + live link + edited launch video + BTS + press kit |
+| **VIP Takeover** | **$9,999** | Takeover + 5 brand ambassadors + professional videographer + up to 60-minute live-production window + premium film + PR-distribution workflow |
 
-Video is intentionally the middle/default value tier: it gives founders a reusable launch asset for social, press outreach, investor updates and their own website rather than a one-off screenshot.
+The product intentionally changes at **$2,999**: the lower paid tiers sell verified media proof; the premium tiers sell a coordinated physical launch moment involving media, people and production.
 
 ## Stack
 
@@ -20,7 +22,7 @@ Video is intentionally the middle/default value tier: it gives founders a reusab
 - Node 22+
 - Firebase Admin + Firestore (`theantibalcony`)
 - Stripe Checkout + verified webhooks
-- Zapier webhook orchestration for media fulfillment, proof and optional social posting
+- Zapier webhook orchestration for media fulfillment, physical operations, proof and optional social posting
 - Optional Resend founder emails
 - Vercel-ready deployment
 
@@ -29,14 +31,17 @@ Video is intentionally the middle/default value tier: it gives founders a reusab
 - Black / neon-pink / electric-green Anti-Balcony visual system using VT323 + Inter.
 - Giant interactive Internet Bell with synthesized audio, haptics and burst animation.
 - Founder claim flow with startup name, website and launch signal.
-- Firestore-backed latest-rings feed with a safe no-credentials demo fallback.
+- Firestore-backed latest-rings feed with safe no-credentials fallback.
 - Native Web Share / clipboard sharing.
-- Three Stripe proof tiers: `snapshot`, `video`, `live`.
+- Four Stripe paid tiers: `snapshot`, `video`, `takeover`, `vip`.
 - Stripe event idempotency stored in Firestore.
 - Provider-neutral billboard fulfillment bridge.
-- Lifecycle: `rung → scheduled/manual_review → live → proof_ready`.
+- Digital lifecycle: `rung → scheduled/manual_review → live → proof_ready`.
+- Physical lifecycle: `rung → ops_review → scheduled → live → proof_ready`.
+- Physical packages cannot become `scheduled` until operations clearance is returned.
 - Authenticated provider/Zapier callback endpoint.
-- Screenshot, video and live-stream asset callbacks.
+- Screenshot, video, live-stream, BTS, press-kit and PR-distribution asset callbacks.
+- Permit, insurance and talent-release reference fields for premium operations.
 - Optional post-proof social automation gated by founder consent.
 - CI for typecheck, lint and production build.
 
@@ -52,13 +57,13 @@ The visual ritual works with no service credentials. Without Firebase Admin cred
 
 ## Firebase / Firestore
 
-The configured project ID is already:
+The configured project ID is:
 
 ```text
 FIREBASE_PROJECT_ID=theantibalcony
 ```
 
-Create/enable **Cloud Firestore** in the Firebase console, then create a server service account and add:
+Enable **Cloud Firestore** in the Firebase console, create a server service account, then add:
 
 ```text
 FIREBASE_CLIENT_EMAIL=
@@ -71,16 +76,17 @@ The app creates these collections automatically as data arrives:
 - `fulfillmentEvents`
 - `fulfillmentJobs`
 
-`firestore.rules` denies all direct client access. The application accesses Firestore only through Firebase Admin in server routes.
+`firestore.rules` denies all direct client access. The application accesses Firestore through Firebase Admin in server routes.
 
 ## Stripe
 
-Create three one-time Prices:
+Create four one-time Prices:
 
 ```text
 STRIPE_PRICE_SNAPSHOT=   # $399
 STRIPE_PRICE_VIDEO=      # $799
-STRIPE_PRICE_LIVE=       # $1,499
+STRIPE_PRICE_TAKEOVER=   # $2,999
+STRIPE_PRICE_VIP=        # $9,999
 ```
 
 Also configure:
@@ -96,86 +102,97 @@ Webhook endpoint:
 https://YOUR_DOMAIN/api/stripe/webhook
 ```
 
-Stripe metadata carries `ringId`, `startupName`, `email`, `tier`, and `allowSocial`. Payment starts fulfillment; it does **not** mark a billboard live.
+Stripe metadata carries `ringId`, `startupName`, `email`, `tier`, `allowSocial`, and whether physical operations clearance is required. Payment starts fulfillment; it does **not** mark a billboard live or a physical Takeover scheduled.
 
 ## Zapier architecture
 
-Use **Webhooks by Zapier → Catch Hook** for each inbound workflow. Keep the generated Catch Hook URLs private and add them as server environment variables.
+Use **Webhooks by Zapier → Catch Hook** for the inbound workflows. Keep Catch Hook URLs private and add them as server environment variables.
 
-### Zap 1 — Paid placement
-
-Environment variable:
+### Zap 1 — Media + Takeover intake
 
 ```text
 ZAPIER_BILLBOARD_WEBHOOK_URL=
 ```
 
-Trigger payload includes:
+For `snapshot` and `video`, the payload uses:
 
-```json
-{
-  "source": "the-anti-balcony",
-  "event": "paid-proof-drop",
-  "ringId": "...",
-  "startupName": "Acme",
-  "email": "founder@example.com",
-  "stripeSessionId": "cs_...",
-  "tier": "video",
-  "deliverables": ["provider-confirmed placement", "static screenshot", "15-second video clip", "share-ready social post"],
-  "callbackUrl": "https://YOUR_DOMAIN/api/fulfillment/callback"
-}
+```text
+event = paid-proof-drop
 ```
 
-Recommended Zap actions:
+For `takeover` and `vip`:
 
-1. Validate/normalize the startup creative request.
-2. Create or queue the DOOH booking with the contracted Times Square provider.
-3. Store the provider/campaign reference.
-4. POST `scheduled` back to `callbackUrl`.
-5. When provider evidence confirms playout, POST `live` back to the callback.
+```text
+event = paid-times-square-takeover
+requiresOperationsClearance = true
+```
+
+The premium payload also includes the required number of brand ambassadors, production level, live-production window, deliverables, release requirement and permit-review flag.
+
+**Do not POST `scheduled` for a physical package immediately after payment.** Complete the operations checklist first, then call the authenticated fulfillment callback.
+
+See [`docs/TAKEOVER_OPERATIONS.md`](docs/TAKEOVER_OPERATIONS.md).
 
 ### Zap 2 — Proof production
-
-Environment variable:
 
 ```text
 ZAPIER_PROOF_WEBHOOK_URL=
 ```
 
-This is triggered only after the placement is confirmed `live`. `requestedAssets` branches by tier:
+This is triggered only after the placement is confirmed `live`. Requested assets branch by tier:
 
-- `snapshot` → `screenshot`
-- `video` → `screenshot`, `video_15s`
-- `live` → `screenshot`, `video_15s`, `live_stream_link`
+- `snapshot` → screenshot
+- `video` → screenshot + 15-second video
+- `takeover` → screenshot + edited launch video + live link + BTS + press kit
+- `vip` → screenshot + professional launch film + live link + BTS + press kit + PR distribution receipt
 
-When assets are available, POST:
+Example premium completion callback:
 
 ```json
 {
   "ringId": "...",
-  "providerRef": "...",
   "status": "proof_ready",
-  "proofUrl": "https://.../screenshot",
-  "videoUrl": "https://.../video",
-  "liveStreamUrl": "https://.../live"
+  "proofUrl": "https://.../proof.jpg",
+  "videoUrl": "https://.../launch-film.mp4",
+  "liveStreamUrl": "https://.../launch",
+  "behindScenesUrl": "https://.../bts",
+  "pressKitUrl": "https://.../press-kit",
+  "prDistributionUrl": "https://.../distribution-report"
 }
 ```
 
-Only send the fields included in that customer's tier.
+Only send assets actually produced for that customer's package.
 
 ### Zap 3 — Confirmed social post
-
-Environment variable:
 
 ```text
 ZAPIER_SOCIAL_WEBHOOK_URL=
 ```
 
-This workflow is called only after `proof_ready` **and** only if the founder opted into publishing. The generated caption is:
+This workflow is called only after `proof_ready` **and** only if the founder opted into publishing. It prefers the confirmed video asset when one exists, otherwise the screenshot proof.
 
-> We just lit up Times Square! 🚀 [Startup] x @TheAntiBalcony. #StartupLaunch
+## Physical Takeover operations
 
-The proof URL travels with the payload, so the post can attach/link the evidence rather than making an unsupported claim.
+A physical package starts in:
+
+```text
+ops_review
+```
+
+The operations workflow should verify, as applicable:
+
+1. media inventory and creative approval
+2. exact public-space footprint and location classification
+3. current MOME / SAPO / NYC Parks / Times Square Alliance requirements
+4. insurance requirements
+5. talent booking and signed releases
+6. branded attire/signage and delivery
+7. videographer/streaming setup
+8. run of show, connectivity, weather and fallback plan
+
+Current NYC guidance distinguishes simple handheld/tripod filming from activities that require permits or event approvals. Do **not** advertise a blanket "no permit required" rule based only on crew size. If a MOME film permit is required for Times Square, current MOME instructions request filing 7 business days before the shoot; required permits generally require at least $1M CGL, subject to the production's specifics.
+
+Full runbook: [`docs/TAKEOVER_OPERATIONS.md`](docs/TAKEOVER_OPERATIONS.md).
 
 ## Callback security
 
@@ -193,7 +210,11 @@ FULFILLMENT_CALLBACK_SECRET=
 
 ## Proof-source rule
 
-Use only a licensed/authorized camera, DOOH proof feed or media-owner asset source. Do not scrape and commercially redistribute a public webcam unless its terms explicitly permit it.
+Use only a licensed/authorized camera, DOOH proof feed, media-owner asset source or properly contracted production footage. Do not scrape and commercially redistribute a public webcam unless its terms explicitly permit it.
+
+## Margin discipline
+
+Do not assume the $2,999 package costs only $300-$500 to fulfill. Actual cost can include DOOH inventory, talent, rush printing, courier, filming/streaming vendors, insurance, permits/location fees, transport, editing, PR distribution and contingency. Track job-level costs and clear the vendor stack before locking the event date.
 
 ## Email
 
@@ -209,13 +230,15 @@ If absent, fulfillment continues without email rather than failing the purchase.
 ## Production checklist
 
 1. Enable Firestore and add Firebase Admin credentials.
-2. Create the three Stripe Prices and webhook secret.
+2. Create the four Stripe Prices and webhook secret.
 3. Build the three Catch Hook Zaps and add their URLs.
 4. Set `FULFILLMENT_CALLBACK_SECRET` in both Vercel and Zapier callback actions.
 5. Finalize the Times Square DOOH vendor contract and current API/creative specs.
-6. Confirm legal rights to screenshot/video/live proof assets.
-7. Add rate limits/moderation before meaningful public traffic.
-8. Add monitoring for jobs stuck in `scheduled` or `manual_review`.
+6. Build the physical operations/vendor bench before enabling $2,999/$9,999 checkout publicly.
+7. Confirm legal rights to screenshot/video/live/BTS proof assets.
+8. Add rate limits and public-name/tagline moderation before meaningful traffic.
+9. Add monitoring for jobs stuck in `scheduled`, `manual_review`, or `ops_review`.
+10. Track actual gross margin per physical Takeover.
 
 ## Brand constants
 
