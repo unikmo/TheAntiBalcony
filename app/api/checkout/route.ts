@@ -7,8 +7,11 @@ export const runtime = "nodejs";
 const TIER_PRICES: Record<ProofTier, string | undefined> = {
   snapshot: process.env.STRIPE_PRICE_SNAPSHOT,
   video: process.env.STRIPE_PRICE_VIDEO,
-  live: process.env.STRIPE_PRICE_LIVE,
+  takeover: process.env.STRIPE_PRICE_TAKEOVER,
+  vip: process.env.STRIPE_PRICE_VIP,
 };
+
+const VALID_TIERS: ProofTier[] = ["snapshot", "video", "takeover", "vip"];
 
 export async function POST(request: Request) {
   const stripe = getStripe();
@@ -27,9 +30,7 @@ export async function POST(request: Request) {
 
     const startupName = body.startupName?.trim().slice(0, 80);
     const email = body.email?.trim().slice(0, 254);
-    const tier: ProofTier = body.tier && ["snapshot", "video", "live"].includes(body.tier)
-      ? body.tier
-      : "snapshot";
+    const tier: ProofTier = body.tier && VALID_TIERS.includes(body.tier) ? body.tier : "snapshot";
     const priceId = TIER_PRICES[tier];
 
     if (!startupName || !email) {
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     }
 
     const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const isConcierge = tier === "takeover" || tier === "vip";
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId, quantity: 1 }],
@@ -53,6 +55,7 @@ export async function POST(request: Request) {
         email,
         tier,
         allowSocial: body.allowSocial ? "true" : "false",
+        requiresOperationsClearance: isConcierge ? "true" : "false",
       },
     });
 
