@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-type ProofTier = "snapshot" | "video" | "live";
+type ProofTier = "snapshot" | "video" | "takeover" | "vip";
 
 type Ring = {
   id: string;
@@ -29,10 +29,12 @@ const PACKAGES: Array<{
   price: string;
   label: string;
   includes: string;
+  concierge: boolean;
 }> = [
-  { id: "snapshot", name: "SIGNAL DROP", price: "$399", label: "STATIC PROOF", includes: "Times Square placement + screenshot + share-ready social post" },
-  { id: "video", name: "MOTION DROP", price: "$799", label: "15-SECOND VIDEO", includes: "Everything in Signal + 15-second Times Square video clip" },
-  { id: "live", name: "LIVE TAKEOVER", price: "$1,499", label: "LIVE LINK", includes: "Everything in Motion + live-stream link for the launch moment" },
+  { id: "snapshot", name: "BILLBOARD SCREENSHOT", price: "$399", label: "STATIC PROOF", includes: "Times Square placement + provider-confirmed screenshot + share-ready social post", concierge: false },
+  { id: "video", name: "BILLBOARD VIDEO", price: "$799", label: "15-SECOND VIDEO", includes: "Everything in Screenshot + a reusable 15-second Times Square launch clip", concierge: false },
+  { id: "takeover", name: "TIMES SQUARE TAKEOVER", price: "$2,999", label: "2 PEOPLE + LIVE", includes: "Billboard + 2 on-site brand ambassadors + live link + edited launch video + BTS + press kit", concierge: true },
+  { id: "vip", name: "VIP TAKEOVER", price: "$9,999", label: "5 PEOPLE + PRO CREW", includes: "Takeover + 5 brand ambassadors + professional videographer + up to 60-minute live production window + PR workflow", concierge: true },
 ];
 
 function playBell() {
@@ -177,7 +179,7 @@ export function AntiBalcony() {
   async function startPaidCheckout(tier: ProofTier) {
     if (!ring) return;
     if (!email.trim()) {
-      setCheckoutError("Add an email so we can deliver the proof package.");
+      setCheckoutError("Add an email so we can deliver the launch package.");
       return;
     }
 
@@ -236,13 +238,13 @@ export function AntiBalcony() {
         <div className="section-number">02</div>
         <div><span className="eyebrow">THE PROOF DROP</span><h2>FROM BROWSER TAB<br />TO <em>TIMES SQUARE.</em></h2></div>
         <div className="proof-copy">
-          <p>One real placement. Three levels of proof. Nothing is called live until the media provider confirms it.</p>
+          <p>Start with proof. Upgrade to presence. The premium packages put real human energy into the square while your launch is on-screen.</p>
           <div className="proof-grid">
             {PACKAGES.map((item) => (
               <div key={item.id}><strong>{item.price}</strong><span>{item.name}<br />{item.label}</span></div>
             ))}
           </div>
-          <p><strong>VIDEO CHANGES THE PRODUCT.</strong> It turns a billboard buy into a founder asset people can actually repost, pitch and remember.</p>
+          <p><strong>THE PRODUCT CHANGES AT $2,999.</strong> Below it, you buy media proof. Above it, you buy a coordinated launch moment with people, screen, stream and reusable content.</p>
           <a className="text-cta" href="#ritual">RING FIRST <span>↗</span></a>
         </div>
       </section>
@@ -262,7 +264,7 @@ export function AntiBalcony() {
                 <span className="ring-index">{String(index + 1).padStart(2, "0")}</span>
                 <div><h3>{item.startupName}</h3><p>{item.tagline || "RANG THE INTERNET BELL"}</p></div>
                 <time dateTime={item.createdAt}>{formatRingTime(item.createdAt)}</time>
-                <span className={`status ${hasProof ? "live" : ""}`}>{item.status === "proof_ready" ? "PROOF READY" : item.status === "live" ? "LIVE" : "RUNG"}</span>
+                <span className={`status ${hasProof ? "live" : ""}`}>{item.status === "proof_ready" ? "PROOF READY" : item.status === "live" ? "LIVE" : item.status === "ops_review" ? "OPS REVIEW" : "RUNG"}</span>
               </article>
             );
           })}
@@ -281,11 +283,13 @@ export function AntiBalcony() {
       <section className="faq" id="faq">
         <span className="eyebrow">NO FINE PRINT ENERGY</span>
         <h2>QUESTIONS.</h2>
-        <details><summary>Is the free ring actually free?<span>+</span></summary><p>Yes. Ringing and claiming a public timestamp costs nothing.</p></details>
+        <details><summary>Is the digital bell actually free?<span>+</span></summary><p>Yes. Ringing and claiming a public timestamp costs nothing.</p></details>
         <details><summary>What does $399 include?<span>+</span></summary><p>A real Times Square placement, provider-confirmed screenshot proof and a share-ready social post.</p></details>
-        <details><summary>Why is the $799 tier different?<span>+</span></summary><p>It adds a 15-second video clip. That is the reusable launch asset for LinkedIn, X, press outreach and investor updates.</p></details>
-        <details><summary>What does the $1,499 tier add?<span>+</span></summary><p>A live-stream link around the launch moment in addition to the video and screenshot assets.</p></details>
-        <details><summary>Do you promise “live” before the screen is confirmed?<span>+</span></summary><p>No. Paid placements move through reserved, scheduled, live and proof-ready states. The interface only says live after provider confirmation.</p></details>
+        <details><summary>Why is the $799 tier different?<span>+</span></summary><p>It adds a 15-second video clip—the reusable launch asset for LinkedIn, X, press outreach and investor updates.</p></details>
+        <details><summary>What makes the $2,999 Takeover different?<span>+</span></summary><p>It adds physical presence: two on-site brand ambassadors, coordinated branding, live-link capability, edited video, behind-the-scenes assets and a press kit. Because people are physically involved, the booking enters operations review before it is called scheduled.</p></details>
+        <details><summary>What does VIP add at $9,999?<span>+</span></summary><p>Five on-site brand ambassadors, a professional videographer, an extended live-production window, premium edit, press assets and a PR-distribution workflow.</p></details>
+        <details><summary>Why does a Takeover need operations review?<span>+</span></summary><p>Times Square filming and branded public-space activity can involve MOME, CECM/SAPO, insurance, location rules and talent releases depending on the exact setup. We confirm those requirements before scheduling the physical event.</p></details>
+        <details><summary>Do you promise “live” before the screen is confirmed?<span>+</span></summary><p>No. Media status and physical operations status are independently verified. The interface only says live after provider confirmation.</p></details>
       </section>
 
       <footer>
@@ -321,20 +325,21 @@ export function AntiBalcony() {
                   <button onClick={shareRing}>SHARE THE RING ↗</button>
                   <div className="upgrade-box">
                     <span>TAKE IT OFF-SCREEN</span>
-                    <strong>CHOOSE YOUR PROOF</strong>
-                    <p>Your payment reserves the workflow. “Live” only appears after provider confirmation.</p>
-                    <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="FOUNDER@STARTUP.COM" aria-label="Email for paid proof package" />
+                    <strong>CHOOSE YOUR LAUNCH MOMENT</strong>
+                    <p>Digital proof can move directly into fulfillment. Physical Takeovers enter operations review before a date is confirmed.</p>
+                    <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="FOUNDER@STARTUP.COM" aria-label="Email for paid launch package" />
                     <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 12 }}>
                       <input type="checkbox" checked={allowSocial} onChange={(e) => setAllowSocial(e.target.checked)} style={{ width: 16, marginTop: 2 }} />
-                      Publish the confirmed proof through The Anti-Balcony social workflow.
+                      Publish confirmed proof through The Anti-Balcony social workflow.
                     </label>
-                    <div className="proof-grid">
+                    <div className="proof-grid package-grid">
                       {PACKAGES.map((item) => (
                         <div key={item.id}>
                           <span>{item.label}</span>
                           <strong>{item.price}</strong>
                           <span>{item.includes}</span>
-                          <button className="paid-button" onClick={() => startPaidCheckout(item.id)}>CHOOSE {item.name} →</button>
+                          {item.concierge && <span>CONCIERGE / DATE CONFIRMED AFTER OPS REVIEW</span>}
+                          <button className="paid-button" onClick={() => startPaidCheckout(item.id)}>{item.concierge ? "RESERVE" : "CHOOSE"} {item.name} →</button>
                         </div>
                       ))}
                     </div>
