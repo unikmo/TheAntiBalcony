@@ -9,6 +9,14 @@ export async function requestProofCapture(input: {
   const url = process.env.ZAPIER_PROOF_WEBHOOK_URL || process.env.PROOF_CAPTURE_WEBHOOK_URL;
   if (!url) return { requested: false };
 
+  const requestedAssets = input.tier === "snapshot"
+    ? ["screenshot"]
+    : input.tier === "video"
+      ? ["screenshot", "video_15s"]
+      : input.tier === "takeover"
+        ? ["screenshot", "edited_launch_video", "live_stream_link", "behind_the_scenes", "press_kit"]
+        : ["screenshot", "professional_launch_film", "live_stream_link", "behind_the_scenes", "press_kit", "pr_distribution_receipt"];
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -21,11 +29,7 @@ export async function requestProofCapture(input: {
       source: "the-anti-balcony",
       event: "capture-proof",
       ...input,
-      requestedAssets: input.tier === "snapshot"
-        ? ["screenshot"]
-        : input.tier === "video"
-          ? ["screenshot", "video_15s"]
-          : ["screenshot", "video_15s", "live_stream_link"],
+      requestedAssets,
       callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/fulfillment/callback`,
     }),
   });
