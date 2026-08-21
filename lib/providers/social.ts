@@ -1,7 +1,14 @@
-export async function publishProofSocial(input: { startupName: string; proofUrl: string; ringId: string }) {
+export async function publishProofSocial(input: {
+  startupName: string;
+  proofUrl: string;
+  ringId: string;
+  videoUrl?: string | null;
+  liveStreamUrl?: string | null;
+}) {
   const url = process.env.ZAPIER_SOCIAL_WEBHOOK_URL || process.env.SOCIAL_PUBLISH_WEBHOOK_URL;
   if (!url) return { published: false };
 
+  const primaryAssetUrl = input.videoUrl || input.proofUrl;
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -14,8 +21,9 @@ export async function publishProofSocial(input: { startupName: string; proofUrl:
       source: "the-anti-balcony",
       event: "proof-ready-social",
       ...input,
-      // This message is emitted only after the fulfillment callback says proof_ready.
-      caption: `We just lit up Times Square! 🚀 ${input.startupName} x @TheAntiBalcony. #StartupLaunch`,
+      primaryAssetUrl,
+      // Emitted only after an authenticated fulfillment callback marks proof ready.
+      caption: `We took over Times Square to launch ${input.startupName}. @TheAntiBalcony made the moment happen. #TimesSquareTakeover #StartupLaunch`,
     }),
   });
 
