@@ -2,20 +2,19 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+type ProofTier = "snapshot" | "video" | "live";
+
 type Ring = {
   id: string;
   startupName: string;
   website?: string | null;
   tagline?: string | null;
   createdAt: string;
-  tier?: "free" | "paid";
+  tier?: "free" | ProofTier;
   status?: string;
 };
 
-type ClaimResult = {
-  ring: Ring;
-  persisted: boolean;
-};
+type ClaimResult = { ring: Ring; persisted: boolean };
 
 const NAV = [
   ["RITUAL", "#ritual"],
@@ -23,6 +22,18 @@ const NAV = [
   ["RINGS", "#rings"],
   ["FAQ", "#faq"],
 ] as const;
+
+const PACKAGES: Array<{
+  id: ProofTier;
+  name: string;
+  price: string;
+  label: string;
+  includes: string;
+}> = [
+  { id: "snapshot", name: "SIGNAL DROP", price: "$399", label: "STATIC PROOF", includes: "Times Square placement + screenshot + share-ready social post" },
+  { id: "video", name: "MOTION DROP", price: "$799", label: "15-SECOND VIDEO", includes: "Everything in Signal + 15-second Times Square video clip" },
+  { id: "live", name: "LIVE TAKEOVER", price: "$1,499", label: "LIVE LINK", includes: "Everything in Motion + live-stream link for the launch moment" },
+];
 
 function playBell() {
   const AudioContextClass = window.AudioContext ||
@@ -77,24 +88,24 @@ export function AntiBalcony() {
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [allowSocial, setAllowSocial] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/rings")
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("rings unavailable"))))
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error("rings unavailable")))
       .then((data: { rings?: Ring[] }) => setRings(data.rings ?? []))
       .catch(() => setRings([]));
   }, []);
 
   useEffect(() => {
-    if (phase === "claim" || phase === "claimed") {
-      modalRef.current?.focus();
-      const onKey = (event: KeyboardEvent) => {
-        if (event.key === "Escape") closeModal();
-      };
-      document.addEventListener("keydown", onKey);
-      return () => document.removeEventListener("keydown", onKey);
-    }
+    if (phase !== "claim" && phase !== "claimed") return;
+    modalRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeModal();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [phase]);
 
   const burst = useMemo(
@@ -163,17 +174,18 @@ export function AntiBalcony() {
     setCheckoutError("Share copy copied to clipboard.");
   }
 
-  async function startPaidCheckout() {
+  async function startPaidCheckout(tier: ProofTier) {
     if (!ring) return;
     if (!email.trim()) {
       setCheckoutError("Add an email so we can deliver the proof package.");
       return;
     }
+
     setCheckoutError("");
     const response = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ringId: ring.id, startupName: ring.startupName, email }),
+      body: JSON.stringify({ ringId: ring.id, startupName: ring.startupName, email, tier, allowSocial }),
     });
     const data = (await response.json()) as { url?: string; error?: string };
     if (!response.ok || !data.url) {
@@ -187,21 +199,14 @@ export function AntiBalcony() {
     <main className="site-shell">
       <div className="noise" aria-hidden="true" />
       <header className="topbar">
-        <a className="wordmark" href="#top" aria-label="The Anti-Balcony home">
-          <span className="slash">/</span>THE ANTI-BALCONY
-        </a>
-        <nav aria-label="Main navigation">
-          {NAV.map(([label, href]) => <a key={href} href={href}>{label}</a>)}
-        </nav>
+        <a className="wordmark" href="#top" aria-label="The Anti-Balcony home"><span className="slash">/</span>THE ANTI-BALCONY</a>
+        <nav aria-label="Main navigation">{NAV.map(([label, href]) => <a key={href} href={href}>{label}</a>)}</nav>
         <span className="live-chip"><i /> INTERNET OPEN</span>
       </header>
 
       <section className="hero" id="top">
         <div className="hero-kicker">NYSE HAS A BALCONY. THE INTERNET HAS THIS.</div>
-        <h1>
-          RING THE<br />
-          <span>INTERNET BELL.</span>
-        </h1>
+        <h1>RING THE<br /><span>INTERNET BELL.</span></h1>
         <p className="hero-copy">A launch ritual for startups that would rather make noise than ask permission.</p>
 
         <div className={`bell-stage ${phase === "ringing" ? "is-ringing" : ""}`} id="ritual">
@@ -210,20 +215,14 @@ export function AntiBalcony() {
           <div className="crosshair horizontal" aria-hidden="true" />
           <div className="crosshair vertical" aria-hidden="true" />
           {phase === "ringing" && burst.map((piece, index) => (
-            <span
-              key={index}
-              className="burst"
-              aria-hidden="true"
-              style={{
-                "--angle": `${piece.angle}deg`,
-                "--distance": `${piece.distance}px`,
-                "--delay": `${piece.delay}ms`,
-              } as React.CSSProperties}
-            >{piece.glyph}</span>
+            <span key={index} className="burst" aria-hidden="true" style={{
+              "--angle": `${piece.angle}deg`,
+              "--distance": `${piece.distance}px`,
+              "--delay": `${piece.delay}ms`,
+            } as React.CSSProperties}>{piece.glyph}</span>
           ))}
           <button className="bell-button" onClick={ringBell} disabled={phase !== "idle"} aria-label="Ring the Internet Bell">
-            <span className="button-top">RING</span>
-            <span className="button-bottom">THE BELL</span>
+            <span className="button-top">RING</span><span className="button-bottom">THE BELL</span>
           </button>
           <span className="bell-instruction">NO IPO. NO INVITE. PRESS IT.</span>
         </div>
@@ -235,17 +234,15 @@ export function AntiBalcony() {
 
       <section className="split-section" id="proof">
         <div className="section-number">02</div>
-        <div>
-          <span className="eyebrow">THE PROOF DROP</span>
-          <h2>FROM BROWSER TAB<br />TO <em>TIMES SQUARE.</em></h2>
-        </div>
+        <div><span className="eyebrow">THE PROOF DROP</span><h2>FROM BROWSER TAB<br />TO <em>TIMES SQUARE.</em></h2></div>
         <div className="proof-copy">
-          <p>Reserve a real digital-out-of-home placement. We submit the creative, track fulfillment, and only call it live after the provider confirms it.</p>
+          <p>One real placement. Three levels of proof. Nothing is called live until the media provider confirms it.</p>
           <div className="proof-grid">
-            <div><strong>15s</strong><span>target creative slot</span></div>
-            <div><strong>PROOF</strong><span>authorized capture</span></div>
-            <div><strong>PACK</strong><span>share + PR assets</span></div>
+            {PACKAGES.map((item) => (
+              <div key={item.id}><strong>{item.price}</strong><span>{item.name}<br />{item.label}</span></div>
+            ))}
           </div>
+          <p><strong>VIDEO CHANGES THE PRODUCT.</strong> It turns a billboard buy into a founder asset people can actually repost, pitch and remember.</p>
           <a className="text-cta" href="#ritual">RING FIRST <span>↗</span></a>
         </div>
       </section>
@@ -258,17 +255,17 @@ export function AntiBalcony() {
         <div className="rings-grid">
           {rings.length === 0 ? (
             <div className="empty-ring"><span>00</span><p>No claimed rings yet. The first one gets the cleanest timestamp.</p></div>
-          ) : rings.map((item, index) => (
-            <article className="ring-card" key={item.id}>
-              <span className="ring-index">{String(index + 1).padStart(2, "0")}</span>
-              <div>
-                <h3>{item.startupName}</h3>
-                <p>{item.tagline || "RANG THE INTERNET BELL"}</p>
-              </div>
-              <time dateTime={item.createdAt}>{formatRingTime(item.createdAt)}</time>
-              <span className={`status ${item.status === "live" ? "live" : ""}`}>{item.status === "live" ? "LIVE PROOF" : "RUNG"}</span>
-            </article>
-          ))}
+          ) : rings.map((item, index) => {
+            const hasProof = item.status === "live" || item.status === "proof_ready";
+            return (
+              <article className="ring-card" key={item.id}>
+                <span className="ring-index">{String(index + 1).padStart(2, "0")}</span>
+                <div><h3>{item.startupName}</h3><p>{item.tagline || "RANG THE INTERNET BELL"}</p></div>
+                <time dateTime={item.createdAt}>{formatRingTime(item.createdAt)}</time>
+                <span className={`status ${hasProof ? "live" : ""}`}>{item.status === "proof_ready" ? "PROOF READY" : item.status === "live" ? "LIVE" : "RUNG"}</span>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -285,9 +282,10 @@ export function AntiBalcony() {
         <span className="eyebrow">NO FINE PRINT ENERGY</span>
         <h2>QUESTIONS.</h2>
         <details><summary>Is the free ring actually free?<span>+</span></summary><p>Yes. Ringing and claiming a public timestamp costs nothing.</p></details>
-        <details><summary>Does pressing the button automatically buy a billboard?<span>+</span></summary><p>No. A physical placement is a separate paid checkout. We never charge on the ritual button.</p></details>
+        <details><summary>What does $399 include?<span>+</span></summary><p>A real Times Square placement, provider-confirmed screenshot proof and a share-ready social post.</p></details>
+        <details><summary>Why is the $799 tier different?<span>+</span></summary><p>It adds a 15-second video clip. That is the reusable launch asset for LinkedIn, X, press outreach and investor updates.</p></details>
+        <details><summary>What does the $1,499 tier add?<span>+</span></summary><p>A live-stream link around the launch moment in addition to the video and screenshot assets.</p></details>
         <details><summary>Do you promise “live” before the screen is confirmed?<span>+</span></summary><p>No. Paid placements move through reserved, scheduled, live and proof-ready states. The interface only says live after provider confirmation.</p></details>
-        <details><summary>What happens if a media provider fails?<span>+</span></summary><p>The fulfillment job remains unresolved and can be retried or handled manually. The product never manufactures fake proof.</p></details>
       </section>
 
       <footer>
@@ -318,15 +316,28 @@ export function AntiBalcony() {
                 <span className="modal-code">TIMESTAMP CLAIMED</span>
                 <h2 id="claim-title">YOU<br /><em>RANG IT.</em></h2>
                 <p><strong>{ring?.startupName}</strong> is now part of the public signal.</p>
-                {!persisted && <p className="demo-warning">Database is not connected yet, so this ring is visible in this session only.</p>}
+                {!persisted && <p className="demo-warning">Firebase credentials are not connected yet, so this ring is visible in this session only.</p>}
                 <div className="claimed-actions">
                   <button onClick={shareRing}>SHARE THE RING ↗</button>
                   <div className="upgrade-box">
                     <span>TAKE IT OFF-SCREEN</span>
-                    <strong>{process.env.NEXT_PUBLIC_PAID_TIER_LABEL || "TIMES SQUARE PROOF DROP"}</strong>
-                    <p>Real placement. Provider-confirmed status. Proof package when live.</p>
+                    <strong>CHOOSE YOUR PROOF</strong>
+                    <p>Your payment reserves the workflow. “Live” only appears after provider confirmation.</p>
                     <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="FOUNDER@STARTUP.COM" aria-label="Email for paid proof package" />
-                    <button className="paid-button" onClick={startPaidCheckout}>RESERVE THE MOMENT →</button>
+                    <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 12 }}>
+                      <input type="checkbox" checked={allowSocial} onChange={(e) => setAllowSocial(e.target.checked)} style={{ width: 16, marginTop: 2 }} />
+                      Publish the confirmed proof through The Anti-Balcony social workflow.
+                    </label>
+                    <div className="proof-grid">
+                      {PACKAGES.map((item) => (
+                        <div key={item.id}>
+                          <span>{item.label}</span>
+                          <strong>{item.price}</strong>
+                          <span>{item.includes}</span>
+                          <button className="paid-button" onClick={() => startPaidCheckout(item.id)}>CHOOSE {item.name} →</button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 {checkoutError && <p className="checkout-note" role="status">{checkoutError}</p>}
