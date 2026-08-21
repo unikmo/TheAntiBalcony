@@ -5,6 +5,13 @@ import { requestProofCapture } from "@/lib/providers/proof";
 import { publishProofSocial } from "@/lib/providers/social";
 import { sendFounderEmail } from "@/lib/providers/email";
 
+type FulfillmentJobRow = {
+  startup_name: string;
+  email: string;
+  allow_social: boolean;
+  provider_ref: string | null;
+};
+
 export async function claimStripeEvent(eventId: string) {
   const supabase = getSupabaseAdmin();
   if (!supabase) return true;
@@ -58,7 +65,7 @@ export async function handleFulfillmentCallback(input: {
   proofUrl?: string | null;
 }) {
   const supabase = getSupabaseAdmin();
-  let job: { startup_name: string; email: string; allow_social: boolean; provider_ref: string | null } | null = null;
+  let job: FulfillmentJobRow | null = null;
 
   if (supabase) {
     const { data } = await supabase
@@ -68,7 +75,7 @@ export async function handleFulfillmentCallback(input: {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    job = data as typeof job;
+    job = data as FulfillmentJobRow | null;
     await supabase.from("fulfillment_jobs").update({
       status: input.status,
       provider_ref: input.providerRef ?? job?.provider_ref ?? null,
