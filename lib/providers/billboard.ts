@@ -1,4 +1,4 @@
-export type ProofTier = "snapshot" | "video" | "live";
+export type ProofTier = "snapshot" | "video" | "takeover" | "vip";
 
 export type BillboardSubmission = {
   eventId: string;
@@ -15,16 +15,88 @@ export type BillboardSubmissionResult = {
   scheduledAt?: string;
 };
 
-const DELIVERABLES: Record<ProofTier, string[]> = {
-  snapshot: ["provider-confirmed placement", "static screenshot", "share-ready social post"],
-  video: ["provider-confirmed placement", "static screenshot", "15-second video clip", "share-ready social post"],
-  live: ["provider-confirmed placement", "static screenshot", "15-second video clip", "live-stream link", "share-ready social post"],
+export const PACKAGE_OPERATIONS: Record<ProofTier, {
+  deliverables: string[];
+  physicalCrew: boolean;
+  actorCount: number;
+  videographer: "none" | "mobile" | "professional";
+  liveStreamMinutes: number;
+  permitReviewRequired: boolean;
+  releaseFormsRequired: boolean;
+  pressKit: boolean;
+  prDistributionWorkflow: boolean;
+}> = {
+  snapshot: {
+    deliverables: ["provider-confirmed placement", "static screenshot", "share-ready social post"],
+    physicalCrew: false,
+    actorCount: 0,
+    videographer: "none",
+    liveStreamMinutes: 0,
+    permitReviewRequired: false,
+    releaseFormsRequired: false,
+    pressKit: false,
+    prDistributionWorkflow: false,
+  },
+  video: {
+    deliverables: ["provider-confirmed placement", "static screenshot", "15-second video clip", "share-ready social post"],
+    physicalCrew: false,
+    actorCount: 0,
+    videographer: "none",
+    liveStreamMinutes: 0,
+    permitReviewRequired: false,
+    releaseFormsRequired: false,
+    pressKit: false,
+    prDistributionWorkflow: false,
+  },
+  takeover: {
+    deliverables: [
+      "provider-confirmed placement",
+      "static screenshot",
+      "edited launch video",
+      "live-stream link",
+      "2 on-site brand ambassadors",
+      "startup-branded attire or approved hand-held branding",
+      "press kit",
+      "behind-the-scenes clips",
+    ],
+    physicalCrew: true,
+    actorCount: 2,
+    videographer: "mobile",
+    liveStreamMinutes: 15,
+    permitReviewRequired: true,
+    releaseFormsRequired: true,
+    pressKit: true,
+    prDistributionWorkflow: false,
+  },
+  vip: {
+    deliverables: [
+      "provider-confirmed placement",
+      "static screenshot",
+      "professionally edited launch film",
+      "up to 60-minute live-stream production window",
+      "5 on-site brand ambassadors",
+      "startup-branded attire or approved hand-held branding",
+      "professional videographer",
+      "press kit",
+      "behind-the-scenes clips",
+      "PR distribution workflow",
+    ],
+    physicalCrew: true,
+    actorCount: 5,
+    videographer: "professional",
+    liveStreamMinutes: 60,
+    permitReviewRequired: true,
+    releaseFormsRequired: true,
+    pressKit: true,
+    prDistributionWorkflow: true,
+  },
 };
 
 export async function submitBillboardJob(input: BillboardSubmission): Promise<BillboardSubmissionResult> {
   const url = process.env.ZAPIER_BILLBOARD_WEBHOOK_URL || process.env.BILLBOARD_FULFILLMENT_WEBHOOK_URL;
   if (!url) return { status: "manual_review" };
 
+  const operations = PACKAGE_OPERATIONS[input.tier];
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -36,18 +108,17 @@ export async function submitBillboardJob(input: BillboardSubmission): Promise<Bi
     },
     body: JSON.stringify({
       source: "the-anti-balcony",
-      event: "paid-proof-drop",
+      event: operations.physicalCrew ? "paid-times-square-takeover" : "paid-proof-drop",
       ...input,
-      deliverables: DELIVERABLES[input.tier],
+      deliverables: operations.deliverables,
+      operations,
+      requiresOperationsClearance: operations.physicalCrew,
       callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/fulfillment/callback`,
     }),
   });
 
   if (!response.ok) throw new Error(`Billboard fulfillment bridge returned ${response.status}.`);
 
-  // Zapier Catch Hook commonly returns a generic acknowledgement rather than
-  // campaign metadata. A later authenticated callback remains the authority
-  // for scheduled/live/proof-ready status.
   const data = (await response.json().catch(() => ({}))) as { providerRef?: string; scheduledAt?: string };
   return { status: "submitted", providerRef: data.providerRef, scheduledAt: data.scheduledAt };
 }
