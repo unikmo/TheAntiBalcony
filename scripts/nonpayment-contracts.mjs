@@ -37,7 +37,11 @@ assert.equal(vip.releaseFormsRequired, true);
 assert.equal(vip.pressKit, true);
 assert.equal(vip.prDistributionWorkflow, true);
 
-for (const key of ["ZAPIER_BILLBOARD_WEBHOOK_URL", "BILLBOARD_FULFILLMENT_WEBHOOK_URL"]) {
+for (const key of [
+  "ZAPIER_OPERATIONS_WEBHOOK_URL",
+  "ZAPIER_BILLBOARD_WEBHOOK_URL",
+  "BILLBOARD_FULFILLMENT_WEBHOOK_URL",
+]) {
   delete process.env[key];
 }
 
@@ -50,7 +54,7 @@ for (const tier of ["snapshot", "video", "takeover", "vip"]) {
     stripeSessionId: `session-${tier}`,
     tier,
   });
-  assert.equal(result.status, "manual_review", `${tier} must fail safely to manual review without a fulfillment bridge`);
+  assert.equal(result.status, "manual_review", `${tier} must fail safely to manual review without an operations hook`);
 }
 
 const allowedTransitions = [
