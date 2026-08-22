@@ -1,0 +1,42 @@
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./tests",
+  timeout: 30000,
+  expect: { timeout: 8000 },
+  fullyParallel: false,
+  retries: 0,
+  reporter: [["list"]],
+  use: {
+    baseURL: "http://127.0.0.1:3200",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
+  webServer: {
+    command: "npm start",
+    url: "http://127.0.0.1:3200/api/health",
+    timeout: 60000,
+    reuseExistingServer: false,
+    env: {
+      PORT: "3200",
+      NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3200",
+      FULFILLMENT_CALLBACK_SECRET: "browser-e2e-secret",
+      FIREBASE_PROJECT_ID: "",
+      FIREBASE_CLIENT_EMAIL: "",
+      FIREBASE_PRIVATE_KEY: "",
+      STRIPE_SECRET_KEY: "",
+      STRIPE_PRICE_SNAPSHOT: "",
+      STRIPE_PRICE_VIDEO: "",
+      STRIPE_PRICE_TAKEOVER: "",
+      STRIPE_PRICE_VIP: "",
+      ZAPIER_BILLBOARD_WEBHOOK_URL: "",
+      BILLBOARD_FULFILLMENT_WEBHOOK_URL: "",
+      ZAPIER_PROOF_WEBHOOK_URL: "",
+      PROOF_CAPTURE_WEBHOOK_URL: "",
+      ZAPIER_SOCIAL_WEBHOOK_URL: "",
+      SOCIAL_PUBLISH_WEBHOOK_URL: "",
+      RESEND_API_KEY: "",
+      RESEND_FROM: "",
+    },
+  },
+});
