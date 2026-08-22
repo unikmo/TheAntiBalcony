@@ -16,11 +16,13 @@ export function GET() {
     process.env.STRIPE_PRICE_TAKEOVER &&
     process.env.STRIPE_PRICE_VIP,
   );
-  const fulfillment = Boolean(
+  const operations = Boolean(
+    process.env.ZAPIER_OPERATIONS_WEBHOOK_URL ||
     process.env.ZAPIER_BILLBOARD_WEBHOOK_URL ||
     process.env.BILLBOARD_FULFILLMENT_WEBHOOK_URL,
   );
   const proof = Boolean(
+    process.env.ZAPIER_OPERATIONS_WEBHOOK_URL ||
     process.env.ZAPIER_PROOF_WEBHOOK_URL ||
     process.env.PROOF_CAPTURE_WEBHOOK_URL,
   );
@@ -34,7 +36,8 @@ export function GET() {
     database: firebase,
     firebase,
     stripe,
-    fulfillment,
+    operations,
+    fulfillment: operations,
     proof,
     social,
   });
