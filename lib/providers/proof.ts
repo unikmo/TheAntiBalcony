@@ -6,7 +6,9 @@ export async function requestProofCapture(input: {
   startupName: string;
   tier: ProofTier;
 }) {
-  const url = process.env.ZAPIER_PROOF_WEBHOOK_URL || process.env.PROOF_CAPTURE_WEBHOOK_URL;
+  const url = process.env.ZAPIER_OPERATIONS_WEBHOOK_URL
+    || process.env.ZAPIER_PROOF_WEBHOOK_URL
+    || process.env.PROOF_CAPTURE_WEBHOOK_URL;
   if (!url) return { requested: false };
 
   const requestedAssets = input.tier === "snapshot"
@@ -27,13 +29,13 @@ export async function requestProofCapture(input: {
     },
     body: JSON.stringify({
       source: "the-anti-balcony",
-      event: "capture-proof",
+      event: "proof_required",
       ...input,
       requestedAssets,
       callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/fulfillment/callback`,
     }),
   });
 
-  if (!response.ok) throw new Error(`Proof capture bridge returned ${response.status}.`);
+  if (!response.ok) throw new Error(`Operations proof notification bridge returned ${response.status}.`);
   return { requested: true };
 }
