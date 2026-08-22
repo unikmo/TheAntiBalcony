@@ -1,0 +1,99 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { SeoShell } from "@/components/SeoPage";
+import { getRingBySlug } from "@/lib/rings";
+
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const ring = await getRingBySlug(slug);
+  if (!ring) return {};
+
+  const description = ring.whatItDoes || ring.tagline || `${ring.startupName} launched in public on The Anti-Balcony.`;
+  return {
+    title: `${ring.startupName} Startup Launch`,
+    description,
+    alternates: { canonical: `/launches/${ring.slug}` },
+    robots: ring.indexable ? { index: true, follow: true } : { index: false, follow: true },
+    openGraph: {
+      title: `${ring.startupName} launched in public`,
+      description,
+      type: "article",
+      images: ring.imageUrl ? [ring.imageUrl] : undefined,
+    },
+  };
+}
+
+export default async function RingPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const ring = await getRingBySlug(slug);
+  if (!ring) notFound();
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const launchUrl = `${site}/launches/${ring.slug}`;
+  const badgeUrl = `${site}/api/rings/${ring.slug}/badge`;
+  const embed = `<a href="${launchUrl}"><img src="${badgeUrl}" alt="${ring.startupName} rung in on The Anti-Balcony" /></a>`;
+
+  const structuredData = ring.indexable ? {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${ring.startupName} Startup Launch`,
+    description: ring.whatItDoes || ring.tagline,
+    datePublished: ring.createdAt,
+    url: launchUrl,
+    primaryImageOfPage: ring.imageUrl ? { "@type": "ImageObject", url: ring.imageUrl } : undefined,
+    about: {
+      "@type": "Organization",
+      name: ring.startupName,
+      url: ring.website || undefined,
+      description: ring.whatItDoes || undefined,
+      founder: ring.founder ? { "@type": "Person", name: ring.founder } : undefined,
+    },
+  } : null;
+
+  return (
+    <SeoShell>
+      <article className="seo-main">
+        {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />}
+        <p className="seo-breadcrumb">PUBLIC RING / {ring.category?.toUpperCase() || "STARTUP LAUNCH"}</p>
+
+        <div className="ring-detail-head">
+          <div>
+            <h1>{ring.startupName}</h1>
+            <p className="seo-lede">{ring.tagline || ring.whatItDoes || "Launched in public on The Anti-Balcony."}</p>
+            <div className="ring-meta">
+              <span>RUNG IN {new Date(ring.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }).toUpperCase()}</span>
+              {ring.category && <span>{ring.category.toUpperCase()}</span>}
+              <span>{ring.status.toUpperCase()}</span>
+            </div>
+            <div className="ab2-actions" style={{ marginTop: 28 }}>
+              {ring.website && <a className="ab2-primary" href={ring.website} target="_blank" rel="noreferrer">VISIT STARTUP ↗</a>}
+              {ring.socialUrl && <a className="ab2-secondary" href={ring.socialUrl} target="_blank" rel="noreferrer">FOUNDER / SOCIAL ↗</a>}
+            </div>
+          </div>
+          <div className="ring-detail-image">
+            {ring.imageUrl ? <img src={ring.imageUrl} alt={`${ring.startupName} product`} /> : <div style={{ height: "100%", display: "grid", placeItems: "center", color: "#8fa6bc" }}>PRODUCT IMAGE NOT ADDED YET</div>}
+          </div>
+        </div>
+
+        <div className="ring-body">
+          <article><h2>What it does</h2><p>{ring.whatItDoes || "This founder has not completed the product description yet."}</p></article>
+          <article><h2>Who it is for</h2><p>{ring.intendedCustomer || "The intended customer has not been added yet."}</p></article>
+          <article><h2>The problem</h2><p>{ring.problem || "The problem statement has not been added yet."}</p></article>
+          <article><h2>Founder story</h2><p>{ring.story || (ring.founder ? `Launched by ${ring.founder}.` : "The founder story has not been added yet.")}</p></article>
+        </div>
+
+        <section className="ring-badge">
+          <p className="ab2-kicker">SHARE THE LAUNCH ARTIFACT</p>
+          <h2>Rung in on The Anti-Balcony.</h2>
+          <p>Use this badge on a website, launch post or founder page. It links back to the permanent public Ring.</p>
+          <img src={`/api/rings/${ring.slug}/badge`} alt={`${ring.startupName} launch badge`} />
+          <pre>{embed}</pre>
+        </section>
+
+        {!ring.indexable && <p className="noindex-note">This Ring is intentionally marked noindex because the profile is not complete enough to be a useful standalone search result.</p>}
+      </article>
+    </SeoShell>
+  );
+}
