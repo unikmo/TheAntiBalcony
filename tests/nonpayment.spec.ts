@@ -1,9 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-function captureRuntimeErrors(page: Parameters<typeof test>[0] extends never ? never : any) {
+function captureRuntimeErrors(page: Page) {
   const errors: string[] = [];
-  page.on("pageerror", (error: Error) => errors.push(error.message));
-  page.on("console", (message: { type(): string; text(): string }) => {
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
   return errors;
