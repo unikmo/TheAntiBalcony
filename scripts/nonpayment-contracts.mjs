@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 const { PACKAGE_OPERATIONS, submitBillboardJob } = await import("../lib/providers/billboard.ts");
+const { assertFulfillmentTransition } = await import("../lib/fulfillment-state.ts");
 
 const snapshot = PACKAGE_OPERATIONS.snapshot;
 const video = PACKAGE_OPERATIONS.video;
@@ -49,6 +50,35 @@ for (const tier of ["snapshot", "video", "takeover", "vip"]) {
     tier,
   });
   assert.equal(result.status, "manual_review", `${tier} must fail safely to manual review without a fulfillment bridge`);
+}
+
+const allowedTransitions = [
+  { current: "manual_review", next: "scheduled", physicalCrew: false, operationsClearance: "not_required" },
+  { current: "scheduled", next: "live", physicalCrew: false, operationsClearance: "not_required" },
+  { current: "live", next: "proof_ready", physicalCrew: false, operationsClearance: "not_required" },
+  { current: "ops_review", next: "scheduled", physicalCrew: true, operationsClearance: "pending" },
+  { current: "scheduled", next: "live", physicalCrew: true, operationsClearance: "cleared" },
+  { current: "live", next: "proof_ready", physicalCrew: true, operationsClearance: "cleared" },
+  { current: "scheduled", next: "scheduled", physicalCrew: true, operationsClearance: "cleared" },
+  { current: "ops_review", next: "failed", physicalCrew: true, operationsClearance: "pending" },
+];
+
+for (const transition of allowedTransitions) {
+  assert.doesNotThrow(() => assertFulfillmentTransition(transition), `${transition.current} -> ${transition.next} should be allowed`);
+}
+
+const forbiddenTransitions = [
+  { current: "manual_review", next: "live", physicalCrew: false, operationsClearance: "not_required" },
+  { current: "manual_review", next: "proof_ready", physicalCrew: false, operationsClearance: "not_required" },
+  { current: "ops_review", next: "live", physicalCrew: true, operationsClearance: "pending" },
+  { current: "ops_review", next: "proof_ready", physicalCrew: true, operationsClearance: "pending" },
+  { current: "scheduled", next: "live", physicalCrew: true, operationsClearance: "pending" },
+  { current: "proof_ready", next: "live", physicalCrew: true, operationsClearance: "cleared" },
+  { current: "failed", next: "scheduled", physicalCrew: true, operationsClearance: "pending" },
+];
+
+for (const transition of forbiddenTransitions) {
+  assert.throws(() => assertFulfillmentTransition(transition), undefined, `${transition.current} -> ${transition.next} must be rejected`);
 }
 
 console.log("nonpayment-contracts: PASS");
