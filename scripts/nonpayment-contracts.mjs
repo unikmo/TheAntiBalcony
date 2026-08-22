@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 const { PACKAGE_OPERATIONS, submitBillboardJob } = await import("../lib/providers/billboard.ts");
 const { assertFulfillmentTransition } = await import("../lib/fulfillment-state.ts");
+const { escapeHtmlAttribute, safeJsonLd } = await import("../lib/security.ts");
 
 const snapshot = PACKAGE_OPERATIONS.snapshot;
 const video = PACKAGE_OPERATIONS.video;
@@ -80,5 +81,15 @@ const forbiddenTransitions = [
 for (const transition of forbiddenTransitions) {
   assert.throws(() => assertFulfillmentTransition(transition), undefined, `${transition.current} -> ${transition.next} must be rejected`);
 }
+
+const hostileJsonLd = safeJsonLd({ founder: "</script><script>window.__xss=1</script>", ampersand: "A&B" });
+assert.equal(hostileJsonLd.includes("</script>"), false, "JSON-LD must not contain a literal script-closing sequence");
+assert.match(hostileJsonLd, /\\u003c\/script\\u003e/);
+assert.match(hostileJsonLd, /A\\u0026B/);
+
+const hostileAttribute = escapeHtmlAttribute('Founder" onerror="alert(1)<script>');
+assert.equal(hostileAttribute.includes('" onerror="'), false, "embed attributes must not preserve quote-breaking input");
+assert.match(hostileAttribute, /&quot;/);
+assert.match(hostileAttribute, /&lt;script&gt;/);
 
 console.log("nonpayment-contracts: PASS");
