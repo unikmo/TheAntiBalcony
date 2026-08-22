@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { getFirebaseDb } from "@/lib/firebase";
 import { handleFulfillmentCallback } from "@/lib/fulfillment";
+import type { CallbackFulfillmentStatus } from "@/lib/fulfillment-state";
 
 export const runtime = "nodejs";
 
@@ -19,8 +21,7 @@ function validateUrl(value?: string) {
   if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid asset URL.");
 }
 
-const VALID_STATUSES = ["ops_review", "scheduled", "live", "proof_ready", "failed"] as const;
-type FulfillmentStatus = typeof VALID_STATUSES[number];
+const VALID_STATUSES: CallbackFulfillmentStatus[] = ["ops_review", "scheduled", "live", "proof_ready", "failed"];
 
 export async function POST(request: Request) {
   if (!authorized(request)) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       startupName?: string;
       email?: string;
       providerRef?: string;
-      status?: FulfillmentStatus;
+      status?: CallbackFulfillmentStatus;
       proofUrl?: string;
       videoUrl?: string;
       liveStreamUrl?: string;
@@ -53,6 +54,20 @@ export async function POST(request: Request) {
     validateUrl(body.behindScenesUrl);
     validateUrl(body.pressKitUrl);
     validateUrl(body.prDistributionUrl);
+
+    if (body.status === "proof_ready" && !body.proofUrl) {
+      return NextResponse.json({ error: "proof_ready requires a proofUrl." }, { status: 400 });
+    }
+
+    let dbAvailable = false;
+    try {
+      dbAvailable = Boolean(getFirebaseDb());
+    } catch {
+      dbAvailable = false;
+    }
+    if (!dbAvailable) {
+      return NextResponse.json({ error: "Fulfillment database is unavailable." }, { status: 503 });
+    }
 
     await handleFulfillmentCallback({
       ringId: body.ringId,
