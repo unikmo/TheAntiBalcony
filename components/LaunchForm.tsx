@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 type Tier = "snapshot" | "video" | "takeover" | "vip";
@@ -8,6 +9,7 @@ type CreatedRing = {
   id: string;
   slug: string;
   startupName: string;
+  indexable: boolean;
 };
 
 const PAID: { tier: Tier; name: string; price: string }[] = [
@@ -76,9 +78,13 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
       <section className="launch-success">
         <p className="ab2-kicker">YOUR RING EXISTS</p>
         <h2>{ring.startupName} has entered the public record.</h2>
-        <p>The public Ring page now verifies whether the profile is complete enough for search indexing. Thin profiles remain noindex automatically.</p>
+        <p data-testid="ring-index-status">
+          {ring.indexable
+            ? "This Ring contains enough detail to be eligible for search indexing."
+            : "This Ring is public but remains noindex until the profile is complete enough to be useful as a search result."}
+        </p>
         {!persisted && <p className="launch-error">Firebase is not connected in this environment, so this Ring is only a session response and will not persist.</p>}
-        {persisted && <p><a href={`/launches/${ring.slug}`}>VIEW AND SHARE YOUR PUBLIC RING ↗</a></p>}
+        {persisted && <p><Link href={`/launches/${ring.slug}`}>VIEW AND SHARE YOUR PUBLIC RING ↗</Link></p>}
 
         <div className="seo-section" style={{ marginTop: 35 }}>
           <h2>Take the moment further</h2>
