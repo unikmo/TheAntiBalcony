@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type Ring = {
@@ -47,6 +49,7 @@ function playBell() {
 }
 
 export function AntiBalconyV2() {
+  const router = useRouter();
   const [rings, setRings] = useState<Ring[]>([]);
   const [ringing, setRinging] = useState(false);
 
@@ -61,18 +64,18 @@ export function AntiBalconyV2() {
     setRinging(true);
     playBell();
     const suffix = tier && tier !== "free" ? `?tier=${encodeURIComponent(tier)}` : "";
-    window.setTimeout(() => window.location.assign(`/launch${suffix}`), 420);
+    window.setTimeout(() => router.push(`/launch${suffix}`), 420);
   }
 
   return (
     <main className="ab2-shell">
       <header className="ab2-nav">
-        <a className="ab2-brand" href="/">THE ANTI-BALCONY <span>PUBLIC STARTUP-LAUNCH PLATFORM</span></a>
+        <Link className="ab2-brand" href="/">THE ANTI-BALCONY <span>PUBLIC STARTUP-LAUNCH PLATFORM</span></Link>
         <nav>
-          <a href="/launches">LAUNCHES</a>
+          <Link href="/launches">LAUNCHES</Link>
           <a href="#how">HOW IT WORKS</a>
           <a href="#packages">PACKAGES</a>
-          <a href="/guides/how-to-launch-a-startup">GUIDES</a>
+          <Link href="/guides/how-to-launch-a-startup">GUIDES</Link>
         </nav>
         <button onClick={() => startLaunch()}>RING IN YOUR STARTUP</button>
       </header>
@@ -91,7 +94,7 @@ export function AntiBalconyV2() {
           <p className="ab2-subhead">Create a public Ring for what you built and share the moment your startup entered the world.</p>
           <div className="ab2-actions">
             <button className="ab2-primary" onClick={() => startLaunch()}>RING IN YOUR STARTUP <span>↗</span></button>
-            <a className="ab2-secondary" href="/launches">EXPLORE LAUNCHES</a>
+            <Link className="ab2-secondary" href="/launches">EXPLORE LAUNCHES</Link>
           </div>
           <p className="ab2-definition"><strong>The Anti-Balcony</strong> is a public startup-launch platform built around a shareable launch ritual called a Ring.</p>
         </div>
@@ -139,16 +142,16 @@ export function AntiBalconyV2() {
       <section className="ab2-latest">
         <div className="ab2-section-head split">
           <div><p className="ab2-kicker">PUBLIC STARTUP LAUNCHES</p><h2>Recent Rings.</h2></div>
-          <a href="/launches">EXPLORE ALL LAUNCHES ↗</a>
+          <Link href="/launches">EXPLORE ALL LAUNCHES ↗</Link>
         </div>
         {rings.length ? (
           <div className="ab2-ring-list">
             {rings.slice(0, 6).map((ring, index) => (
-              <a key={ring.id} href={`/launches/${ring.slug || ring.id}`}>
+              <Link key={ring.id} href={`/launches/${ring.slug || ring.id}`}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <div><h3>{ring.startupName}</h3><p>{ring.tagline || ring.category || "Public startup launch"}</p></div>
                 <time>{new Date(ring.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</time>
-              </a>
+              </Link>
             ))}
           </div>
         ) : (
@@ -159,10 +162,10 @@ export function AntiBalconyV2() {
       <section className="ab2-guides">
         <div className="ab2-section-head"><p className="ab2-kicker">LAUNCH BETTER</p><h2>Practical startup-launch guides.</h2></div>
         <div>
-          <a href="/guides/how-to-launch-a-startup"><span>STARTUP LAUNCH</span><strong>How to launch a startup</strong></a>
-          <a href="/guides/product-launch-checklist"><span>CHECKLIST</span><strong>Product launch checklist</strong></a>
-          <a href="/guides/build-in-public"><span>BUILD IN PUBLIC</span><strong>Build in public without becoming content</strong></a>
-          <a href="/guides/product-hunt-alternatives"><span>COMPARISON</span><strong>Product Hunt alternatives</strong></a>
+          <Link href="/guides/how-to-launch-a-startup"><span>STARTUP LAUNCH</span><strong>How to launch a startup</strong></Link>
+          <Link href="/guides/product-launch-checklist"><span>CHECKLIST</span><strong>Product launch checklist</strong></Link>
+          <Link href="/guides/build-in-public"><span>BUILD IN PUBLIC</span><strong>Build in public without becoming content</strong></Link>
+          <Link href="/guides/product-hunt-alternatives"><span>COMPARISON</span><strong>Product Hunt alternatives</strong></Link>
         </div>
       </section>
 
@@ -174,7 +177,7 @@ export function AntiBalconyV2() {
 
       <footer className="ab2-footer">
         <div><strong>THE ANTI-BALCONY</strong><span>Public startup-launch platform</span></div>
-        <nav><a href="/launch">Launch</a><a href="/launches">Launches</a><a href="/startup-launch">Startup launch</a><a href="/guides/how-to-launch-a-startup">Guides</a></nav>
+        <nav><Link href="/launch">Launch</Link><Link href="/launches">Launches</Link><Link href="/startup-launch">Startup launch</Link><Link href="/guides/how-to-launch-a-startup">Guides</Link></nav>
         <span>© {new Date().getFullYear()}</span>
       </footer>
     </main>
