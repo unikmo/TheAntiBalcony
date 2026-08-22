@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const port = 3100;
 const base = `http://127.0.0.1:${port}`;
 const secret = "nonpayment-smoke-secret";
+const nextBin = fileURLToPath(new URL("../node_modules/next/dist/bin/next", import.meta.url));
 
 const env = {
   ...process.env,
@@ -28,7 +30,7 @@ const env = {
   RESEND_FROM: "",
 };
 
-const server = spawn("npm", ["start"], {
+const server = spawn(process.execPath, [nextBin, "start", "-p", String(port)], {
   env,
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -213,13 +215,16 @@ try {
 
   console.log("nonpayment-smoke: PASS");
 } finally {
-  server.kill("SIGTERM");
+  if (server.exitCode === null) server.kill("SIGTERM");
   await new Promise((resolve) => {
     if (server.exitCode !== null) return resolve();
-    server.once("exit", resolve);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (server.exitCode === null) server.kill("SIGKILL");
       resolve();
-    }, 3000).unref();
+    }, 3000);
+    server.once("exit", () => {
+      clearTimeout(timer);
+      resolve();
+    });
   });
 }
