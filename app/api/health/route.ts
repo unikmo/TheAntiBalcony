@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 
 export function GET() {
   const firebase = Boolean(
-    process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_CLIENT_EMAIL &&
-    process.env.FIREBASE_PRIVATE_KEY,
+    process.env.FIRESTORE_EMULATOR_HOST ||
+    (
+      process.env.FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      process.env.FIREBASE_PRIVATE_KEY
+    ),
   );
   const stripe = Boolean(
     process.env.STRIPE_SECRET_KEY &&
