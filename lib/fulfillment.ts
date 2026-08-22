@@ -1,5 +1,11 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { getFirebaseDb } from "@/lib/firebase";
+import {
+  assertFulfillmentTransition,
+  type CallbackFulfillmentStatus,
+  type FulfillmentStatus,
+  type OperationsClearance,
+} from "@/lib/fulfillment-state";
 import { updateRingStatus } from "@/lib/rings";
 import { PACKAGE_OPERATIONS, submitBillboardJob, type ProofTier } from "@/lib/providers/billboard";
 import { requestProofCapture } from "@/lib/providers/proof";
@@ -13,7 +19,8 @@ type FulfillmentJobDoc = {
   allowSocial: boolean;
   providerRef: string | null;
   tier: ProofTier;
-  status: string;
+  status: FulfillmentStatus;
+  operationsClearance: OperationsClearance;
   createdAt?: Timestamp;
 };
 
@@ -41,7 +48,7 @@ export async function beginPaidFulfillment(input: {
 }) {
   const result = await submitBillboardJob(input);
   const operations = PACKAGE_OPERATIONS[input.tier];
-  const status = operations.physicalCrew
+  const status: FulfillmentStatus = operations.physicalCrew
     ? "ops_review"
     : result.status === "submitted"
       ? "scheduled"
@@ -83,7 +90,7 @@ export async function handleFulfillmentCallback(input: {
   startupName?: string;
   email?: string;
   providerRef?: string | null;
-  status: "ops_review" | "scheduled" | "live" | "proof_ready" | "failed";
+  status: CallbackFulfillmentStatus;
   proofUrl?: string | null;
   videoUrl?: string | null;
   liveStreamUrl?: string | null;
@@ -95,46 +102,57 @@ export async function handleFulfillmentCallback(input: {
   talentReleaseRef?: string | null;
 }) {
   const db = getFirebaseDb();
-  let job: FulfillmentJobDoc | null = null;
-  let jobId: string | null = null;
+  if (!db) throw new Error("Fulfillment database is not configured.");
 
-  if (db) {
-    const jobs = await db.collection("fulfillmentJobs").where("ringId", "==", input.ringId).limit(10).get();
-    const chosen = jobs.docs
-      .map((doc) => ({ id: doc.id, data: doc.data() as FulfillmentJobDoc }))
-      .sort((a, b) => (b.data.createdAt?.toMillis() ?? 0) - (a.data.createdAt?.toMillis() ?? 0))[0];
+  const jobs = await db.collection("fulfillmentJobs").where("ringId", "==", input.ringId).limit(10).get();
+  const chosen = jobs.docs
+    .map((doc) => ({ id: doc.id, data: doc.data() as FulfillmentJobDoc }))
+    .sort((a, b) => (b.data.createdAt?.toMillis() ?? 0) - (a.data.createdAt?.toMillis() ?? 0))[0];
 
-    if (chosen) {
-      job = chosen.data;
-      jobId = chosen.id;
-      const tier = job.tier || "snapshot";
-      const physicalCrew = PACKAGE_OPERATIONS[tier].physicalCrew;
-      await db.collection("fulfillmentJobs").doc(jobId).set({
-        status: input.status,
-        providerRef: input.providerRef ?? job.providerRef ?? null,
-        proofUrl: input.proofUrl ?? null,
-        videoUrl: input.videoUrl ?? null,
-        liveStreamUrl: input.liveStreamUrl ?? null,
-        behindScenesUrl: input.behindScenesUrl ?? null,
-        pressKitUrl: input.pressKitUrl ?? null,
-        prDistributionUrl: input.prDistributionUrl ?? null,
-        permitRef: input.permitRef ?? null,
-        insuranceRef: input.insuranceRef ?? null,
-        talentReleaseRef: input.talentReleaseRef ?? null,
-        operationsClearance: physicalCrew && input.status === "scheduled" ? "cleared" : physicalCrew ? "pending" : "not_required",
-        updatedAt: Timestamp.now(),
-      }, { merge: true });
-    }
-  }
+  if (!chosen) throw new Error("Fulfillment job not found for this Ring.");
 
-  const tier = job?.tier || "snapshot";
+  const job = chosen.data;
+  const jobId = chosen.id;
+  const tier = job.tier || "snapshot";
+  const physicalCrew = PACKAGE_OPERATIONS[tier].physicalCrew;
+  const currentClearance: OperationsClearance = job.operationsClearance || (physicalCrew ? "pending" : "not_required");
+
+  assertFulfillmentTransition({
+    current: job.status,
+    next: input.status,
+    physicalCrew,
+    operationsClearance: currentClearance,
+  });
+
+  const nextClearance: OperationsClearance = physicalCrew
+    ? input.status === "scheduled"
+      ? "cleared"
+      : currentClearance
+    : "not_required";
+
+  await db.collection("fulfillmentJobs").doc(jobId).set({
+    status: input.status,
+    providerRef: input.providerRef ?? job.providerRef ?? null,
+    proofUrl: input.proofUrl ?? null,
+    videoUrl: input.videoUrl ?? null,
+    liveStreamUrl: input.liveStreamUrl ?? null,
+    behindScenesUrl: input.behindScenesUrl ?? null,
+    pressKitUrl: input.pressKitUrl ?? null,
+    prDistributionUrl: input.prDistributionUrl ?? null,
+    permitRef: input.permitRef ?? null,
+    insuranceRef: input.insuranceRef ?? null,
+    talentReleaseRef: input.talentReleaseRef ?? null,
+    operationsClearance: nextClearance,
+    updatedAt: Timestamp.now(),
+  }, { merge: true });
+
   await updateRingStatus(input.ringId, input.status, tier);
 
-  const startupName = input.startupName || job?.startupName || "Your startup";
-  const email = input.email || job?.email;
-  const providerRef = input.providerRef || job?.providerRef;
+  const startupName = input.startupName || job.startupName || "Your startup";
+  const email = input.email || job.email;
+  const providerRef = input.providerRef || job.providerRef;
 
-  if (input.status === "scheduled" && email && PACKAGE_OPERATIONS[tier].physicalCrew) {
+  if (input.status === "scheduled" && email && physicalCrew) {
     await sendFounderEmail({
       to: email,
       subject: `${startupName} Takeover is cleared and scheduled`,
@@ -152,7 +170,7 @@ export async function handleFulfillmentCallback(input: {
   }
 
   if (input.status === "proof_ready" && input.proofUrl) {
-    if (job?.allowSocial) {
+    if (job.allowSocial) {
       await publishProofSocial({
         startupName,
         proofUrl: input.proofUrl,
@@ -174,7 +192,7 @@ export async function handleFulfillmentCallback(input: {
 
       await sendFounderEmail({
         to: email,
-        subject: `Your Times Square launch assets are ready`,
+        subject: "Your Times Square launch assets are ready",
         html: `<p><strong>${escapeHtml(startupName)}</strong> left proof.</p>${links}`,
       });
     }
