@@ -19,3 +19,7 @@ jobs:
       - run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      - run: npm run test:nonpayment
+        env:
+          NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
+          FULFILLMENT_CALLBACK_SECRET: nonpayment-smoke-secret
