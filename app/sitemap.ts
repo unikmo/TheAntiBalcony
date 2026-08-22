@@ -22,11 +22,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const rings = await listRings(200);
     const launchRoutes: MetadataRoute.Sitemap = rings
-      .filter((ring) => ring.indexable)
+      .filter((ring) => ring.indexable && Boolean(ring.socialUrl))
       .map((ring) => ({
         url: `${site}/launches/${ring.slug}`,
         lastModified: new Date(ring.createdAt),
-        changeFrequency: "monthly",
+        changeFrequency: "monthly" as const,
         priority: 0.65,
       }));
     return [...staticRoutes, ...launchRoutes];
