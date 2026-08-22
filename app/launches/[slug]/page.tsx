@@ -2,28 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeoShell } from "@/components/SeoPage";
 import { getRingBySlug } from "@/lib/rings";
+import { escapeHtmlAttribute, safeJsonLd } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 function isSearchReady(ring: Awaited<ReturnType<typeof getRingBySlug>>) {
   return Boolean(ring?.indexable && ring.socialUrl);
-}
-
-function safeJsonLd(value: unknown) {
-  return JSON.stringify(value)
-    .replace(/</g, "\\u003c")
-    .replace(/>/g, "\\u003e")
-    .replace(/&/g, "\\u0026");
-}
-
-function escapeAttribute(value: string) {
-  return value.replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  })[char] || char);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -56,7 +40,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
   const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const launchUrl = `${site}/launches/${ring.slug}`;
   const badgeUrl = `${site}/api/rings/${ring.slug}/badge`;
-  const embed = `<a href="${escapeAttribute(launchUrl)}"><img src="${escapeAttribute(badgeUrl)}" alt="${escapeAttribute(ring.startupName)} rung in on The Anti-Balcony" /></a>`;
+  const embed = `<a href="${escapeHtmlAttribute(launchUrl)}"><img src="${escapeHtmlAttribute(badgeUrl)}" alt="${escapeHtmlAttribute(ring.startupName)} rung in on The Anti-Balcony" /></a>`;
 
   const structuredData = searchReady ? {
     "@context": "https://schema.org",
