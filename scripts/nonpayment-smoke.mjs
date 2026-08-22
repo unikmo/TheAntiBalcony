@@ -195,23 +195,29 @@ try {
   }, 400, true);
   assert.match((await badAsset.json()).error, /Invalid asset URL/);
 
+  const missingProof = await postJson("/api/fulfillment/callback", {
+    ringId: "ring-test",
+    status: "proof_ready",
+  }, 400, true);
+  assert.match((await missingProof.json()).error, /requires a proofUrl/);
+
   for (const status of ["ops_review", "scheduled", "live", "failed"]) {
     const response = await postJson("/api/fulfillment/callback", {
       ringId: "ring-test",
       startupName: "Callback Test",
       status,
-    }, 200, true);
-    assert.equal((await response.json()).ok, true);
+    }, 503, true);
+    assert.match((await response.json()).error, /database is unavailable/i);
   }
 
-  const proofReady = await postJson("/api/fulfillment/callback", {
+  const proofReadyWithoutDatabase = await postJson("/api/fulfillment/callback", {
     ringId: "ring-test",
     startupName: "Proof Test",
     status: "proof_ready",
     proofUrl: "https://example.com/proof.png",
     videoUrl: "https://example.com/video.mp4",
-  }, 200, true);
-  assert.equal((await proofReady.json()).ok, true);
+  }, 503, true);
+  assert.match((await proofReadyWithoutDatabase.json()).error, /database is unavailable/i);
 
   console.log("nonpayment-smoke: PASS");
 } finally {
