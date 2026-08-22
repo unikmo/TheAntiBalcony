@@ -24,7 +24,7 @@ test("bell CTA carries a visitor into the launch flow", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Ring in your startup/i }).first().click();
   await expect(page).toHaveURL(/\/launch$/);
-  await expect(page.getByText(/Create your public Ring/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Ring in your startup/i })).toBeVisible();
 });
 
 test("package selection preserves the intended tier", async ({ page }) => {
@@ -64,7 +64,7 @@ test("launch directory is reachable from the homepage", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: /Explore launches/i }).click();
   await expect(page).toHaveURL(/\/launches$/);
-  await expect(page.getByRole("heading", { name: /launch/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Explore launches/i })).toBeVisible();
 });
 
 test("mobile hero keeps the core action visible", async ({ page }) => {
