@@ -93,7 +93,9 @@ export const PACKAGE_OPERATIONS: Record<ProofTier, {
 };
 
 export async function submitBillboardJob(input: BillboardSubmission): Promise<BillboardSubmissionResult> {
-  const url = process.env.ZAPIER_BILLBOARD_WEBHOOK_URL || process.env.BILLBOARD_FULFILLMENT_WEBHOOK_URL;
+  const url = process.env.ZAPIER_OPERATIONS_WEBHOOK_URL
+    || process.env.ZAPIER_BILLBOARD_WEBHOOK_URL
+    || process.env.BILLBOARD_FULFILLMENT_WEBHOOK_URL;
   if (!url) return { status: "manual_review" };
 
   const operations = PACKAGE_OPERATIONS[input.tier];
@@ -108,7 +110,8 @@ export async function submitBillboardJob(input: BillboardSubmission): Promise<Bi
     },
     body: JSON.stringify({
       source: "the-anti-balcony",
-      event: operations.physicalCrew ? "paid-times-square-takeover" : "paid-proof-drop",
+      event: "fulfillment_created",
+      fulfillmentType: operations.physicalCrew ? "physical" : "digital",
       ...input,
       deliverables: operations.deliverables,
       operations,
@@ -117,7 +120,7 @@ export async function submitBillboardJob(input: BillboardSubmission): Promise<Bi
     }),
   });
 
-  if (!response.ok) throw new Error(`Billboard fulfillment bridge returned ${response.status}.`);
+  if (!response.ok) throw new Error(`Operations notification bridge returned ${response.status}.`);
 
   const data = (await response.json().catch(() => ({}))) as { providerRef?: string; scheduledAt?: string };
   return { status: "submitted", providerRef: data.providerRef, scheduledAt: data.scheduledAt };
