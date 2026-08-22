@@ -27,15 +27,29 @@ test("bell CTA carries a visitor into the launch flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Ring in your startup/i })).toBeVisible();
 });
 
-test("package selection preserves the intended tier", async ({ page }) => {
+test("free package enters the base launch flow", async ({ page }) => {
   await page.goto("/");
-  const clipCard = page.locator("article").filter({ hasText: "THE CLIP" });
-  await expect(clipCard).toBeVisible();
-  await clipCard.getByRole("button", { name: /Start your launch/i }).click();
-  await expect(page).toHaveURL(/\/launch\?tier=video$/);
+  const freeCard = page.locator("article").filter({ hasText: "THE RING" }).first();
+  await freeCard.getByRole("button", { name: /Create your Ring/i }).click();
+  await expect(page).toHaveURL(/\/launch$/);
 });
 
-test("complete Ring form reaches the success state without Stripe or Firebase", async ({ page }) => {
+for (const item of [
+  { name: "THE PROOF", tier: "snapshot" },
+  { name: "THE CLIP", tier: "video" },
+  { name: "THE MOMENT", tier: "takeover" },
+  { name: "THE LEGEND", tier: "vip" },
+]) {
+  test(`${item.name} package preserves ${item.tier} tier`, async ({ page }) => {
+    await page.goto("/");
+    const card = page.locator("article").filter({ hasText: item.name }).first();
+    await expect(card).toBeVisible();
+    await card.getByRole("button", { name: /Start your launch/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/launch\\?tier=${item.tier}$`));
+  });
+}
+
+test("complete Ring form submits every SEO field and returns indexable true", async ({ page }) => {
   const errors = captureRuntimeErrors(page);
   await page.goto("/launch");
 
@@ -79,6 +93,32 @@ test("complete Ring form reaches the success state without Stripe or Firebase", 
   await expect(page.getByText(/Firebase is not connected/i)).toBeVisible();
 
   expect(errors).toEqual([]);
+});
+
+test("thin Ring stays noindex in the customer success state", async ({ page }) => {
+  await page.goto("/launch");
+  await page.getByLabel("STARTUP NAME").fill("Thin Browser Ring");
+
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().endsWith("/api/rings") && response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: /Ring in your startup/i }).click();
+  const response = await responsePromise;
+  const data = await response.json() as { ring: { indexable: boolean } };
+  expect(data.ring.indexable).toBe(false);
+  await expect(page.getByTestId("ring-index-status")).toContainText(/remains noindex/i);
+});
+
+test("paid upgrade fails gracefully when Stripe is not configured", async ({ page }) => {
+  await page.goto("/launch");
+  await page.getByLabel("STARTUP NAME").fill("No Stripe Browser Test");
+  await page.getByRole("button", { name: /Ring in your startup/i }).click();
+  await expect(page.getByText("YOUR RING EXISTS")).toBeVisible();
+
+  await page.getByLabel("Email for launch package delivery").fill("founder@example.com");
+  const proofButton = page.locator(".upgrade-inline button").filter({ hasText: "THE PROOF" });
+  await proofButton.click();
+  await expect(page.getByText(/Paid checkout is not configured yet/i)).toBeVisible();
 });
 
 test("launch directory is reachable from the homepage", async ({ page }) => {
