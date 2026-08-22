@@ -9,6 +9,23 @@ function isSearchReady(ring: Awaited<ReturnType<typeof getRingBySlug>>) {
   return Boolean(ring?.indexable && ring.socialUrl);
 }
 
+function safeJsonLd(value: unknown) {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
+function escapeAttribute(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[char] || char);
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const ring = await getRingBySlug(slug);
@@ -39,7 +56,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
   const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const launchUrl = `${site}/launches/${ring.slug}`;
   const badgeUrl = `${site}/api/rings/${ring.slug}/badge`;
-  const embed = `<a href="${launchUrl}"><img src="${badgeUrl}" alt="${ring.startupName} rung in on The Anti-Balcony" /></a>`;
+  const embed = `<a href="${escapeAttribute(launchUrl)}"><img src="${escapeAttribute(badgeUrl)}" alt="${escapeAttribute(ring.startupName)} rung in on The Anti-Balcony" /></a>`;
 
   const structuredData = searchReady ? {
     "@context": "https://schema.org",
@@ -62,7 +79,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
   return (
     <SeoShell>
       <article className="seo-main">
-        {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />}
+        {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(structuredData) }} />}
         <p className="seo-breadcrumb">PUBLIC RING / {ring.category?.toUpperCase() || "STARTUP LAUNCH"}</p>
 
         <div className="ring-detail-head">
