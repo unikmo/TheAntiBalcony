@@ -80,15 +80,21 @@ function slugify(value: string) {
 function normalizeUrl(value: string | undefined, label: string) {
   if (!value?.trim()) return null;
   const raw = value.trim();
+  const explicitScheme = raw.match(/^([a-z][a-z0-9+.-]*):/i)?.[1]?.toLowerCase();
+  if (explicitScheme && explicitScheme !== "http" && explicitScheme !== "https") {
+    throw new Error(`${label} must use HTTP or HTTPS.`);
+  }
   const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   const url = new URL(candidate);
   if (!["http:", "https:"].includes(url.protocol)) throw new Error(`${label} must use HTTP or HTTPS.`);
+  if (!url.hostname) throw new Error(`${label} must be a valid URL.`);
   return url.toString();
 }
 
-export function isRingIndexable(ring: Pick<Ring, "website" | "category" | "whatItDoes" | "intendedCustomer" | "founder" | "problem" | "story" | "imageUrl">) {
+export function isRingIndexable(ring: Pick<Ring, "website" | "socialUrl" | "category" | "whatItDoes" | "intendedCustomer" | "founder" | "problem" | "story" | "imageUrl">) {
   return Boolean(
     ring.website &&
+    ring.socialUrl &&
     ring.category &&
     ring.whatItDoes &&
     ring.intendedCustomer &&
