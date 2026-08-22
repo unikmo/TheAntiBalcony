@@ -5,17 +5,22 @@ import { getRingBySlug } from "@/lib/rings";
 
 export const dynamic = "force-dynamic";
 
+function isSearchReady(ring: Awaited<ReturnType<typeof getRingBySlug>>) {
+  return Boolean(ring?.indexable && ring.socialUrl);
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const ring = await getRingBySlug(slug);
   if (!ring) return {};
 
   const description = ring.whatItDoes || ring.tagline || `${ring.startupName} launched in public on The Anti-Balcony.`;
+  const searchReady = isSearchReady(ring);
   return {
     title: `${ring.startupName} Startup Launch`,
     description,
     alternates: { canonical: `/launches/${ring.slug}` },
-    robots: ring.indexable ? { index: true, follow: true } : { index: false, follow: true },
+    robots: searchReady ? { index: true, follow: true } : { index: false, follow: true },
     openGraph: {
       title: `${ring.startupName} launched in public`,
       description,
@@ -30,12 +35,13 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
   const ring = await getRingBySlug(slug);
   if (!ring) notFound();
 
+  const searchReady = isSearchReady(ring);
   const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const launchUrl = `${site}/launches/${ring.slug}`;
   const badgeUrl = `${site}/api/rings/${ring.slug}/badge`;
   const embed = `<a href="${launchUrl}"><img src="${badgeUrl}" alt="${ring.startupName} rung in on The Anti-Balcony" /></a>`;
 
-  const structuredData = ring.indexable ? {
+  const structuredData = searchReady ? {
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: `${ring.startupName} Startup Launch`,
@@ -47,6 +53,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
       "@type": "Organization",
       name: ring.startupName,
       url: ring.website || undefined,
+      sameAs: ring.socialUrl ? [ring.socialUrl] : undefined,
       description: ring.whatItDoes || undefined,
       founder: ring.founder ? { "@type": "Person", name: ring.founder } : undefined,
     },
@@ -92,7 +99,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
           <pre>{embed}</pre>
         </section>
 
-        {!ring.indexable && <p className="noindex-note">This Ring is intentionally marked noindex because the profile is not complete enough to be a useful standalone search result.</p>}
+        {!searchReady && <p className="noindex-note">This Ring is intentionally marked noindex until the profile includes the startup category, product description, intended customer, founder or team, problem, founder story, product image, website and social link.</p>}
       </article>
     </SeoShell>
   );
