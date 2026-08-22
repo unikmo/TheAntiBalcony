@@ -50,11 +50,32 @@ test("complete Ring form reaches the success state without Stripe or Firebase", 
   await page.getByLabel("WHAT PROBLEM ARE YOU SOLVING?").fill("Launch activity becomes fragmented across temporary channels.");
   await page.getByLabel("SHORT FOUNDER STORY").fill("We built this to give founders a permanent launch artifact they can keep sharing.");
 
+  const browserPayload = await page.locator("form.launch-form-grid").evaluate((form) =>
+    Object.fromEntries(new FormData(form as HTMLFormElement).entries()),
+  );
+  for (const field of ["startupName", "category", "website", "socialUrl", "whatItDoes", "intendedCustomer", "founder", "imageUrl", "problem", "story"]) {
+    expect(browserPayload[field], `browser form must submit ${field}`).toBeTruthy();
+  }
+
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().endsWith("/api/rings") && response.request().method() === "POST",
+  );
   await page.getByRole("button", { name: /Ring in your startup/i }).click();
+  const response = await responsePromise;
+  const requestPayload = response.request().postDataJSON() as Record<string, unknown>;
+  for (const field of ["startupName", "category", "website", "socialUrl", "whatItDoes", "intendedCustomer", "founder", "imageUrl", "problem", "story"]) {
+    expect(requestPayload[field], `API request must contain ${field}`).toBeTruthy();
+  }
+
+  const responseData = await response.json() as { persisted: boolean; ring: { indexable: boolean; startupName: string } };
+  expect(response.status()).toBe(202);
+  expect(responseData.persisted).toBe(false);
+  expect(responseData.ring.startupName).toBe("Browser Test Startup");
+  expect(responseData.ring.indexable).toBe(true);
 
   await expect(page.getByText("YOUR RING EXISTS")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Browser Test Startup has entered the public record/i })).toBeVisible();
-  await expect(page.getByText(/eligible for search indexing/i)).toBeVisible();
+  await expect(page.getByTestId("ring-index-status")).toContainText(/eligible for search indexing/i);
   await expect(page.getByText(/Firebase is not connected/i)).toBeVisible();
 
   expect(errors).toEqual([]);
