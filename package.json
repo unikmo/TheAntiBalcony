@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:contracts": "node --experimental-strip-types scripts/nonpayment-contracts.mjs",
     "test:smoke": "node scripts/nonpayment-smoke.mjs",
+    "test:e2e": "playwright test",
     "test:nonpayment": "npm run test:contracts && npm run test:smoke"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "stripe": "^18.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
