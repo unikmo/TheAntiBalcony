@@ -1,8 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let cachedClient: ReturnType<typeof createClient> | null | undefined;
+type UntypedSupabaseClient = SupabaseClient<any, "public", any>;
 
-export function getSupabaseAdmin() {
+let cachedClient: UntypedSupabaseClient | null | undefined;
+
+export function getSupabaseAdmin(): UntypedSupabaseClient | null {
   if (cachedClient !== undefined) return cachedClient;
 
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -13,12 +15,12 @@ export function getSupabaseAdmin() {
     return cachedClient;
   }
 
-  cachedClient = createClient(url, key, {
+  cachedClient = createClient<any>(url, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
-  });
+  }) as UntypedSupabaseClient;
 
   return cachedClient;
 }
