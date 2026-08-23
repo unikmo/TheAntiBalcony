@@ -29,7 +29,7 @@ test("bell CTA carries a visitor into the launch flow", async ({ page }) => {
 
 test("free package enters the base launch flow", async ({ page }) => {
   await page.goto("/");
-  const freeCard = page.locator("article").filter({ hasText: "THE RING" }).first();
+  const freeCard = page.locator("#packages article").filter({ hasText: "THE RING" }).first();
   await freeCard.getByRole("button", { name: /Create your Ring/i }).click();
   await expect(page).toHaveURL(/\/launch$/);
 });
@@ -42,7 +42,7 @@ for (const item of [
 ]) {
   test(`${item.name} package preserves ${item.tier} tier`, async ({ page }) => {
     await page.goto("/");
-    const card = page.locator("article").filter({ hasText: item.name }).first();
+    const card = page.locator("#packages article").filter({ hasText: item.name }).first();
     await expect(card).toBeVisible();
     await card.getByRole("button", { name: /Start your launch/i }).click();
     await expect(page).toHaveURL(new RegExp(`/launch\\?tier=${item.tier}$`));
@@ -90,7 +90,7 @@ test("complete Ring form submits every SEO field and returns indexable true", as
   await expect(page.getByText("YOUR RING EXISTS")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Browser Test Startup has entered the public record/i })).toBeVisible();
   await expect(page.getByTestId("ring-index-status")).toContainText(/eligible for search indexing/i);
-  await expect(page.getByText(/Firebase is not connected/i)).toBeVisible();
+  await expect(page.getByText(/Supabase is not connected/i)).toBeVisible();
 
   expect(errors).toEqual([]);
 });
