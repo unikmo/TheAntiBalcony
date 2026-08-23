@@ -229,11 +229,11 @@ export async function updateRingStatus(
   const db = getSupabaseAdmin();
   if (!db) return;
 
-  const patch: Record<string, unknown> = {
+  const patch = {
     status,
     updated_at: new Date().toISOString(),
+    ...(tier ? { tier } : {}),
   };
-  if (tier) patch.tier = tier;
 
   const { error } = await db.from("anti_balcony_rings").update(patch).eq("id", ringId);
   if (error) throw new Error(`Could not update Ring status: ${error.message}`);
