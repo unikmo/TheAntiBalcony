@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Timestamp } from "firebase-admin/firestore";
-import { getFirebaseDb } from "@/lib/firebase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export type RingTier = "free" | "snapshot" | "video" | "takeover" | "vip";
 
@@ -24,23 +23,24 @@ export type Ring = {
   indexable: boolean;
 };
 
-type RingDoc = {
-  slug?: string | null;
-  startupName: string;
-  website?: string | null;
-  tagline?: string | null;
-  category?: string | null;
-  whatItDoes?: string | null;
-  intendedCustomer?: string | null;
-  founder?: string | null;
-  problem?: string | null;
-  story?: string | null;
-  imageUrl?: string | null;
-  socialUrl?: string | null;
-  createdAt: Timestamp | Date | string;
-  tier?: RingTier;
-  status?: string;
-  indexable?: boolean;
+type RingRow = {
+  id: string;
+  slug: string;
+  startup_name: string;
+  website: string | null;
+  tagline: string | null;
+  category: string | null;
+  what_it_does: string | null;
+  intended_customer: string | null;
+  founder: string | null;
+  problem: string | null;
+  story: string | null;
+  image_url: string | null;
+  social_url: string | null;
+  created_at: string;
+  tier: RingTier;
+  status: string;
+  indexable: boolean;
 };
 
 export type CreateRingInput = {
@@ -56,12 +56,6 @@ export type CreateRingInput = {
   imageUrl?: string;
   socialUrl?: string;
 };
-
-function toIso(value: RingDoc["createdAt"]) {
-  if (value instanceof Timestamp) return value.toDate().toISOString();
-  if (value instanceof Date) return value.toISOString();
-  return new Date(value).toISOString();
-}
 
 function cleanText(value: string | undefined, max: number) {
   return value?.trim().replace(/\s+/g, " ").slice(0, max) || null;
@@ -105,58 +99,65 @@ export function isRingIndexable(ring: Pick<Ring, "website" | "socialUrl" | "cate
   );
 }
 
-function toRing(id: string, doc: RingDoc): Ring {
-  const slug = doc.slug || `${slugify(doc.startupName)}-${id.slice(0, 6)}`;
-  const ring: Ring = {
-    id,
-    slug,
-    startupName: doc.startupName,
-    website: doc.website || null,
-    tagline: doc.tagline || null,
-    category: doc.category || null,
-    whatItDoes: doc.whatItDoes || null,
-    intendedCustomer: doc.intendedCustomer || null,
-    founder: doc.founder || null,
-    problem: doc.problem || null,
-    story: doc.story || null,
-    imageUrl: doc.imageUrl || null,
-    socialUrl: doc.socialUrl || null,
-    createdAt: toIso(doc.createdAt),
-    tier: doc.tier || "free",
-    status: doc.status || "rung",
-    indexable: false,
+function toRing(row: RingRow): Ring {
+  return {
+    id: row.id,
+    slug: row.slug,
+    startupName: row.startup_name,
+    website: row.website,
+    tagline: row.tagline,
+    category: row.category,
+    whatItDoes: row.what_it_does,
+    intendedCustomer: row.intended_customer,
+    founder: row.founder,
+    problem: row.problem,
+    story: row.story,
+    imageUrl: row.image_url,
+    socialUrl: row.social_url,
+    createdAt: new Date(row.created_at).toISOString(),
+    tier: row.tier || "free",
+    status: row.status || "rung",
+    indexable: Boolean(row.indexable),
   };
-  ring.indexable = typeof doc.indexable === "boolean" ? doc.indexable : isRingIndexable(ring);
-  return ring;
 }
 
 export async function listRings(limit = 12): Promise<Ring[]> {
-  const db = getFirebaseDb();
+  const db = getSupabaseAdmin();
   if (!db) return [];
-  const snapshot = await db.collection("rings")
-    .orderBy("createdAt", "desc")
-    .limit(Math.min(limit, 200))
-    .get();
-  return snapshot.docs.map((doc) => toRing(doc.id, doc.data() as RingDoc));
+
+  const { data, error } = await db
+    .from("anti_balcony_rings")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(Math.min(limit, 200));
+
+  if (error) throw new Error(`Could not load Rings: ${error.message}`);
+  return (data as RingRow[]).map(toRing);
 }
 
 export async function getRingBySlug(slugOrId: string): Promise<Ring | null> {
-  const db = getFirebaseDb();
+  const db = getSupabaseAdmin();
   if (!db) return null;
 
-  const direct = await db.collection("rings").doc(slugOrId).get();
-  if (direct.exists) return toRing(direct.id, direct.data() as RingDoc);
-
-  const bySlug = await db.collection("rings").where("slug", "==", slugOrId).limit(1).get();
-  if (!bySlug.empty) {
-    const doc = bySlug.docs[0];
-    return toRing(doc.id, doc.data() as RingDoc);
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (uuidPattern.test(slugOrId)) {
+    const { data, error } = await db
+      .from("anti_balcony_rings")
+      .select("*")
+      .eq("id", slugOrId)
+      .maybeSingle();
+    if (error) throw new Error(`Could not load Ring: ${error.message}`);
+    if (data) return toRing(data as RingRow);
   }
 
-  // Backward compatibility for Rings created before slugs were persisted.
-  const recent = await db.collection("rings").orderBy("createdAt", "desc").limit(200).get();
-  const match = recent.docs.find((doc) => toRing(doc.id, doc.data() as RingDoc).slug === slugOrId);
-  return match ? toRing(match.id, match.data() as RingDoc) : null;
+  const { data, error } = await db
+    .from("anti_balcony_rings")
+    .select("*")
+    .eq("slug", slugOrId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Could not load Ring: ${error.message}`);
+  return data ? toRing(data as RingRow) : null;
 }
 
 export async function createRing(input: CreateRingInput) {
@@ -191,28 +192,31 @@ export async function createRing(input: CreateRingInput) {
   };
   ring.indexable = isRingIndexable(ring);
 
-  const db = getFirebaseDb();
+  const db = getSupabaseAdmin();
   if (!db) return { ring, persisted: false };
 
-  await db.collection("rings").doc(id).set({
+  const { error } = await db.from("anti_balcony_rings").insert({
+    id: ring.id,
     slug: ring.slug,
-    startupName: ring.startupName,
+    startup_name: ring.startupName,
     website: ring.website,
     tagline: ring.tagline,
     category: ring.category,
-    whatItDoes: ring.whatItDoes,
-    intendedCustomer: ring.intendedCustomer,
+    what_it_does: ring.whatItDoes,
+    intended_customer: ring.intendedCustomer,
     founder: ring.founder,
     problem: ring.problem,
     story: ring.story,
-    imageUrl: ring.imageUrl,
-    socialUrl: ring.socialUrl,
+    image_url: ring.imageUrl,
+    social_url: ring.socialUrl,
     tier: ring.tier,
     status: ring.status,
     indexable: ring.indexable,
-    createdAt: Timestamp.fromDate(createdAt),
+    created_at: ring.createdAt,
+    updated_at: ring.createdAt,
   });
 
+  if (error) throw new Error(`Could not save Ring: ${error.message}`);
   return { ring, persisted: true };
 }
 
@@ -222,9 +226,15 @@ export async function updateRingStatus(
   tier?: RingTier,
 ) {
   if (!ringId) return;
-  const db = getFirebaseDb();
+  const db = getSupabaseAdmin();
   if (!db) return;
-  const patch: Record<string, unknown> = { status, updatedAt: Timestamp.now() };
+
+  const patch: Record<string, unknown> = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
   if (tier) patch.tier = tier;
-  await db.collection("rings").doc(ringId).set(patch, { merge: true });
+
+  const { error } = await db.from("anti_balcony_rings").update(patch).eq("id", ringId);
+  if (error) throw new Error(`Could not update Ring status: ${error.message}`);
 }
