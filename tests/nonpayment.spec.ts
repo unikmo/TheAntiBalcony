@@ -29,7 +29,9 @@ test("bell CTA carries a visitor into the launch flow", async ({ page }) => {
 
 test("free package enters the base launch flow", async ({ page }) => {
   await page.goto("/");
-  const freeCard = page.locator("#packages article").filter({ hasText: "THE RING" }).first();
+  const freeCard = page.locator("#packages article", {
+    has: page.getByRole("heading", { name: "THE RING", exact: true }),
+  });
   await freeCard.getByRole("button", { name: /Create your Ring/i }).click();
   await expect(page).toHaveURL(/\/launch$/);
 });
@@ -42,7 +44,9 @@ for (const item of [
 ]) {
   test(`${item.name} package preserves ${item.tier} tier`, async ({ page }) => {
     await page.goto("/");
-    const card = page.locator("#packages article").filter({ hasText: item.name }).first();
+    const card = page.locator("#packages article", {
+      has: page.getByRole("heading", { name: item.name, exact: true }),
+    });
     await expect(card).toBeVisible();
     await card.getByRole("button", { name: /Start your launch/i }).click();
     await expect(page).toHaveURL(new RegExp(`/launch\\?tier=${item.tier}$`));
