@@ -1,5 +1,4 @@
-import { Timestamp } from "firebase-admin/firestore";
-import { getFirebaseDb } from "@/lib/firebase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import {
   assertFulfillmentTransition,
   type CallbackFulfillmentStatus,
@@ -12,29 +11,39 @@ import { requestProofCapture } from "@/lib/providers/proof";
 import { publishProofSocial } from "@/lib/providers/social";
 import { sendFounderEmail } from "@/lib/providers/email";
 
-type FulfillmentJobDoc = {
-  ringId: string | null;
-  startupName: string;
+type FulfillmentJobRow = {
+  stripe_session_id: string;
+  ring_id: string | null;
+  startup_name: string;
   email: string;
-  allowSocial: boolean;
-  providerRef: string | null;
+  allow_social: boolean;
+  provider_ref: string | null;
   tier: ProofTier;
   status: FulfillmentStatus;
-  operationsClearance: OperationsClearance;
-  createdAt?: Timestamp;
+  operations_clearance: OperationsClearance;
+  proof_url: string | null;
+  video_url: string | null;
+  live_stream_url: string | null;
+  behind_scenes_url: string | null;
+  press_kit_url: string | null;
+  pr_distribution_url: string | null;
+  permit_ref: string | null;
+  insurance_ref: string | null;
+  talent_release_ref: string | null;
+  created_at: string;
 };
 
 export async function claimStripeEvent(eventId: string) {
-  const db = getFirebaseDb();
-  if (!db) return true;
+  const db = getSupabaseAdmin();
+  if (!db) throw new Error("Fulfillment database is not configured.");
 
-  const ref = db.collection("fulfillmentEvents").doc(eventId);
-  return db.runTransaction(async (transaction) => {
-    const existing = await transaction.get(ref);
-    if (existing.exists) return false;
-    transaction.create(ref, { eventId, createdAt: Timestamp.now() });
-    return true;
-  });
+  const { error } = await db
+    .from("anti_balcony_fulfillment_events")
+    .insert({ event_id: eventId });
+
+  if (!error) return true;
+  if (error.code === "23505") return false;
+  throw new Error(`Could not claim Stripe event: ${error.message}`);
 }
 
 export async function beginPaidFulfillment(input: {
@@ -46,6 +55,9 @@ export async function beginPaidFulfillment(input: {
   allowSocial: boolean;
   tier: ProofTier;
 }) {
+  const db = getSupabaseAdmin();
+  if (!db) throw new Error("Fulfillment database is not configured.");
+
   const result = await submitBillboardJob(input);
   const operations = PACKAGE_OPERATIONS[input.tier];
   const status: FulfillmentStatus = operations.physicalCrew
@@ -53,25 +65,26 @@ export async function beginPaidFulfillment(input: {
     : result.status === "submitted"
       ? "scheduled"
       : "manual_review";
-  const db = getFirebaseDb();
 
-  if (db) {
-    await db.collection("fulfillmentJobs").doc(input.stripeSessionId).set({
-      stripeSessionId: input.stripeSessionId,
-      ringId: input.ringId,
-      startupName: input.startupName,
-      email: input.email,
-      allowSocial: input.allowSocial,
-      providerRef: result.providerRef ?? null,
-      scheduledAt: operations.physicalCrew ? null : result.scheduledAt ?? null,
-      tier: input.tier,
-      operations,
-      operationsClearance: operations.physicalCrew ? "pending" : "not_required",
-      status,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    }, { merge: true });
-  }
+  const now = new Date().toISOString();
+  const { error } = await db.from("anti_balcony_fulfillment_jobs").upsert({
+    stripe_session_id: input.stripeSessionId,
+    event_id: input.eventId,
+    ring_id: input.ringId,
+    startup_name: input.startupName,
+    email: input.email,
+    allow_social: input.allowSocial,
+    provider_ref: result.providerRef ?? null,
+    scheduled_at: operations.physicalCrew ? null : result.scheduledAt ?? null,
+    tier: input.tier,
+    operations,
+    operations_clearance: operations.physicalCrew ? "pending" : "not_required",
+    status,
+    created_at: now,
+    updated_at: now,
+  }, { onConflict: "stripe_session_id" });
+
+  if (error) throw new Error(`Could not save fulfillment job: ${error.message}`);
 
   await updateRingStatus(input.ringId, status, input.tier);
   await sendFounderEmail({
@@ -101,21 +114,24 @@ export async function handleFulfillmentCallback(input: {
   insuranceRef?: string | null;
   talentReleaseRef?: string | null;
 }) {
-  const db = getFirebaseDb();
+  const db = getSupabaseAdmin();
   if (!db) throw new Error("Fulfillment database is not configured.");
 
-  const jobs = await db.collection("fulfillmentJobs").where("ringId", "==", input.ringId).limit(10).get();
-  const chosen = jobs.docs
-    .map((doc) => ({ id: doc.id, data: doc.data() as FulfillmentJobDoc }))
-    .sort((a, b) => (b.data.createdAt?.toMillis() ?? 0) - (a.data.createdAt?.toMillis() ?? 0))[0];
+  const { data, error } = await db
+    .from("anti_balcony_fulfillment_jobs")
+    .select("*")
+    .eq("ring_id", input.ringId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  if (!chosen) throw new Error("Fulfillment job not found for this Ring.");
+  if (error) throw new Error(`Could not load fulfillment job: ${error.message}`);
+  if (!data) throw new Error("Fulfillment job not found for this Ring.");
 
-  const job = chosen.data;
-  const jobId = chosen.id;
+  const job = data as FulfillmentJobRow;
   const tier = job.tier || "snapshot";
   const physicalCrew = PACKAGE_OPERATIONS[tier].physicalCrew;
-  const currentClearance: OperationsClearance = job.operationsClearance || (physicalCrew ? "pending" : "not_required");
+  const currentClearance: OperationsClearance = job.operations_clearance || (physicalCrew ? "pending" : "not_required");
 
   assertFulfillmentTransition({
     current: job.status,
@@ -130,27 +146,34 @@ export async function handleFulfillmentCallback(input: {
       : currentClearance
     : "not_required";
 
-  await db.collection("fulfillmentJobs").doc(jobId).set({
+  const patch = {
     status: input.status,
-    providerRef: input.providerRef ?? job.providerRef ?? null,
-    proofUrl: input.proofUrl ?? null,
-    videoUrl: input.videoUrl ?? null,
-    liveStreamUrl: input.liveStreamUrl ?? null,
-    behindScenesUrl: input.behindScenesUrl ?? null,
-    pressKitUrl: input.pressKitUrl ?? null,
-    prDistributionUrl: input.prDistributionUrl ?? null,
-    permitRef: input.permitRef ?? null,
-    insuranceRef: input.insuranceRef ?? null,
-    talentReleaseRef: input.talentReleaseRef ?? null,
-    operationsClearance: nextClearance,
-    updatedAt: Timestamp.now(),
-  }, { merge: true });
+    provider_ref: input.providerRef ?? job.provider_ref ?? null,
+    proof_url: input.proofUrl ?? job.proof_url ?? null,
+    video_url: input.videoUrl ?? job.video_url ?? null,
+    live_stream_url: input.liveStreamUrl ?? job.live_stream_url ?? null,
+    behind_scenes_url: input.behindScenesUrl ?? job.behind_scenes_url ?? null,
+    press_kit_url: input.pressKitUrl ?? job.press_kit_url ?? null,
+    pr_distribution_url: input.prDistributionUrl ?? job.pr_distribution_url ?? null,
+    permit_ref: input.permitRef ?? job.permit_ref ?? null,
+    insurance_ref: input.insuranceRef ?? job.insurance_ref ?? null,
+    talent_release_ref: input.talentReleaseRef ?? job.talent_release_ref ?? null,
+    operations_clearance: nextClearance,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: updateError } = await db
+    .from("anti_balcony_fulfillment_jobs")
+    .update(patch)
+    .eq("stripe_session_id", job.stripe_session_id);
+
+  if (updateError) throw new Error(`Could not update fulfillment job: ${updateError.message}`);
 
   await updateRingStatus(input.ringId, input.status, tier);
 
-  const startupName = input.startupName || job.startupName || "Your startup";
+  const startupName = input.startupName || job.startup_name || "Your startup";
   const email = input.email || job.email;
-  const providerRef = input.providerRef || job.providerRef;
+  const providerRef = input.providerRef || job.provider_ref;
 
   if (input.status === "scheduled" && email && physicalCrew) {
     await sendFounderEmail({
@@ -170,7 +193,7 @@ export async function handleFulfillmentCallback(input: {
   }
 
   if (input.status === "proof_ready" && input.proofUrl) {
-    if (job.allowSocial) {
+    if (job.allow_social) {
       await publishProofSocial({
         startupName,
         proofUrl: input.proofUrl,
