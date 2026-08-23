@@ -12,9 +12,10 @@ const env = {
   PORT: String(port),
   NEXT_PUBLIC_SITE_URL: base,
   FULFILLMENT_CALLBACK_SECRET: secret,
-  FIREBASE_PROJECT_ID: "",
-  FIREBASE_CLIENT_EMAIL: "",
-  FIREBASE_PRIVATE_KEY: "",
+  SUPABASE_URL: "",
+  NEXT_PUBLIC_SUPABASE_URL: "",
+  SUPABASE_SECRET_KEY: "",
+  SUPABASE_SERVICE_ROLE_KEY: "",
   STRIPE_SECRET_KEY: "",
   STRIPE_PRICE_SNAPSHOT: "",
   STRIPE_PRICE_VIDEO: "",
@@ -76,7 +77,7 @@ try {
 
   const health = await (await get("/api/health")).json();
   assert.equal(health.ok, true);
-  assert.equal(health.firebase, false);
+  assert.equal(health.supabase, false);
   assert.equal(health.database, false);
   assert.equal(health.stripe, false);
   assert.equal(health.fulfillment, false);
