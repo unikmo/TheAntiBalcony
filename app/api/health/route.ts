@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 
 export function GET() {
-  const firebase = Boolean(
-    process.env.FIRESTORE_EMULATOR_HOST ||
-    (
-      process.env.FIREBASE_PROJECT_ID &&
-      process.env.FIREBASE_CLIENT_EMAIL &&
-      process.env.FIREBASE_PRIVATE_KEY
-    ),
+  const supabase = Boolean(
+    (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) &&
+    (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
   );
   const stripe = Boolean(
     process.env.STRIPE_SECRET_KEY &&
@@ -33,8 +29,8 @@ export function GET() {
 
   return NextResponse.json({
     ok: true,
-    database: firebase,
-    firebase,
+    database: supabase,
+    supabase,
     stripe,
     operations,
     fulfillment: operations,
