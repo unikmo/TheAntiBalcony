@@ -83,7 +83,7 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
             ? "This Ring contains enough detail to be eligible for search indexing."
             : "This Ring is public but remains noindex until the profile is complete enough to be useful as a search result."}
         </p>
-        {!persisted && <p className="launch-error">Firebase is not connected in this environment, so this Ring is only a session response and will not persist.</p>}
+        {!persisted && <p className="launch-error">Supabase is not connected in this environment, so this Ring is only a session response and will not persist.</p>}
         {persisted && <p><Link href={`/launches/${ring.slug}`}>VIEW AND SHARE YOUR PUBLIC RING ↗</Link></p>}
 
         <div className="seo-section" style={{ marginTop: 35 }}>
