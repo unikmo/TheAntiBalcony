@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getFirebaseDb } from "@/lib/firebase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { handleFulfillmentCallback } from "@/lib/fulfillment";
 import type { CallbackFulfillmentStatus } from "@/lib/fulfillment-state";
 
@@ -59,13 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "proof_ready requires a proofUrl." }, { status: 400 });
     }
 
-    let dbAvailable = false;
-    try {
-      dbAvailable = Boolean(getFirebaseDb());
-    } catch {
-      dbAvailable = false;
-    }
-    if (!dbAvailable) {
+    if (!getSupabaseAdmin()) {
       return NextResponse.json({ error: "Fulfillment database is unavailable." }, { status: 503 });
     }
 
