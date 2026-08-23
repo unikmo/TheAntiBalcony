@@ -14,7 +14,7 @@
     "test:nonpayment": "npm run test:contracts && npm run test:smoke"
   },
   "dependencies": {
-    "firebase-admin": "^14.2.0",
+    "@supabase/supabase-js": "^2.57.4",
     "next": "^16.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
