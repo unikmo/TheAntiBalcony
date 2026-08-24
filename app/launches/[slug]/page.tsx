@@ -75,13 +75,13 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
               {ring.category && <span>{ring.category.toUpperCase()}</span>}
               <span>{ring.status.toUpperCase()}</span>
             </div>
-            <div className="ab2-actions" style={{ marginTop: 28 }}>
-              {ring.website && <a className="ab2-primary" href={ring.website} target="_blank" rel="noreferrer">VISIT STARTUP ↗</a>}
-              {ring.socialUrl && <a className="ab2-secondary" href={ring.socialUrl} target="_blank" rel="noreferrer">FOUNDER / SOCIAL ↗</a>}
+            <div className="de-actions">
+              {ring.website && <a className="de-primary" href={ring.website} target="_blank" rel="noreferrer">Visit startup</a>}
+              {ring.socialUrl && <a className="de-secondary" href={ring.socialUrl} target="_blank" rel="noreferrer">Founder / social</a>}
             </div>
           </div>
           <div className="ring-detail-image">
-            {ring.imageUrl ? <img src={ring.imageUrl} alt={`${ring.startupName} product`} /> : <div style={{ height: "100%", display: "grid", placeItems: "center", color: "#8fa6bc" }}>PRODUCT IMAGE NOT ADDED YET</div>}
+            {ring.imageUrl ? <img src={ring.imageUrl} alt={`${ring.startupName} product`} /> : <div className="ring-detail-placeholder">PRODUCT IMAGE NOT ADDED YET</div>}
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
         </div>
 
         <section className="ring-badge">
-          <p className="ab2-kicker">SHARE THE LAUNCH ARTIFACT</p>
+          <p className="seo-breadcrumb">Share the launch artifact</p>
           <h2>Rung in on The Anti-Balcony.</h2>
           <p>Use this badge on a website, launch post or founder page. It links back to the permanent public Ring.</p>
           <img src={`/api/rings/${ring.slug}/badge`} alt={`${ring.startupName} launch badge`} />
