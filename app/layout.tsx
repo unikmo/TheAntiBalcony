@@ -5,6 +5,7 @@ import "./blue-theme.css";
 import "./cinematic-hero.css";
 import "./public-launch.css";
 import "./design-excellence.css";
+import "./site-pages-excellence.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
