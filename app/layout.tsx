@@ -4,6 +4,7 @@ import "./globals.css";
 import "./blue-theme.css";
 import "./cinematic-hero.css";
 import "./public-launch.css";
+import "./design-excellence.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
@@ -14,12 +15,12 @@ export const metadata: Metadata = {
     default: "Launch Your Startup in Public | The Anti-Balcony",
     template: "%s | The Anti-Balcony",
   },
-  description: "The Anti-Balcony is a public startup-launch platform built around a shareable launch ritual called a Ring.",
+  description: "Create a dated public Ring for your startup, share the launch everywhere, and extend the moment to Times Square when it deserves more visibility.",
   applicationName: "The Anti-Balcony",
   keywords: ["startup launch", "launch your startup", "public startup launch", "product launch", "build in public"],
   openGraph: {
     title: "Launch Your Startup in Public | The Anti-Balcony",
-    description: "Create a public Ring for what you built and share the moment your startup entered the world.",
+    description: "Create a dated public Ring for what you built and share the moment your startup entered the world.",
     type: "website",
     siteName: "The Anti-Balcony",
   },
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b2341",
+  themeColor: "#0b0b0c",
   colorScheme: "dark",
 };
 
