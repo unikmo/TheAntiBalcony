@@ -76,7 +76,7 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
     const selected = PAID.find((item) => item.tier === initialTier);
     return (
       <section className="launch-success">
-        <p className="ab2-kicker">YOUR RING EXISTS</p>
+        <p className="seo-breadcrumb">Your Ring exists</p>
         <h2>{ring.startupName} has entered the public record.</h2>
         <p data-testid="ring-index-status">
           {ring.indexable
@@ -84,24 +84,25 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
             : "This Ring is public but remains noindex until the profile is complete enough to be useful as a search result."}
         </p>
         {!persisted && <p className="launch-error">Supabase is not connected in this environment, so this Ring is only a session response and will not persist.</p>}
-        {persisted && <p><Link href={`/launches/${ring.slug}`}>VIEW AND SHARE YOUR PUBLIC RING ↗</Link></p>}
+        {persisted && <p><Link href={`/launches/${ring.slug}`}>View and share your public Ring</Link></p>}
 
-        <div className="seo-section" style={{ marginTop: 35 }}>
+        <div className="seo-section launch-upgrade">
           <h2>Take the moment further</h2>
           <div>
             <p>Add Times Square proof without changing what the Ring is: your permanent public launch artifact.</p>
             <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="founder@startup.com" aria-label="Email for launch package delivery" />
-            <label style={{ display: "block", marginTop: 14, color: "#b8c7da", fontSize: 12 }}>
-              <input type="checkbox" checked={allowSocial} onChange={(event) => setAllowSocial(event.target.checked)} /> Publish confirmed proof through The Anti-Balcony social workflow.
+            <label className="launch-consent">
+              <input type="checkbox" checked={allowSocial} onChange={(event) => setAllowSocial(event.target.checked)} />
+              <span>Publish confirmed proof through The Anti-Balcony social workflow.</span>
             </label>
             <div className="upgrade-inline">
               {PAID.map((item) => (
-                <button key={item.tier} onClick={() => checkout(item.tier)} style={selected?.tier === item.tier ? { outline: "1px solid #8db7e3" } : undefined}>
+                <button key={item.tier} onClick={() => checkout(item.tier)} className={selected?.tier === item.tier ? "is-selected" : undefined}>
                   <span>{item.name}</span><strong>{item.price}</strong>
                 </button>
               ))}
             </div>
-            {checkoutError && <p className="launch-error">{checkoutError}</p>}
+            {checkoutError && <p className="launch-error" role="alert">{checkoutError}</p>}
           </div>
         </div>
       </section>
@@ -123,7 +124,7 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
       <label className="full">SHORT FOUNDER STORY<textarea name="story" maxLength={1000} placeholder="Why did you build this, and why now?" /></label>
       <p className="launch-help">The public Ring is free. Rich profiles can become indexable startup-launch pages. Thin Rings remain public but noindex so the directory does not fill with low-value pages.</p>
       {error && <p className="launch-error" role="alert">{error}</p>}
-      <button className="launch-submit" disabled={loading}>{loading ? "CREATING THE RING…" : "RING IN YOUR STARTUP →"}</button>
+      <button className="launch-submit" disabled={loading}>{loading ? "CREATING THE RING…" : "RING IN YOUR STARTUP"}</button>
     </form>
   );
 }
