@@ -74,24 +74,17 @@ export function AntiBalconyV2() {
     setRinging(true);
     playBell();
     const suffix = tier && tier !== "free" ? `?tier=${encodeURIComponent(tier)}` : "";
-    window.setTimeout(() => router.push(`/launch${suffix}`), 620);
+    window.setTimeout(() => router.push(`/launch${suffix}`), 420);
   }
 
   return (
     <main className="de-shell">
       <header className="de-header">
-        <div className="de-container de-header-inner">
+        <div className="de-container de-header-inner" style={{ justifyContent: "center" }}>
           <Link className="de-brand" href="/" aria-label="The Anti-Balcony home">
             <span className="de-brand-mark" aria-hidden="true" />
             THE ANTI-BALCONY
           </Link>
-          <nav aria-label="Primary navigation">
-            <Link href="/launches">Launches</Link>
-            <a href="#how">How it works</a>
-            <a href="#packages">Packages</a>
-            <Link href="/guides/how-to-launch-a-startup">Guides</Link>
-          </nav>
-          <button className="de-header-cta" onClick={() => startLaunch()}>Create your Ring</button>
         </div>
       </header>
 
@@ -117,7 +110,7 @@ export function AntiBalconyV2() {
             <footer><b>RUNG IN</b><b>NEW YORK</b></footer>
           </article>
 
-          <div className={`cinema-bell-wrap ${ringing ? "is-ringing" : ""}`}>
+          <div className={`cinema-bell-wrap ${ringing ? "is-ringing" : ""}`} style={{ animation: "none" }}>
             <button className="cinema-bell-button" onClick={() => startLaunch()} aria-label="Ring in your startup">
               <span className="cinema-bell-handle" aria-hidden="true" />
               <span className="cinema-bell-body" aria-hidden="true" />
@@ -132,50 +125,44 @@ export function AntiBalconyV2() {
         <div className="cinema-copy">
           <p className="cinema-kicker">Bell · Times Square · Your public Ring</p>
           <h1 id="home-title">Launch your startup in public.</h1>
-          <p>Ring in what you built. Put the moment on a public record. When it deserves a bigger stage, take the same launch to Times Square.</p>
+          <p>Ring in what you built. Put the moment on a public record. Take it to Times Square when the launch deserves a bigger stage.</p>
           <div className="cinema-actions">
             <button className="cinema-primary" onClick={() => startLaunch()}>Ring in your startup</button>
-            <Link className="cinema-secondary" href="/launches">Explore launches</Link>
           </div>
         </div>
       </section>
 
       <section className="de-principle">
-        <div className="de-container de-principle-grid">
-          <div>
-            <p className="de-eyebrow">A launch moment, not a launch competition</p>
-            <h2>Your launch should belong to you.</h2>
-          </div>
-          <div className="de-principle-copy">
-            <p>Product Hunt, LinkedIn, X, Hacker News and your mailing list can distribute a launch. The Anti-Balcony gives the launch itself a permanent artifact: a Ring you can point people to before, during and after launch day.</p>
-            <div className="de-channel-row" aria-label="Compatible launch channels">
-              <span>Product Hunt</span><span>LinkedIn</span><span>X</span><span>Hacker News</span><span>Email</span>
-            </div>
+        <div className="de-container" style={{ maxWidth: 900, textAlign: "center" }}>
+          <p className="de-eyebrow" style={{ justifyContent: "center" }}>One launch. One public moment.</p>
+          <h2>Your launch should belong to you.</h2>
+          <div className="de-principle-copy" style={{ maxWidth: 720, margin: "30px auto 0" }}>
+            <p>Other channels can distribute the news. The Anti-Balcony gives the launch itself a permanent artifact: one Ring you can point people to before, during and after launch day.</p>
           </div>
         </div>
       </section>
 
       <section className="de-how" id="how" aria-labelledby="how-title">
         <div className="de-container">
-          <div className="de-section-head">
-            <p className="de-eyebrow">How it works</p>
+          <div className="de-section-head" style={{ textAlign: "center", marginInline: "auto" }}>
+            <p className="de-eyebrow" style={{ justifyContent: "center" }}>How it works</p>
             <h2 id="how-title">Three steps. One public moment.</h2>
-            <p>The core journey stays deliberately simple so the startup—not the platform—remains the focus.</p>
+            <p>The startup stays in focus from first Ring to final proof.</p>
           </div>
-          <div className="de-steps">
+          <div className="de-steps" style={{ gridTemplateColumns: "1fr", maxWidth: 900, marginInline: "auto" }}>
             <article className="de-step"><span className="de-step-number">01</span><h3>Create the Ring</h3><p>Tell people what you built, who it is for and why it exists.</p></article>
             <article className="de-step"><span className="de-step-number">02</span><h3>Make it public</h3><p>Your startup gets a dated public launch page designed to be understood and shared quickly.</p></article>
-            <article className="de-step"><span className="de-step-number">03</span><h3>Extend the moment</h3><p>Share the Ring across your channels—or add Times Square, video and launch-production upgrades.</p></article>
+            <article className="de-step"><span className="de-step-number">03</span><h3>Extend the moment</h3><p>Keep the Ring digital or extend the same launch into Times Square, film and production.</p></article>
           </div>
         </div>
       </section>
 
       <section className="de-packages" id="packages" aria-labelledby="packages-title">
         <div className="de-container">
-          <div className="de-section-head">
-            <p className="de-eyebrow">From public Ring to Times Square</p>
-            <h2 id="packages-title">Choose how visible the moment becomes.</h2>
-            <p>Start free. Upgrade only when the launch needs a larger public artifact or production layer.</p>
+          <div className="de-section-head" style={{ textAlign: "center", marginInline: "auto" }}>
+            <p className="de-eyebrow" style={{ justifyContent: "center" }}>From Ring to Times Square</p>
+            <h2 id="packages-title">Choose how big the moment becomes.</h2>
+            <p>Start free. Add visibility only when the launch needs it.</p>
           </div>
           <div className="de-package-list">
             {packages.map((item) => (
@@ -183,7 +170,7 @@ export function AntiBalconyV2() {
                 <div><span className="de-package-kicker">{item.label}</span><h3>{item.name}</h3></div>
                 <strong className="de-package-price">{item.price}</strong>
                 <p>{item.text}</p>
-                <button onClick={() => startLaunch(item.tier)}>{item.tier === "free" ? "Create Ring" : "Start launch"}</button>
+                <button onClick={() => startLaunch(item.tier)}>{item.tier === "free" ? "Create your Ring" : "Start your launch"}</button>
               </article>
             ))}
           </div>
