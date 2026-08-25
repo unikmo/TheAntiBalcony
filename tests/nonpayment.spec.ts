@@ -14,7 +14,7 @@ test("homepage loads cleanly and explains the category", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: /Launch your startup in public/i })).toBeVisible();
-  await expect(page.getByText(/public startup-launch platform built around a shareable launch ritual called a Ring/i)).toBeVisible();
+  await expect(page.getByText(/Bell · Times Square · Your public Ring/i)).toBeVisible();
   await expect(page.getByRole("button", { name: /Ring in your startup/i }).first()).toBeVisible();
 
   expect(errors).toEqual([]);
@@ -127,7 +127,7 @@ test("paid upgrade fails gracefully when Stripe is not configured", async ({ pag
 
 test("launch directory is reachable from the homepage", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: /Explore launches/i }).click();
+  await page.getByRole("link", { name: /Explore all launches/i }).click();
   await expect(page).toHaveURL(/\/launches$/);
   await expect(page.getByRole("heading", { name: /Explore launches/i })).toBeVisible();
 });
@@ -138,5 +138,5 @@ test("mobile hero keeps the core action visible", async ({ page }) => {
 
   await expect(page.getByRole("heading", { name: /Launch your startup in public/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Ring in your startup/i }).first()).toBeVisible();
-  await expect(page.locator(".ab2-bell")).toBeVisible();
+  await expect(page.locator(".cinema-bell-button")).toBeVisible();
 });
