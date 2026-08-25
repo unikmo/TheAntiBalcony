@@ -27,6 +27,7 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
   const [email, setEmail] = useState("");
   const [allowSocial, setAllowSocial] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,6 +57,10 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
     if (!ring) return;
     if (!email.trim()) {
       setCheckoutError("Add an email for delivery before choosing a paid package.");
+      return;
+    }
+    if (!acceptedTerms) {
+      setCheckoutError("Accept the Terms and acknowledge the Privacy Notice before continuing.");
       return;
     }
     setCheckoutError("");
@@ -95,6 +100,10 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
               <input type="checkbox" checked={allowSocial} onChange={(event) => setAllowSocial(event.target.checked)} />
               <span>Publish confirmed proof through The Anti-Balcony social workflow.</span>
             </label>
+            <label className="launch-consent">
+              <input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} />
+              <span>I accept the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link>.</span>
+            </label>
             <div className="upgrade-inline">
               {PAID.map((item) => (
                 <button key={item.tier} onClick={() => checkout(item.tier)} className={selected?.tier === item.tier ? "is-selected" : undefined}>
@@ -122,6 +131,7 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
       <label>PRODUCT IMAGE URL<input name="imageUrl" type="url" placeholder="https://.../product-screenshot.jpg" /></label>
       <label className="full">WHAT PROBLEM ARE YOU SOLVING?<textarea name="problem" maxLength={320} placeholder="The problem before your startup exists." /></label>
       <label className="full">SHORT FOUNDER STORY<textarea name="story" maxLength={1000} placeholder="Why did you build this, and why now?" /></label>
+      <label className="launch-consent full"><input name="legalConsent" type="checkbox" required /><span>I confirm I am authorized to publish this information, accept the <Link href="/terms">Terms</Link>, and acknowledge the <Link href="/privacy">Privacy Notice</Link>.</span></label>
       <p className="launch-help">The public Ring is free. Rich profiles can become indexable startup-launch pages. Thin Rings remain public but noindex so the directory does not fill with low-value pages.</p>
       {error && <p className="launch-error" role="alert">{error}</p>}
       <button className="launch-submit" disabled={loading}>{loading ? "CREATING THE RING…" : "RING IN YOUR STARTUP"}</button>

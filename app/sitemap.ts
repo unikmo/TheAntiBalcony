@@ -5,7 +5,7 @@ import { listRings } from "@/lib/rings";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com";
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -13,6 +13,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${site}/launch`, lastModified: now, changeFrequency: "monthly", priority: 0.95 },
     { url: `${site}/startup-launch`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
     { url: `${site}/launches`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: `${site}/imprint`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${site}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${site}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     ...GUIDES.map((guide) => ({
       url: `${site}/guides/${guide.slug}`,
       lastModified: now,

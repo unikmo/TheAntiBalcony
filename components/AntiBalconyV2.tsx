@@ -89,6 +89,12 @@ export function AntiBalconyV2() {
       </header>
 
       <section className="cinema-hero" aria-labelledby="home-title">
+        <div className="record-hero-title"><h1 id="home-title">Your launch deserves a public record.</h1></div>
+        <div className="visible-moments" aria-label="Founder, public Ring and Times Square launch journey">
+          <article><img src="/antibalcony-founder-launch.png" alt="A founder preparing a startup launch" /><div><span>01 · FOUNDER</span><strong>You launch what you built.</strong></div></article>
+          <article className="visible-ring"><div className="public-ring-visual"><i /><small>FOUNDER-APPROVED RECORD</small><strong>YOUR STARTUP</strong><p>The launch now has a permanent public page.</p><b>RUNG IN · 2026</b></div><div><span>02 · RING</span><strong>The moment becomes public.</strong></div></article>
+          <article><video autoPlay muted loop playsInline poster="/antibalcony-times-square.png" aria-label="Startup launch appearing in Times Square"><source src="/antibalcony-times-square-loop.mp4" type="video/mp4" /></video><div><span>03 · TIMES SQUARE</span><strong>Extend it when the moment deserves more.</strong></div></article>
+        </div>
         <div className="cinema-stage" aria-label="A cinematic launch scene combining Times Square, The Anti-Balcony bell and a public startup Ring">
           <div className="cinema-city" aria-hidden="true">
             <div className="cinema-building left-a" />
@@ -124,7 +130,7 @@ export function AntiBalconyV2() {
 
         <div className="cinema-copy">
           <p className="cinema-kicker">Bell · Times Square · Your public Ring</p>
-          <h1 id="home-title">Launch your startup in public.</h1>
+          <h2>Launch your startup in public.</h2>
           <p>Ring in what you built. Put the moment on a public record. Take it to Times Square when the launch deserves a bigger stage.</p>
           <div className="cinema-actions">
             <button className="cinema-primary" onClick={() => startLaunch()}>Ring in your startup</button>
@@ -223,7 +229,7 @@ export function AntiBalconyV2() {
       <footer className="de-footer">
         <div className="de-container de-footer-inner">
           <div className="de-footer-brand"><strong>THE ANTI-BALCONY</strong><span>Public startup-launch platform</span></div>
-          <nav aria-label="Footer navigation"><Link href="/launch">Launch</Link><Link href="/launches">Launches</Link><Link href="/startup-launch">Startup launch</Link><Link href="/guides/how-to-launch-a-startup">Guides</Link></nav>
+          <nav aria-label="Footer navigation"><Link href="/launch">Launch</Link><Link href="/launches">Launches</Link><Link href="/startup-launch">How it works</Link><Link href="/guides/how-to-launch-a-startup">Guides</Link><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav>
           <span className="de-footer-copy">© {new Date().getFullYear()}</span>
         </div>
       </footer>

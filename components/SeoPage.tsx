@@ -20,6 +20,11 @@ export function SeoShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       {children}
+      <footer className="legal-footer">
+        <div><strong>THE ANTI-BALCONY</strong><span>A service of PlanetHike OÜ</span></div>
+        <nav aria-label="Legal navigation"><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav>
+        <span>© {new Date().getFullYear()} PlanetHike OÜ</span>
+      </footer>
     </main>
   );
 }

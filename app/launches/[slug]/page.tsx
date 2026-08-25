@@ -37,7 +37,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
   if (!ring) notFound();
 
   const searchReady = isSearchReady(ring);
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com";
   const launchUrl = `${site}/launches/${ring.slug}`;
   const badgeUrl = `${site}/api/rings/${ring.slug}/badge`;
   const embed = `<a href="${escapeHtmlAttribute(launchUrl)}"><img src="${escapeHtmlAttribute(badgeUrl)}" alt="${escapeHtmlAttribute(ring.startupName)} rung in on The Anti-Balcony" /></a>`;
