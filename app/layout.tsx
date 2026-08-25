@@ -7,12 +7,13 @@ import "./public-launch.css";
 import "./design-excellence.css";
 import "./site-pages-excellence.css";
 import "./navigation-responsive.css";
+import "./cinematic-brand.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com"),
   title: {
     default: "Launch Your Startup in Public | The Anti-Balcony",
     template: "%s | The Anti-Balcony",
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0b0c",
+  themeColor: "#070707",
   colorScheme: "dark",
 };
 
