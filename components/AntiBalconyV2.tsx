@@ -91,9 +91,9 @@ export function AntiBalconyV2() {
       <section className="cinema-hero" aria-labelledby="home-title">
         <div className="record-hero-title"><h1 id="home-title">Your launch deserves a public record.</h1></div>
         <div className="visible-moments" aria-label="Founder, public Ring and Times Square launch journey">
-          <article><img src="/antibalcony-founder-launch.png" alt="A founder preparing a startup launch" /><div><span>01 · FOUNDER</span><strong>You launch what you built.</strong></div></article>
+          <article><img src="/antibalcony-founder-launch.webp" alt="A founder preparing a startup launch" /><div><span>01 · FOUNDER</span><strong>You launch what you built.</strong></div></article>
           <article className="visible-ring"><div className="public-ring-visual"><i /><small>FOUNDER-APPROVED RECORD</small><strong>YOUR STARTUP</strong><p>The launch now has a permanent public page.</p><b>RUNG IN · 2026</b></div><div><span>02 · RING</span><strong>The moment becomes public.</strong></div></article>
-          <article><video autoPlay muted loop playsInline poster="/antibalcony-times-square.png" aria-label="Startup launch appearing in Times Square"><source src="/antibalcony-times-square-loop.mp4" type="video/mp4" /></video><div><span>03 · TIMES SQUARE</span><strong>Extend it when the moment deserves more.</strong></div></article>
+          <article><video autoPlay muted loop playsInline poster="/antibalcony-times-square.webp" aria-label="Startup launch appearing in Times Square"><source src="/antibalcony-times-square-loop-lite.mp4" type="video/mp4" /></video><div><span>03 · TIMES SQUARE</span><strong>Extend it when the moment deserves more.</strong></div></article>
         </div>
         <div className="cinema-stage" aria-label="A cinematic launch scene combining Times Square, The Anti-Balcony bell and a public startup Ring">
           <div className="cinema-city" aria-hidden="true">
