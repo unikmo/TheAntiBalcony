@@ -187,7 +187,12 @@ export function AntiBalconyV2() {
       </header>
 
       <section className="cinema-hero" aria-labelledby="home-title">
-        <div className="record-hero-title"><h1 id="home-title">Your launch deserves a public record.</h1></div>
+        <div className="record-hero-title">
+          <h1 id="home-title">
+            <span>Your launch deserves</span>
+            <em>a public record.</em>
+          </h1>
+        </div>
         <div className="visible-moments" aria-label="Interactive UNIKMO founder, bell and Times Square demonstration">
           <article className={`visible-moment founder-moment ${activeMoment === "founder" ? "is-active" : ""}`}>
             <button type="button" className="moment-button" onClick={showFounderDemo} aria-pressed={activeMoment === "founder"} aria-label="Show UNIKMO founder launch example">
