@@ -23,7 +23,7 @@ const packages = [
   { name: "THE LEGEND", price: "$9,999", label: "FULL PRODUCTION", text: "The staffed Times Square launch production with professional video and PR workflow.", tier: "vip" },
 ];
 
-function playBell() {
+function playBell(fullCeremony = false) {
   const AudioContextClass =
     window.AudioContext ||
     (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -31,26 +31,34 @@ function playBell() {
 
   const ctx = new AudioContextClass();
   const now = ctx.currentTime;
+  const duration = fullCeremony ? 8.4 : 1.25;
+  const strikes = fullCeremony ? [0, 0.72, 1.46, 2.2, 2.96, 3.74, 4.54, 5.36, 6.2, 7.06] : [0];
   const master = ctx.createGain();
   master.gain.setValueAtTime(0.0001, now);
-  master.gain.exponentialRampToValueAtTime(0.42, now + 0.02);
-  master.gain.exponentialRampToValueAtTime(0.0001, now + 1.45);
+  master.gain.exponentialRampToValueAtTime(0.34, now + 0.02);
+  master.gain.setValueAtTime(0.34, now + Math.max(0.5, duration - 0.7));
+  master.gain.exponentialRampToValueAtTime(0.0001, now + duration);
   master.connect(ctx.destination);
 
-  [110, 165, 220].forEach((frequency, index) => {
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = index === 0 ? "sine" : "triangle";
-    oscillator.frequency.setValueAtTime(frequency, now);
-    gain.gain.setValueAtTime(1 / (index + 1), now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.3);
-    oscillator.connect(gain);
-    gain.connect(master);
-    oscillator.start(now);
-    oscillator.stop(now + 1.55);
+  strikes.forEach((offset, strikeIndex) => {
+    [330, 495, 660, 990].forEach((frequency, toneIndex) => {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const strike = now + offset;
+      oscillator.type = toneIndex < 2 ? "sine" : "triangle";
+      oscillator.frequency.setValueAtTime(frequency * (1 + strikeIndex * 0.0015), strike);
+      oscillator.detune.setValueAtTime((strikeIndex % 2 === 0 ? -1 : 1) * toneIndex * 2.5, strike);
+      gain.gain.setValueAtTime(0.0001, strike);
+      gain.gain.exponentialRampToValueAtTime(0.38 / (toneIndex + 1), strike + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, strike + 1.08);
+      oscillator.connect(gain);
+      gain.connect(master);
+      oscillator.start(strike);
+      oscillator.stop(strike + 1.12);
+    });
   });
 
-  window.setTimeout(() => void ctx.close(), 1700);
+  window.setTimeout(() => void ctx.close(), (duration + 0.3) * 1000);
 }
 
 function formatRingDate(value: string) {
@@ -96,9 +104,9 @@ export function AntiBalconyV2() {
     setActiveMoment("record");
     setRinging(false);
     window.requestAnimationFrame(() => setRinging(true));
-    playBell();
+    playBell(true);
     if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
-    bellTimerRef.current = window.setTimeout(() => setRinging(false), 1000);
+    bellTimerRef.current = window.setTimeout(() => setRinging(false), 8400);
   }
 
   function playTimesSquareDemo() {
@@ -159,13 +167,12 @@ export function AntiBalconyV2() {
             <button type="button" className="moment-button" onClick={ringUnikmoDemo} aria-pressed={activeMoment === "record"} aria-label="Ring the bell for UNIKMO and reveal its public record">
               <span className={`moment-media bell-demo-visual ${ringing ? "is-ringing" : ""}`}>
                 <Image src="/antibalcony-real-bell.webp" alt="A polished coral-red ceremonial launch bell" fill priority sizes="(max-width: 850px) 100vw, 33vw" />
-                <span className="bell-prompt"><b>{activeMoment === "founder" ? "RING THE BELL" : "RING AGAIN"}</b><small>Click the bell</small></span>
+                <span className="bell-prompt"><b>{activeMoment === "founder" ? "RING" : "RING AGAIN"}</b></span>
                 <span className="bell-wave wave-one" aria-hidden="true" />
                 <span className="bell-wave wave-two" aria-hidden="true" />
                 <span className="public-record-demo" role="status" aria-live="polite">
-                  <small>FOUNDER-INITIATED · DEMONSTRATION RECORD</small>
+                  <small>PUBLIC RECORD</small>
                   <strong>UNIKMO</strong>
-                  <p>Some moments deserve more than a message.</p>
                   <span><b>UNIKMO.COM</b><b>RUNG · 26 AUG 2026</b></span>
                 </span>
               </span>
@@ -178,11 +185,9 @@ export function AntiBalconyV2() {
               <span className="moment-media times-square-media">
                 <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Animated UNIKMO creative displayed on the Nasdaq Tower"><source src="/antibalcony-nasdaq-unikmo-idle.mp4" type="video/mp4" /></video>
                 <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Fifteen-second demonstration of the UNIKMO launch on the Nasdaq Tower" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-nasdaq-unikmo-proof.mp4" type="video/mp4" /></video>
-                <span className="proof-metadata"><b><i /> DEMONSTRATION</b><small>NASDAQ TOWER · NEW YORK</small><small>CREATIVE · 9:16 MASTER / TOWER-ADAPTED</small><small>BOOKING · PROVIDER CONFIRMATION REQUIRED</small></span>
-                <span className="display-timer" aria-live="polite"><b>{timesSquarePlaying ? `${displaySeconds.toFixed(1)}s` : displaySeconds === 0 ? "15s COMPLETE" : "PLAY 15s"}</b><small>{timesSquarePlaying ? "DEMO PLAYBACK" : displaySeconds === 0 ? "DEMO COMPLETE" : "CLICK NASDAQ"}</small></span>
                 <span className="display-progress" aria-hidden="true"><i style={{ transform: `scaleX(${timesSquarePlaying ? (15 - displaySeconds) / 15 : displaySeconds === 0 ? 1 : 0})` }} /></span>
               </span>
-              <span className="moment-caption"><small>03 · NASDAQ TOWER</small><strong>{timesSquarePlaying ? "The UNIKMO demonstration is playing for 15 seconds." : displaySeconds === 0 ? "The 15-second launch display is complete." : "See UNIKMO on the Nasdaq Tower."}</strong><em>Click to play the timed demonstration</em></span>
+              <span className="moment-caption"><small>03 · NASDAQ TOWER</small><strong>UNIKMO, in Times Square.</strong><em>{timesSquarePlaying ? "Playing" : displaySeconds === 0 ? "Click to replay" : "Click to watch"}</em></span>
             </button>
           </article>
         </div>
