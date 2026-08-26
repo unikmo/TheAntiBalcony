@@ -222,7 +222,7 @@ export function AntiBalconyV2() {
             <button type="button" className="moment-button" onClick={playTimesSquareDemo} aria-pressed={activeMoment === "times-square"} aria-label="Play the UNIKMO Nasdaq Tower display for 15 seconds">
               <span className="moment-media times-square-media">
                 <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Animated UNIKMO creative displayed on the Nasdaq Tower"><source src="/antibalcony-nasdaq-unikmo-idle.mp4" type="video/mp4" /></video>
-                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Fifteen-second demonstration of the UNIKMO launch on the Nasdaq Tower" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-nasdaq-unikmo-proof.mp4" type="video/mp4" /></video>
+                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Fifteen-second demonstration of the UNIKMO launch on the Nasdaq Tower" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-nasdaq-unikmo-proof-v2.mp4" type="video/mp4" /></video>
                 <span className="display-progress" aria-hidden="true"><i style={{ transform: `scaleX(${timesSquarePlaying ? (15 - displaySeconds) / 15 : displaySeconds === 0 ? 1 : 0})` }} /></span>
               </span>
               <span className="moment-caption"><small>03 · NASDAQ TOWER</small><strong>UNIKMO, in Times Square.</strong><em>{timesSquarePlaying ? "Playing" : displaySeconds === 0 ? "Click to replay" : "Click to watch"}</em></span>
@@ -318,14 +318,3 @@ export function AntiBalconyV2() {
           <button className="de-primary" onClick={() => startLaunch()}>Create your public Ring</button>
         </div>
       </section>
-
-      <footer className="de-footer">
-        <div className="de-container de-footer-inner">
-          <div className="de-footer-brand"><strong>THE ANTI-BALCONY</strong><span>Public startup-launch platform</span></div>
-          <nav aria-label="Footer navigation"><Link href="/launch">Launch</Link><Link href="/launches">Launches</Link><Link href="/startup-launch">How it works</Link><Link href="/guides/how-to-launch-a-startup">Guides</Link><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav>
-          <span className="de-footer-copy">© {new Date().getFullYear()}</span>
-        </div>
-      </footer>
-    </main>
-  );
-}
