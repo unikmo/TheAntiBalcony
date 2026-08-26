@@ -32,30 +32,59 @@ function playBell(fullCeremony = false) {
   const ctx = new AudioContextClass();
   const now = ctx.currentTime;
   const duration = fullCeremony ? 8.4 : 1.25;
-  const strikes = fullCeremony ? [0, 0.72, 1.46, 2.2, 2.96, 3.74, 4.54, 5.36, 6.2, 7.06] : [0];
+  const strikes = fullCeremony
+    ? [0, 0.34, 0.7, 1.06, 1.43, 1.82, 2.21, 2.6, 3.01, 3.42, 3.84, 4.28, 4.73, 5.18, 5.65, 6.12, 6.6, 7.08, 7.55, 7.93]
+    : [0];
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.setValueAtTime(-18, now);
+  compressor.knee.setValueAtTime(12, now);
+  compressor.ratio.setValueAtTime(5, now);
+  compressor.attack.setValueAtTime(0.003, now);
+  compressor.release.setValueAtTime(0.12, now);
+  compressor.connect(ctx.destination);
+
   const master = ctx.createGain();
   master.gain.setValueAtTime(0.0001, now);
-  master.gain.exponentialRampToValueAtTime(0.34, now + 0.02);
-  master.gain.setValueAtTime(0.34, now + Math.max(0.5, duration - 0.7));
+  master.gain.exponentialRampToValueAtTime(0.24, now + 0.012);
+  master.gain.setValueAtTime(0.24, now + Math.max(0.5, duration - 0.35));
   master.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-  master.connect(ctx.destination);
+  master.connect(compressor);
 
   strikes.forEach((offset, strikeIndex) => {
-    [330, 495, 660, 990].forEach((frequency, toneIndex) => {
+    const strike = now + offset;
+    const baseFrequency = [880, 988, 1047, 1175][strikeIndex % 4];
+
+    [1, 1.41, 2.08, 2.73].forEach((ratio, toneIndex) => {
       const oscillator = ctx.createOscillator();
       const gain = ctx.createGain();
-      const strike = now + offset;
-      oscillator.type = toneIndex < 2 ? "sine" : "triangle";
-      oscillator.frequency.setValueAtTime(frequency * (1 + strikeIndex * 0.0015), strike);
-      oscillator.detune.setValueAtTime((strikeIndex % 2 === 0 ? -1 : 1) * toneIndex * 2.5, strike);
+      oscillator.type = toneIndex < 3 ? "sine" : "triangle";
+      oscillator.frequency.setValueAtTime(baseFrequency * ratio, strike);
+      oscillator.detune.setValueAtTime((strikeIndex % 2 === 0 ? -1 : 1) * toneIndex * 4, strike);
       gain.gain.setValueAtTime(0.0001, strike);
-      gain.gain.exponentialRampToValueAtTime(0.38 / (toneIndex + 1), strike + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, strike + 1.08);
+      gain.gain.exponentialRampToValueAtTime(0.27 / (toneIndex + 1), strike + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, strike + 0.3);
       oscillator.connect(gain);
       gain.connect(master);
       oscillator.start(strike);
-      oscillator.stop(strike + 1.12);
+      oscillator.stop(strike + 0.34);
     });
+
+    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.045), ctx.sampleRate);
+    const samples = noiseBuffer.getChannelData(0);
+    for (let index = 0; index < samples.length; index += 1) samples[index] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    const highPass = ctx.createBiquadFilter();
+    const noiseGain = ctx.createGain();
+    noise.buffer = noiseBuffer;
+    highPass.type = "highpass";
+    highPass.frequency.setValueAtTime(2600, strike);
+    noiseGain.gain.setValueAtTime(0.12, strike);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, strike + 0.045);
+    noise.connect(highPass);
+    highPass.connect(noiseGain);
+    noiseGain.connect(master);
+    noise.start(strike);
+    noise.stop(strike + 0.05);
   });
 
   window.setTimeout(() => void ctx.close(), (duration + 0.3) * 1000);
@@ -71,6 +100,7 @@ export function AntiBalconyV2() {
   const router = useRouter();
   const [rings, setRings] = useState<Ring[]>([]);
   const [ringing, setRinging] = useState(false);
+  const [recordRevealed, setRecordRevealed] = useState(false);
   const [activeMoment, setActiveMoment] = useState<"founder" | "record" | "times-square">("founder");
   const [timesSquarePlaying, setTimesSquarePlaying] = useState(false);
   const [displaySeconds, setDisplaySeconds] = useState(15);
@@ -97,16 +127,22 @@ export function AntiBalconyV2() {
   function showFounderDemo() {
     stopTimesSquareDemo();
     setActiveMoment("founder");
+    setRecordRevealed(false);
   }
 
   function ringUnikmoDemo() {
+    if (ringing) return;
     stopTimesSquareDemo();
     setActiveMoment("record");
+    setRecordRevealed(false);
     setRinging(false);
     window.requestAnimationFrame(() => setRinging(true));
     playBell(true);
     if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
-    bellTimerRef.current = window.setTimeout(() => setRinging(false), 8400);
+    bellTimerRef.current = window.setTimeout(() => {
+      setRinging(false);
+      setRecordRevealed(true);
+    }, 8400);
   }
 
   function playTimesSquareDemo() {
@@ -163,20 +199,22 @@ export function AntiBalconyV2() {
             </button>
           </article>
 
-          <article className={`visible-moment bell-moment ${activeMoment !== "founder" ? "has-record" : ""}`}>
-            <button type="button" className="moment-button" onClick={ringUnikmoDemo} aria-pressed={activeMoment === "record"} aria-label="Ring the bell for UNIKMO and reveal its public record">
+          <article className={`visible-moment bell-moment ${recordRevealed ? "has-record" : ""}`}>
+            <button type="button" className="moment-button" onClick={ringUnikmoDemo} disabled={ringing} aria-pressed={activeMoment === "record"} aria-label="Ring the bell for UNIKMO and reveal its public record">
               <span className={`moment-media bell-demo-visual ${ringing ? "is-ringing" : ""}`}>
                 <Image src="/antibalcony-real-bell.webp" alt="A polished coral-red ceremonial launch bell" fill priority sizes="(max-width: 850px) 100vw, 33vw" />
-                <span className="bell-prompt"><b>{activeMoment === "founder" ? "RING" : "RING AGAIN"}</b></span>
+                <span className="bell-prompt"><b>{ringing ? "RINGING" : recordRevealed ? "RING AGAIN" : "RING"}</b></span>
                 <span className="bell-wave wave-one" aria-hidden="true" />
                 <span className="bell-wave wave-two" aria-hidden="true" />
-                <span className="public-record-demo" role="status" aria-live="polite">
-                  <small>PUBLIC RECORD</small>
-                  <strong>UNIKMO</strong>
-                  <span><b>UNIKMO.COM</b><b>RUNG · 26 AUG 2026</b></span>
-                </span>
+                {recordRevealed ? (
+                  <span className="public-record-demo" role="status" aria-live="polite">
+                    <small>PUBLIC RECORD</small>
+                    <strong>UNIKMO</strong>
+                    <span><b>UNIKMO.COM</b><b>RUNG · 26 AUG 2026</b></span>
+                  </span>
+                ) : null}
               </span>
-              <span className="moment-caption"><small>02 · BELL</small><strong>{activeMoment === "founder" ? "Ring it to see what becomes public." : "UNIKMO now has a dated public launch record."}</strong><em>No order or submission is created</em></span>
+              <span className="moment-caption"><small>02 · BELL</small><strong>{ringing ? "UNIKMO is ringing in." : recordRevealed ? "UNIKMO now has a dated public launch record." : "Ring it to see what becomes public."}</strong><em>No order or submission is created</em></span>
             </button>
           </article>
 

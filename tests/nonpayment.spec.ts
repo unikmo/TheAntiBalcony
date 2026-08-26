@@ -24,7 +24,11 @@ test("homepage loads cleanly and explains the category", async ({ page }) => {
 test("bell demonstration reveals what a public record means without ordering", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Ring the bell for UNIKMO/i }).click();
-  await expect(page.locator(".public-record-demo")).toBeVisible();
+  await expect(page.locator(".bell-demo-visual")).toHaveClass(/is-ringing/);
+  await expect(page.locator(".bell-demo-visual > img")).toHaveCSS("animation-duration", "0.24s");
+  await expect(page.locator(".bell-demo-visual > img")).toHaveCSS("animation-iteration-count", "35");
+  await expect(page.locator(".public-record-demo")).toHaveCount(0);
+  await expect(page.locator(".public-record-demo")).toBeVisible({ timeout: 10000 });
   await expect(page.locator(".public-record-demo")).toContainText("UNIKMO.COM");
   await expect(page.getByText(/UNIKMO now has a dated public launch record/i)).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
