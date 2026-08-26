@@ -13,18 +13,32 @@ test("homepage loads cleanly and explains the category", async ({ page }) => {
   const errors = captureRuntimeErrors(page);
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: /Launch your startup in public/i })).toBeVisible();
-  await expect(page.getByText(/Bell · Times Square · Your public Ring/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: /Ring in your startup/i }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Your launch deserves a public record/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Show UNIKMO founder launch example/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Ring the bell for UNIKMO/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Play the UNIKMO Times Square display for 15 seconds/i })).toBeVisible();
 
   expect(errors).toEqual([]);
 });
 
-test("bell CTA carries a visitor into the launch flow", async ({ page }) => {
+test("bell demonstration reveals what a public record means without ordering", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Ring in your startup/i }).first().click();
-  await expect(page).toHaveURL(/\/launch$/);
-  await expect(page.getByRole("heading", { name: /Ring in your startup/i })).toBeVisible();
+  await page.getByRole("button", { name: /Ring the bell for UNIKMO/i }).click();
+  await expect(page.locator(".public-record-demo")).toBeVisible();
+  await expect(page.locator(".public-record-demo")).toContainText("UNIKMO.COM");
+  await expect(page.getByText(/UNIKMO now has a dated public launch record/i)).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test("Times Square tile switches from its animated screen to a timed Times Square proof preview", async ({ page }) => {
+  await page.goto("/");
+  const tile = page.locator(".times-square-moment");
+  await expect(tile.locator(".times-square-idle")).toBeVisible();
+  await tile.getByRole("button", { name: /Play the UNIKMO Times Square display for 15 seconds/i }).click();
+  await expect(tile.locator(".proof-metadata")).toContainText("TIMES SQUARE · NEW YORK");
+  await expect(tile.locator(".proof-metadata")).toContainText("ADOMNI (PLANNED)");
+  await expect(tile.locator(".times-square-proof")).toHaveCSS("opacity", "1");
+  await expect(tile.locator("a")).toHaveCount(0);
 });
 
 test("free package enters the base launch flow", async ({ page }) => {
@@ -136,7 +150,7 @@ test("mobile hero keeps the core action visible", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: /Launch your startup in public/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Ring in your startup/i }).first()).toBeVisible();
-  await expect(page.locator(".cinema-bell-button")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Your launch deserves a public record/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Ring the bell for UNIKMO/i })).toBeVisible();
+  await expect(page.locator(".bell-demo-visual")).toBeVisible();
 });

@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Ring = {
   id: string;
@@ -62,13 +63,76 @@ export function AntiBalconyV2() {
   const router = useRouter();
   const [rings, setRings] = useState<Ring[]>([]);
   const [ringing, setRinging] = useState(false);
+  const [activeMoment, setActiveMoment] = useState<"founder" | "record" | "times-square">("founder");
+  const [timesSquarePlaying, setTimesSquarePlaying] = useState(false);
+  const [displaySeconds, setDisplaySeconds] = useState(15);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const bellTimerRef = useRef<number | null>(null);
+  const displayTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     fetch("/api/rings")
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data: { rings?: Ring[] }) => setRings(data.rings ?? []))
       .catch(() => setRings([]));
+
+    return () => {
+      if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
+      if (displayTimerRef.current) window.clearInterval(displayTimerRef.current);
+    };
   }, []);
+
+  function stopTimesSquareDemo() {
+    if (displayTimerRef.current) {
+      window.clearInterval(displayTimerRef.current);
+      displayTimerRef.current = null;
+    }
+    videoRef.current?.pause();
+    setTimesSquarePlaying(false);
+    setDisplaySeconds(15);
+  }
+
+  function showFounderDemo() {
+    stopTimesSquareDemo();
+    setActiveMoment("founder");
+  }
+
+  function ringUnikmoDemo() {
+    stopTimesSquareDemo();
+    setActiveMoment("record");
+    setRinging(false);
+    window.requestAnimationFrame(() => setRinging(true));
+    playBell();
+    if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
+    bellTimerRef.current = window.setTimeout(() => setRinging(false), 1000);
+  }
+
+  function playTimesSquareDemo() {
+    stopTimesSquareDemo();
+    setActiveMoment("times-square");
+    setTimesSquarePlaying(true);
+    setDisplaySeconds(15);
+
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = 0;
+      void video.play();
+    }
+
+    const startedAt = window.performance.now();
+    displayTimerRef.current = window.setInterval(() => {
+      const elapsed = (window.performance.now() - startedAt) / 1000;
+      const remaining = Math.max(0, 15 - elapsed);
+      setDisplaySeconds(Number(remaining.toFixed(1)));
+
+      if (remaining <= 0) {
+        if (displayTimerRef.current) window.clearInterval(displayTimerRef.current);
+        displayTimerRef.current = null;
+        videoRef.current?.pause();
+        setTimesSquarePlaying(false);
+      }
+    }, 100);
+  }
 
   function startLaunch(tier?: string) {
     setRinging(true);
@@ -90,51 +154,48 @@ export function AntiBalconyV2() {
 
       <section className="cinema-hero" aria-labelledby="home-title">
         <div className="record-hero-title"><h1 id="home-title">Your launch deserves a public record.</h1></div>
-        <div className="visible-moments" aria-label="Founder, public Ring and Times Square launch journey">
-          <article><img src="/antibalcony-founder-launch.webp" alt="A founder preparing a startup launch" /><div><span>01 · FOUNDER</span><strong>You launch what you built.</strong></div></article>
-          <article className="visible-ring"><div className="public-ring-visual"><i /><small>FOUNDER-APPROVED RECORD</small><strong>YOUR STARTUP</strong><p>The launch now has a permanent public page.</p><b>RUNG IN · 2026</b></div><div><span>02 · RING</span><strong>The moment becomes public.</strong></div></article>
-          <article><video autoPlay muted loop playsInline poster="/antibalcony-times-square.webp" aria-label="Startup launch appearing in Times Square"><source src="/antibalcony-times-square-loop-lite.mp4" type="video/mp4" /></video><div><span>03 · TIMES SQUARE</span><strong>Extend it when the moment deserves more.</strong></div></article>
-        </div>
-        <div className="cinema-stage" aria-label="A cinematic launch scene combining Times Square, The Anti-Balcony bell and a public startup Ring">
-          <div className="cinema-city" aria-hidden="true">
-            <div className="cinema-building left-a" />
-            <div className="cinema-building left-b" />
-            <div className="cinema-building right-b" />
-            <div className="cinema-building right-a" />
-            <div className="cinema-side-screen left" />
-            <div className="cinema-side-screen right" />
-            <div className="cinema-billboard">
-              <small>Times Square · New York</small>
-              <strong>Your Startup</strong>
-              <span>Rung in on The Anti-Balcony</span>
-            </div>
-          </div>
-
-          <article className="cinema-ring-card" aria-label="Example public startup Ring">
-            <span>Public Ring · Launch artifact</span>
-            <strong>YOUR STARTUP</strong>
-            <footer><b>RUNG IN</b><b>NEW YORK</b></footer>
+        <div className="visible-moments" aria-label="Interactive UNIKMO founder, bell and Times Square demonstration">
+          <article className={`visible-moment founder-moment ${activeMoment === "founder" ? "is-active" : ""}`}>
+            <button type="button" className="moment-button" onClick={showFounderDemo} aria-pressed={activeMoment === "founder"} aria-label="Show UNIKMO founder launch example">
+              <span className="moment-media founder-media">
+                <Image src="/antibalcony-founder-launch.webp" alt="A founder preparing the UNIKMO launch" fill priority sizes="(max-width: 850px) 100vw, 33vw" />
+                <span className="moment-status"><b>UNIKMO.COM</b><small>READY TO RING</small></span>
+              </span>
+              <span className="moment-caption"><small>01 · FOUNDER</small><strong>UNIKMO is ready to enter the public record.</strong><em>Click to restart the demonstration</em></span>
+            </button>
           </article>
 
-          <div className={`cinema-bell-wrap ${ringing ? "is-ringing" : ""}`} style={{ animation: "none" }}>
-            <button className="cinema-bell-button" onClick={() => startLaunch()} aria-label="Ring in your startup">
-              <span className="cinema-bell-handle" aria-hidden="true" />
-              <span className="cinema-bell-body" aria-hidden="true" />
-              <span className="cinema-bell-lip" aria-hidden="true" />
-              <span className="cinema-bell-clapper" aria-hidden="true" />
-              <span className="cinema-bell-word">RING</span>
+          <article className={`visible-moment bell-moment ${activeMoment !== "founder" ? "has-record" : ""}`}>
+            <button type="button" className="moment-button" onClick={ringUnikmoDemo} aria-pressed={activeMoment === "record"} aria-label="Ring the bell for UNIKMO and reveal its public record">
+              <span className={`moment-media bell-demo-visual ${ringing ? "is-ringing" : ""}`}>
+                <Image src="/antibalcony-real-bell.webp" alt="A polished coral-red ceremonial launch bell" fill priority sizes="(max-width: 850px) 100vw, 33vw" />
+                <span className="bell-prompt"><b>{activeMoment === "founder" ? "RING THE BELL" : "RING AGAIN"}</b><small>Click the bell</small></span>
+                <span className="bell-wave wave-one" aria-hidden="true" />
+                <span className="bell-wave wave-two" aria-hidden="true" />
+                <span className="public-record-demo" role="status" aria-live="polite">
+                  <small>FOUNDER-INITIATED · DEMONSTRATION RECORD</small>
+                  <strong>UNIKMO</strong>
+                  <p>Some moments deserve more than a message.</p>
+                  <span><b>UNIKMO.COM</b><b>RUNG · 26 AUG 2026</b></span>
+                </span>
+              </span>
+              <span className="moment-caption"><small>02 · BELL</small><strong>{activeMoment === "founder" ? "Ring it to see what becomes public." : "UNIKMO now has a dated public launch record."}</strong><em>No order or submission is created</em></span>
             </button>
-            <span className="cinema-bell-caption">Press the bell to begin</span>
-          </div>
-        </div>
+          </article>
 
-        <div className="cinema-copy">
-          <p className="cinema-kicker">Bell · Times Square · Your public Ring</p>
-          <h2>Launch your startup in public.</h2>
-          <p>Ring in what you built. Put the moment on a public record. Take it to Times Square when the launch deserves a bigger stage.</p>
-          <div className="cinema-actions">
-            <button className="cinema-primary" onClick={() => startLaunch()}>Ring in your startup</button>
-          </div>
+          <article className={`visible-moment times-square-moment ${activeMoment === "times-square" ? "is-active" : ""}`}>
+            <button type="button" className="moment-button" onClick={playTimesSquareDemo} aria-pressed={activeMoment === "times-square"} aria-label="Play the UNIKMO Times Square display for 15 seconds">
+              <span className="moment-media times-square-media">
+                <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-times-square.webp" aria-label="Animated giant Times Square launch screen"><source src="/antibalcony-times-square-loop-lite.mp4" type="video/mp4" /></video>
+                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-times-square-proof-preview.webp" aria-label="Fifteen-second proof preview of the UNIKMO launch on a giant Times Square screen"><source src="/antibalcony-times-square-proof-preview.mp4" type="video/mp4" /></video>
+                <span className="times-square-screen"><small>THE ANTI-BALCONY PRESENTS</small><strong>UNIKMO</strong><b>SOME MOMENTS DESERVE MORE THAN A MESSAGE.</b></span>
+                <span className="proof-metadata"><b><i /> PROOF PREVIEW</b><small>TIMES SQUARE · NEW YORK</small><small>PLACEMENT SOURCE · ADOMNI (PLANNED)</small><small>CAPTURE · LICENSED FIELD CAMERA</small></span>
+                <span className="display-timer" aria-live="polite"><b>{timesSquarePlaying ? `${displaySeconds.toFixed(1)}s` : displaySeconds === 0 ? "15s COMPLETE" : "PLAY 15s"}</b><small>{timesSquarePlaying ? "LIVE DISPLAY" : displaySeconds === 0 ? "DISPLAY PROOF" : "CLICK TIMES SQUARE"}</small></span>
+                <span className="display-progress" aria-hidden="true"><i style={{ transform: `scaleX(${timesSquarePlaying ? (15 - displaySeconds) / 15 : displaySeconds === 0 ? 1 : 0})` }} /></span>
+              </span>
+              <span className="moment-caption"><small>03 · TIMES SQUARE</small><strong>{timesSquarePlaying ? "UNIKMO is live for 15 seconds." : displaySeconds === 0 ? "The 15-second launch display is complete." : "See the same launch on a real-world stage."}</strong><em>Click to play the timed display</em></span>
+            </button>
+          </article>
         </div>
       </section>
 
