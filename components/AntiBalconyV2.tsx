@@ -318,3 +318,14 @@ export function AntiBalconyV2() {
           <button className="de-primary" onClick={() => startLaunch()}>Create your public Ring</button>
         </div>
       </section>
+
+      <footer className="de-footer">
+        <div className="de-container de-footer-inner">
+          <div className="de-footer-brand"><strong>THE ANTI-BALCONY</strong><span>Public startup-launch platform</span></div>
+          <nav aria-label="Footer navigation"><Link href="/launch">Launch</Link><Link href="/launches">Launches</Link><Link href="/startup-launch">How it works</Link><Link href="/guides/how-to-launch-a-startup">Guides</Link><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav>
+          <span className="de-footer-copy">© {new Date().getFullYear()}</span>
+        </div>
+      </footer>
+    </main>
+  );
+}
