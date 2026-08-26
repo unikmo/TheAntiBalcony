@@ -68,7 +68,6 @@ export function AntiBalconyV2() {
   const [displaySeconds, setDisplaySeconds] = useState(15);
   const videoRef = useRef<HTMLVideoElement>(null);
   const bellTimerRef = useRef<number | null>(null);
-  const displayTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     fetch("/api/rings")
@@ -78,15 +77,10 @@ export function AntiBalconyV2() {
 
     return () => {
       if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
-      if (displayTimerRef.current) window.clearInterval(displayTimerRef.current);
     };
   }, []);
 
   function stopTimesSquareDemo() {
-    if (displayTimerRef.current) {
-      window.clearInterval(displayTimerRef.current);
-      displayTimerRef.current = null;
-    }
     videoRef.current?.pause();
     setTimesSquarePlaying(false);
     setDisplaySeconds(15);
@@ -118,20 +112,16 @@ export function AntiBalconyV2() {
       video.currentTime = 0;
       void video.play();
     }
+  }
 
-    const startedAt = window.performance.now();
-    displayTimerRef.current = window.setInterval(() => {
-      const elapsed = (window.performance.now() - startedAt) / 1000;
-      const remaining = Math.max(0, 15 - elapsed);
-      setDisplaySeconds(Number(remaining.toFixed(1)));
+  function syncTimesSquareTimer() {
+    const elapsed = videoRef.current?.currentTime ?? 0;
+    setDisplaySeconds(Number(Math.max(0, 15 - elapsed).toFixed(1)));
+  }
 
-      if (remaining <= 0) {
-        if (displayTimerRef.current) window.clearInterval(displayTimerRef.current);
-        displayTimerRef.current = null;
-        videoRef.current?.pause();
-        setTimesSquarePlaying(false);
-      }
-    }, 100);
+  function completeTimesSquareDemo() {
+    setDisplaySeconds(0);
+    setTimesSquarePlaying(false);
   }
 
   function startLaunch(tier?: string) {
@@ -187,7 +177,7 @@ export function AntiBalconyV2() {
             <button type="button" className="moment-button" onClick={playTimesSquareDemo} aria-pressed={activeMoment === "times-square"} aria-label="Play the UNIKMO Times Square display for 15 seconds">
               <span className="moment-media times-square-media">
                 <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-times-square.webp" aria-label="Animated giant Times Square launch screen"><source src="/antibalcony-times-square-loop-lite.mp4" type="video/mp4" /></video>
-                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-times-square-proof-preview.webp" aria-label="Fifteen-second proof preview of the UNIKMO launch on a giant Times Square screen"><source src="/antibalcony-times-square-proof-preview.mp4" type="video/mp4" /></video>
+                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-times-square-proof-preview.webp" aria-label="Fifteen-second proof preview of the UNIKMO launch on a giant Times Square screen" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-times-square-proof-preview.mp4" type="video/mp4" /></video>
                 <span className="times-square-screen"><small>THE ANTI-BALCONY PRESENTS</small><strong>UNIKMO</strong><b>SOME MOMENTS DESERVE MORE THAN A MESSAGE.</b></span>
                 <span className="proof-metadata"><b><i /> PROOF PREVIEW</b><small>TIMES SQUARE · NEW YORK</small><small>PLACEMENT SOURCE · ADOMNI (PLANNED)</small><small>CAPTURE · LICENSED FIELD CAMERA</small></span>
                 <span className="display-timer" aria-live="polite"><b>{timesSquarePlaying ? `${displaySeconds.toFixed(1)}s` : displaySeconds === 0 ? "15s COMPLETE" : "PLAY 15s"}</b><small>{timesSquarePlaying ? "LIVE DISPLAY" : displaySeconds === 0 ? "DISPLAY PROOF" : "CLICK TIMES SQUARE"}</small></span>
