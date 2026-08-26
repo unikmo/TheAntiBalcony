@@ -30,13 +30,14 @@ test("bell demonstration reveals what a public record means without ordering", a
   await expect(page).toHaveURL(/\/$/);
 });
 
-test("Times Square tile switches from its animated screen to a timed Times Square proof preview", async ({ page }) => {
+test("Nasdaq Tower tile switches from its animated UNIKMO screen to a timed proof demonstration", async ({ page }) => {
   await page.goto("/");
   const tile = page.locator(".times-square-moment");
   await expect(tile.locator(".times-square-idle")).toBeVisible();
-  await tile.getByRole("button", { name: /Play the UNIKMO Times Square display for 15 seconds/i }).click();
-  await expect(tile.locator(".proof-metadata")).toContainText("TIMES SQUARE · NEW YORK");
-  await expect(tile.locator(".proof-metadata")).toContainText("ADOMNI (PLANNED)");
+  await tile.getByRole("button", { name: /Play the UNIKMO Nasdaq Tower display for 15 seconds/i }).click();
+  await expect(tile.locator(".proof-metadata")).toContainText("NASDAQ TOWER · NEW YORK");
+  await expect(tile.locator(".proof-metadata")).toContainText("9:16 MASTER / TOWER-ADAPTED");
+  await expect(tile.locator(".proof-metadata")).toContainText("PROVIDER CONFIRMATION REQUIRED");
   await expect(tile.locator(".times-square-proof")).toHaveCSS("opacity", "1");
   await expect(tile.locator("a")).toHaveCount(0);
 });

@@ -174,16 +174,15 @@ export function AntiBalconyV2() {
           </article>
 
           <article className={`visible-moment times-square-moment ${activeMoment === "times-square" ? "is-active" : ""}`}>
-            <button type="button" className="moment-button" onClick={playTimesSquareDemo} aria-pressed={activeMoment === "times-square"} aria-label="Play the UNIKMO Times Square display for 15 seconds">
+            <button type="button" className="moment-button" onClick={playTimesSquareDemo} aria-pressed={activeMoment === "times-square"} aria-label="Play the UNIKMO Nasdaq Tower display for 15 seconds">
               <span className="moment-media times-square-media">
-                <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-times-square.webp" aria-label="Animated giant Times Square launch screen"><source src="/antibalcony-times-square-loop-lite.mp4" type="video/mp4" /></video>
-                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-times-square-proof-preview.webp" aria-label="Fifteen-second proof preview of the UNIKMO launch on a giant Times Square screen" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-times-square-proof-preview.mp4" type="video/mp4" /></video>
-                <span className="times-square-screen"><small>THE ANTI-BALCONY PRESENTS</small><strong>UNIKMO</strong><b>SOME MOMENTS DESERVE MORE THAN A MESSAGE.</b></span>
-                <span className="proof-metadata"><b><i /> PROOF PREVIEW</b><small>TIMES SQUARE · NEW YORK</small><small>PLACEMENT SOURCE · ADOMNI (PLANNED)</small><small>CAPTURE · LICENSED FIELD CAMERA</small></span>
-                <span className="display-timer" aria-live="polite"><b>{timesSquarePlaying ? `${displaySeconds.toFixed(1)}s` : displaySeconds === 0 ? "15s COMPLETE" : "PLAY 15s"}</b><small>{timesSquarePlaying ? "LIVE DISPLAY" : displaySeconds === 0 ? "DISPLAY PROOF" : "CLICK TIMES SQUARE"}</small></span>
+                <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Animated UNIKMO creative displayed on the Nasdaq Tower"><source src="/antibalcony-nasdaq-unikmo-idle.mp4" type="video/mp4" /></video>
+                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Fifteen-second demonstration of the UNIKMO launch on the Nasdaq Tower" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-nasdaq-unikmo-proof.mp4" type="video/mp4" /></video>
+                <span className="proof-metadata"><b><i /> DEMONSTRATION</b><small>NASDAQ TOWER · NEW YORK</small><small>CREATIVE · 9:16 MASTER / TOWER-ADAPTED</small><small>BOOKING · PROVIDER CONFIRMATION REQUIRED</small></span>
+                <span className="display-timer" aria-live="polite"><b>{timesSquarePlaying ? `${displaySeconds.toFixed(1)}s` : displaySeconds === 0 ? "15s COMPLETE" : "PLAY 15s"}</b><small>{timesSquarePlaying ? "DEMO PLAYBACK" : displaySeconds === 0 ? "DEMO COMPLETE" : "CLICK NASDAQ"}</small></span>
                 <span className="display-progress" aria-hidden="true"><i style={{ transform: `scaleX(${timesSquarePlaying ? (15 - displaySeconds) / 15 : displaySeconds === 0 ? 1 : 0})` }} /></span>
               </span>
-              <span className="moment-caption"><small>03 · TIMES SQUARE</small><strong>{timesSquarePlaying ? "UNIKMO is live for 15 seconds." : displaySeconds === 0 ? "The 15-second launch display is complete." : "See the same launch on a real-world stage."}</strong><em>Click to play the timed display</em></span>
+              <span className="moment-caption"><small>03 · NASDAQ TOWER</small><strong>{timesSquarePlaying ? "The UNIKMO demonstration is playing for 15 seconds." : displaySeconds === 0 ? "The 15-second launch display is complete." : "See UNIKMO on the Nasdaq Tower."}</strong><em>Click to play the timed demonstration</em></span>
             </button>
           </article>
         </div>
