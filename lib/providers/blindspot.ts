@@ -40,6 +40,12 @@ export type BlindspotConfirmationResult = {
   scheduledWindowEnd?: string | null;
 };
 
+export type BlindspotCreativeReviewResult = {
+  status: "approved" | "needs_changes" | "manual_review";
+  moderationStatus?: string | null;
+  notes?: string | null;
+};
+
 function bridgeUrl() {
   return process.env.BLINDSPOT_BOOKING_BRIDGE_URL || process.env.BLINDSPOT_API_BRIDGE_URL;
 }
@@ -82,9 +88,39 @@ export async function checkBlindspotAvailability(
 
   if (!response.ok) throw new Error(`Blindspot availability bridge returned ${response.status}.`);
   const data = (await response.json().catch(() => ({}))) as BlindspotAvailabilityResult;
-  if (!data.status || !["available", "unavailable", "manual_review"].includes(data.status)) {
-    return { status: "manual_review" };
-  }
+  if (!data.status || !["available", "unavailable", "manual_review"].includes(data.status)) return { status: "manual_review" };
+  return data;
+}
+
+export async function reviewBlindspotCreative(input: {
+  orderId: string;
+  orderRef: string;
+  providerRef?: string | null;
+  holdRef?: string | null;
+  creativePath: string;
+  contentType: string;
+  width: number;
+  height: number;
+  durationSeconds?: number | null;
+}): Promise<BlindspotCreativeReviewResult> {
+  const url = bridgeUrl();
+  if (!url) return { status: "manual_review" };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: headers(`${input.orderId}:creative-preflight`),
+    body: JSON.stringify({
+      source: "the-anti-balcony",
+      event: "creative_preflight_requested",
+      ...input,
+      masterFormat: "9:16",
+      callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/orders/provider-callback`,
+    }),
+  });
+
+  if (!response.ok) throw new Error(`Blindspot creative preflight returned ${response.status}.`);
+  const data = (await response.json().catch(() => ({}))) as BlindspotCreativeReviewResult;
+  if (!data.status || !["approved", "needs_changes", "manual_review"].includes(data.status)) return { status: "manual_review" };
   return data;
 }
 
@@ -111,8 +147,6 @@ export async function confirmBlindspotBooking(input: {
 
   if (!response.ok) throw new Error(`Blindspot confirmation bridge returned ${response.status}.`);
   const data = (await response.json().catch(() => ({}))) as BlindspotConfirmationResult;
-  if (!data.status || !["confirmed", "manual_review", "failed"].includes(data.status)) {
-    return { status: "manual_review" };
-  }
+  if (!data.status || !["confirmed", "manual_review", "failed"].includes(data.status)) return { status: "manual_review" };
   return data;
 }
