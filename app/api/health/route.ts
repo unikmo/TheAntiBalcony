@@ -7,34 +7,38 @@ export function GET() {
   );
   const stripe = Boolean(
     process.env.STRIPE_SECRET_KEY &&
+    process.env.STRIPE_WEBHOOK_SECRET &&
     process.env.STRIPE_PRICE_SNAPSHOT &&
     process.env.STRIPE_PRICE_VIDEO &&
-    process.env.STRIPE_PRICE_TAKEOVER &&
-    process.env.STRIPE_PRICE_VIP,
+    process.env.STRIPE_PRICE_TAKEOVER,
   );
+  const blindspot = Boolean(process.env.BLINDSPOT_BOOKING_BRIDGE_URL || process.env.BLINDSPOT_API_BRIDGE_URL);
+  const earthcam = Boolean(process.env.EARTHCAM_CAPTURE_BRIDGE_URL);
+  const providerCallback = Boolean(process.env.PROVIDER_CALLBACK_SECRET || process.env.FULFILLMENT_CALLBACK_SECRET);
   const operations = Boolean(
     process.env.ZAPIER_OPERATIONS_WEBHOOK_URL ||
     process.env.ZAPIER_BILLBOARD_WEBHOOK_URL ||
     process.env.BILLBOARD_FULFILLMENT_WEBHOOK_URL,
   );
   const proof = Boolean(
+    earthcam ||
     process.env.ZAPIER_OPERATIONS_WEBHOOK_URL ||
     process.env.ZAPIER_PROOF_WEBHOOK_URL ||
     process.env.PROOF_CAPTURE_WEBHOOK_URL,
   );
-  const social = Boolean(
-    process.env.ZAPIER_SOCIAL_WEBHOOK_URL ||
-    process.env.SOCIAL_PUBLISH_WEBHOOK_URL,
-  );
+  const social = Boolean(process.env.ZAPIER_SOCIAL_WEBHOOK_URL || process.env.SOCIAL_PUBLISH_WEBHOOK_URL);
 
   return NextResponse.json({
     ok: true,
     database: supabase,
     supabase,
     stripe,
-    operations,
-    fulfillment: operations,
-    proof,
+    blindspot,
+    earthcam,
+    providerCallback,
+    bookingReady: supabase && stripe && blindspot && providerCallback,
+    proofReady: proof && providerCallback,
+    legacyOperations: operations,
     social,
   });
 }
