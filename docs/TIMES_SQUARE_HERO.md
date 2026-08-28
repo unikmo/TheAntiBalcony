@@ -16,7 +16,7 @@ Each scene has server-rendered HTML copy, not text embedded in the image. The vi
 | Weddings & anniversaries | Your love. Larger than life. | Imagine their face when they look up. |
 | Graduations & achievements | You earned this. Let it show. | A bigger stage for your next chapter. |
 
-Warm-white copy sits at the lower left over a dark gradient, leaving the tower and portraits as the main image. Smaller type and insets on mobile. No added purchase button, card language or specification copy inside the image.
+Warm-white copy sits at the lower left over a dark gradient, leaving the tower and portraits as the main image. Smaller type and insets on mobile. Desktop image height is capped at 58% of the small viewport height (640px maximum) so the invitation is visible sooner on shorter laptop screens. No added purchase button, card language or specification copy inside the image.
 
 ## Assets
 
