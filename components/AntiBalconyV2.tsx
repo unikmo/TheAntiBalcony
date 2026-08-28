@@ -11,19 +11,100 @@ type Moment = {
   screen: string;
   note: string;
   art: string;
+  image: string;
 };
 
 const moments: Moment[] = [
-  { slug: "proposal", label: "Proposal", question: "About to ask?", screen: "WILL YOU MARRY ME?", note: "Make the question impossible to miss.", art: "proposal" },
-  { slug: "wedding", label: "Wedding", question: "Saying I do?", screen: "THIS IS OUR DAY", note: "Put the date you will never forget above Times Square.", art: "wedding" },
-  { slug: "birthday", label: "Birthday", question: "Someone worth celebrating?", screen: "HAPPY BIRTHDAY", note: "For the person who deserves more than a post.", art: "birthday" },
-  { slug: "baby", label: "Baby shower", question: "A little one on the way?", screen: "HELLO, LITTLE ONE", note: "Welcome them to the world in the middle of it.", art: "baby" },
-  { slug: "love", label: "I love you", question: "Want to say it bigger?", screen: "I LOVE YOU", note: "Three words. One impossible-to-ignore screen.", art: "love" },
-  { slug: "memories", label: "Our memories", question: "A memory worth keeping?", screen: "OUR STORY", note: "Some moments deserve more than 24 hours.", art: "memories" },
-  { slug: "anniversary", label: "Anniversary", question: "Still choosing each other?", screen: "STILL US", note: "Mark the years with something that feels like them.", art: "anniversary" },
-  { slug: "graduation", label: "Graduation", question: "They did the work?", screen: "YOU DID IT", note: "Give the achievement a skyline.", art: "graduation" },
-  { slug: "achievement", label: "Big win", question: "Earned something big?", screen: "THIS IS YOUR MOMENT", note: "You earned it. Let it show.", art: "achievement" },
-  { slug: "launch", label: "Launch", question: "Built something?", screen: "WE'RE LIVE", note: "Ring the work into public when it is ready.", art: "launch" },
+  {
+    slug: "proposal",
+    label: "Proposal",
+    question: "About to ask?",
+    screen: "WILL YOU MARRY ME?",
+    note: "Make the question impossible to miss.",
+    art: "proposal",
+    image: "https://images.pexels.com/photos/3038145/pexels-photo-3038145.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "wedding",
+    label: "Wedding",
+    question: "Saying I do?",
+    screen: "THIS IS OUR DAY",
+    note: "Put the date you will never forget above Times Square.",
+    art: "wedding",
+    image: "https://images.pexels.com/photos/18047314/pexels-photo-18047314.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "birthday",
+    label: "Birthday",
+    question: "Someone worth celebrating?",
+    screen: "HAPPY BIRTHDAY",
+    note: "For the person who deserves more than a post.",
+    art: "birthday",
+    image: "https://images.pexels.com/photos/7337165/pexels-photo-7337165.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "baby",
+    label: "Baby shower",
+    question: "A little one on the way?",
+    screen: "HELLO, LITTLE ONE",
+    note: "Welcome them to the world in the middle of it.",
+    art: "baby",
+    image: "https://images.pexels.com/photos/29324785/pexels-photo-29324785.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "love",
+    label: "I love you",
+    question: "Want to say it bigger?",
+    screen: "I LOVE YOU",
+    note: "Three words. One impossible-to-ignore screen.",
+    art: "love",
+    image: "https://images.pexels.com/photos/30531610/pexels-photo-30531610.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "memories",
+    label: "Our memories",
+    question: "A memory worth keeping?",
+    screen: "OUR STORY",
+    note: "Some moments deserve more than 24 hours.",
+    art: "memories",
+    image: "https://images.pexels.com/photos/8848781/pexels-photo-8848781.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "anniversary",
+    label: "Anniversary",
+    question: "Still choosing each other?",
+    screen: "STILL US",
+    note: "Mark the years with something that feels like them.",
+    art: "anniversary",
+    image: "https://images.pexels.com/photos/4015089/pexels-photo-4015089.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "graduation",
+    label: "Graduation",
+    question: "They did the work?",
+    screen: "YOU DID IT",
+    note: "Give the achievement a skyline.",
+    art: "graduation",
+    image: "https://images.pexels.com/photos/37296595/pexels-photo-37296595.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "achievement",
+    label: "Big win",
+    question: "Earned something big?",
+    screen: "THIS IS YOUR MOMENT",
+    note: "You earned it. Let it show.",
+    art: "achievement",
+    image: "https://images.pexels.com/photos/6250860/pexels-photo-6250860.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
+  {
+    slug: "launch",
+    label: "Launch",
+    question: "Built something?",
+    screen: "WE'RE LIVE",
+    note: "Ring the work into public when it is ready.",
+    art: "launch",
+    image: "https://images.pexels.com/photos/6913228/pexels-photo-6913228.jpeg?auto=compress&cs=tinysrgb&w=1200&h=900&fit=crop",
+  },
 ];
 
 const offers = [
@@ -121,7 +202,7 @@ export function AntiBalconyV2() {
 
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % moments.length);
-    }, 3400);
+    }, 2800);
 
     return () => window.clearInterval(timer);
   }, [paused]);
@@ -148,10 +229,19 @@ export function AntiBalconyV2() {
   return (
     <main className="ab-home">
       <header className="ab-header">
-        <Link className="ab-brand" href="/" aria-label="The Anti-Balcony home">
-          <span aria-hidden="true" />
-          THE ANTI-BALCONY
-        </Link>
+        <div className="ab-header-inner">
+          <Link className="ab-brand" href="/" aria-label="The Anti-Balcony home">
+            <span aria-hidden="true" />
+            THE ANTI-BALCONY
+          </Link>
+          <nav aria-label="Main navigation">
+            <a href="#how">How it works</a>
+            <a href="#occasions">Occasions</a>
+            <a href="#proof">What you get</a>
+            <a href="#offer">Pricing</a>
+          </nav>
+          <a className="ab-header-cta" href={mailto("I want my Times Square moment")}>Book your moment</a>
+        </div>
       </header>
 
       <section className="ab-hero" aria-labelledby="home-title">
@@ -160,7 +250,7 @@ export function AntiBalconyV2() {
           <h1 id="home-title">
             Celebrate it. Show it. <em>Keep it.</em>
           </h1>
-          <span>Proposal. Birthday. Wedding. Launch. Or simply: I love you.</span>
+          <span>A proposal. A birthday. A wedding. A launch. Or three words you want the world to see.</span>
         </div>
 
         <div
@@ -189,7 +279,11 @@ export function AntiBalconyV2() {
             <strong>{moment.note}</strong>
           </div>
 
-          <div className={`ab-screen ab-screen-${moment.art}`} key={moment.slug}>
+          <div
+            className={`ab-screen ab-screen-${moment.art}`}
+            key={moment.slug}
+            style={{ backgroundImage: `linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.48)), url("${moment.image}")` }}
+          >
             <span>{moment.label}</span>
             <strong>{moment.screen}</strong>
             <small>THE ANTI-BALCONY · TIMES SQUARE</small>
@@ -215,22 +309,29 @@ export function AntiBalconyV2() {
           </button>
         </div>
 
-        <div className="ab-moment-tabs" aria-label="Choose a moment">
-          {moments.map((item, index) => (
-            <button
-              key={item.slug}
-              type="button"
-              className={index === activeIndex ? "is-active" : undefined}
-              aria-pressed={index === activeIndex}
-              onClick={() => setActiveIndex(index)}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div className="ab-occasion-wrap" id="occasions">
+          <p>CHOOSE YOUR MOMENT</p>
+          <div className="ab-moment-tabs" aria-label="Choose a moment">
+            {moments.map((item, index) => (
+              <button
+                key={item.slug}
+                type="button"
+                className={index === activeIndex ? "is-active" : undefined}
+                aria-pressed={index === activeIndex}
+                onClick={() => setActiveIndex(index)}
+              >
+                <span className="ab-moment-thumb" style={{ backgroundImage: `url("${item.image}")` }} aria-hidden="true" />
+                <span className="ab-moment-copy">
+                  <strong>{item.label}</strong>
+                  <small>{item.question}</small>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="ab-hero-after">
-          <p>15 seconds in Times Square. Proof you were there. A record that does not disappear.</p>
+          <p><strong>15 seconds in Times Square.</strong> Verified proof you were there. A keepsake that does not disappear when the screen goes dark.</p>
           <a href={mailto(`My Times Square moment — ${moment.label}`)}>Make it yours</a>
         </div>
       </section>
@@ -240,7 +341,7 @@ export function AntiBalconyV2() {
           <p>THE WHOLE IDEA</p>
           <h2 id="how-title">The moment should not end when the screen goes dark.</h2>
         </div>
-        <div className="ab-three-grid">
+        <div className="ab-three-grid" id="proof">
           <article>
             <span>01</span>
             <h3>Show it.</h3>
@@ -298,7 +399,7 @@ export function AntiBalconyV2() {
 
       <section className="ab-offer" id="offer" aria-labelledby="offer-title">
         <div className="ab-section-copy">
-          <p>KEEP THE OFFER SIMPLE</p>
+          <p>SIMPLE BY DESIGN</p>
           <h2 id="offer-title">Choose how much of the moment you want to keep.</h2>
         </div>
         <div className="ab-offer-list">
