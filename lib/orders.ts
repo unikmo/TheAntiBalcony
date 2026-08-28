@@ -1,6 +1,14 @@
 import { createHash, randomBytes, randomUUID } from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { checkBlindspotAvailability, confirmBlindspotBooking, DISPLAY_WINDOWS, type DisplayWindowCode, type MomentTier } from "@/lib/providers/blindspot";
+import { getStripe } from "@/lib/stripe";
+import {
+  checkBlindspotAvailability,
+  confirmBlindspotBooking,
+  reviewBlindspotCreative,
+  DISPLAY_WINDOWS,
+  type DisplayWindowCode,
+  type MomentTier,
+} from "@/lib/providers/blindspot";
 import { armEarthCamCapture } from "@/lib/providers/earthcam";
 import { sendFounderEmail } from "@/lib/providers/email";
 
@@ -99,7 +107,7 @@ export async function createMomentOrder(input: MomentOrderInput) {
 
   const orderId = randomUUID();
   const accessToken = randomBytes(24).toString("hex");
-  const orderRef = `AB-${input.eventDate.replaceAll("-", "")}-${orderId.slice(0, 8).toUpperCase()}`;
+  const orderRef = `PM-${input.eventDate.replaceAll("-", "")}-${orderId.slice(0, 8).toUpperCase()}`;
   const preferred = displayWindowBounds(input.eventDate, input.preferredWindow);
   const alternative = input.backupWindow ? displayWindowBounds(input.eventDate, input.backupWindow) : null;
   const now = new Date().toISOString();
@@ -133,7 +141,7 @@ export async function createMomentOrder(input: MomentOrderInput) {
     capture_consent_at: now,
     terms_accepted_at: now,
     privacy_acknowledged_at: now,
-    status: "availability_check",
+    status: "creative_upload_pending",
     payment_status: "not_requested",
     provider_name: "blindspot",
     capture_provider: null,
@@ -142,79 +150,20 @@ export async function createMomentOrder(input: MomentOrderInput) {
   });
   if (error) throw new Error(`Could not create booking: ${error.message}`);
 
-  await addOrderEvent(orderId, "availability_check_started", "availability_check", {
+  await addOrderEvent(orderId, "booking_request_created", "creative_upload_pending", {
     eventDate: input.eventDate,
     preferredWindow: input.preferredWindow,
     backupWindow: input.backupWindow || null,
     anyTimeSameDay: input.anyTimeSameDay,
+    paymentPolicy: "charge_then_allocate_with_refund_fallback",
   });
-
-  let availability;
-  try {
-    availability = await checkBlindspotAvailability({
-      orderId,
-      orderRef,
-      occasion: input.occasion,
-      tier: input.tier,
-      eventDate: input.eventDate,
-      preferredWindow: input.preferredWindow,
-      backupWindow: input.backupWindow || null,
-      anyTimeSameDay: input.anyTimeSameDay,
-      timezone: TIMEZONE,
-      board,
-    });
-  } catch (error) {
-    availability = { status: "manual_review" as const };
-    await addOrderEvent(orderId, "availability_bridge_error", "manual_review", {
-      message: error instanceof Error ? error.message : "Unknown provider error",
-    });
-  }
-
-  const status = availability.status === "available"
-    ? availability.holdRef ? "inventory_held" : "available"
-    : availability.status;
-
-  const resolvedCode = availability.resolvedWindow && availability.resolvedWindow !== "any"
-    ? availability.resolvedWindow
-    : null;
-  const resolvedBounds = resolvedCode ? displayWindowBounds(input.eventDate, resolvedCode) : null;
-
-  const { error: updateError } = await db.from("anti_balcony_orders").update({
-    status,
-    provider_ref: availability.providerRef || null,
-    provider_hold_ref: availability.holdRef || null,
-    provider_hold_expires_at: availability.holdExpiresAt || null,
-    provider_quote: availability.quote || {},
-    scheduled_window_start: availability.resolvedWindowStart || resolvedBounds?.start || null,
-    scheduled_window_end: availability.resolvedWindowEnd || resolvedBounds?.end || null,
-    updated_at: new Date().toISOString(),
-  }).eq("id", orderId);
-  if (updateError) throw new Error(`Could not update booking availability: ${updateError.message}`);
-
-  await addOrderEvent(orderId, "availability_result", status, {
-    providerRef: availability.providerRef || null,
-    holdRef: availability.holdRef || null,
-    resolvedWindow: availability.resolvedWindow || null,
-  });
-
-  const checkoutReady = availability.status === "available" && Boolean(
-    availability.holdRef || process.env.BLINDSPOT_ALLOW_UNHELD_CHECKOUT === "true",
-  );
-
-  if (!checkoutReady) {
-    await sendFounderEmail({
-      to: input.email,
-      subject: `We received your Times Square date — ${orderRef}`,
-      html: `<p>We have your request for <strong>${input.eventDate}</strong>.</p><p>Your preferred display window is <strong>${DISPLAY_WINDOWS[input.preferredWindow].label} ET</strong>${input.backupWindow ? `, with ${DISPLAY_WINDOWS[input.backupWindow].label} ET as backup` : ""}.</p><p>We will not charge you until the display window is confirmed.</p>`,
-    });
-  }
 
   return {
     orderId,
     orderRef,
     accessToken,
-    status,
-    checkoutReady,
+    status: "creative_upload_pending",
+    checkoutReady: false,
     preferredWindowLabel: DISPLAY_WINDOWS[input.preferredWindow].label,
     backupWindowLabel: input.backupWindow ? DISPLAY_WINDOWS[input.backupWindow].label : null,
   };
@@ -242,42 +191,205 @@ export async function markOrderPaymentPending(orderId: string, stripeSessionId: 
   await addOrderEvent(orderId, "stripe_checkout_created", "payment_pending", { stripeSessionId });
 }
 
+async function movePaidOrderToManualReview(order: Record<string, any>, reason: string, metadata: Record<string, unknown> = {}) {
+  const db = getSupabaseAdmin();
+  if (!db) throw new Error("Booking database is not configured.");
+  await db.from("anti_balcony_orders").update({
+    status: "manual_review",
+    failure_reason: reason,
+    updated_at: new Date().toISOString(),
+  }).eq("id", order.id);
+  await addOrderEvent(order.id, "paid_booking_manual_review", "manual_review", { reason, ...metadata });
+  await sendFounderEmail({
+    to: order.email,
+    subject: `Payment received — we are securing your Pop Moment · ${order.order_ref}`,
+    html: `<p>Your payment is received and your requested date is in our booking queue.</p><p>We are securing the best eligible Times Square placement within your selected same-day flexibility. If an exceptional inventory issue makes fulfillment impossible, we will automatically refund you in full.</p>`,
+  });
+  return { status: "manual_review" as const };
+}
+
+async function refundMomentPayment(order: Record<string, any>, stripeSessionId: string, reason: string) {
+  const db = getSupabaseAdmin();
+  if (!db) throw new Error("Booking database is not configured.");
+  const stripe = getStripe();
+
+  if (!stripe) {
+    return movePaidOrderToManualReview(order, `Refund required but Stripe is unavailable: ${reason}`);
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    const paymentIntentId = typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+    if (!paymentIntentId) throw new Error("Stripe Checkout has no refundable PaymentIntent.");
+
+    const refund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      metadata: {
+        flow: "pop_moment_fulfillment_refund",
+        orderId: order.id,
+        orderRef: order.order_ref,
+        reason: reason.slice(0, 450),
+      },
+    }, {
+      idempotencyKey: `${order.id}:fulfillment-refund`,
+    });
+
+    await db.from("anti_balcony_orders").update({
+      status: "cancelled",
+      payment_status: "refunded",
+      failure_reason: reason,
+      updated_at: new Date().toISOString(),
+    }).eq("id", order.id);
+
+    await addOrderEvent(order.id, "automatic_full_refund_created", "cancelled", {
+      refundId: refund.id,
+      paymentIntentId,
+      reason,
+    });
+
+    await sendFounderEmail({
+      to: order.email,
+      subject: `Automatic refund issued — ${order.order_ref}`,
+      html: `<p>We could not secure an eligible Times Square placement for your selected date using the flexibility you gave us.</p><p>We have therefore issued a full automatic refund. Your bank or card provider may take several business days to show it.</p>`,
+    });
+
+    return { status: "cancelled" as const, refunded: true as const };
+  } catch (error) {
+    return movePaidOrderToManualReview(order, `Automatic refund needs manual handling: ${reason}`, {
+      refundError: error instanceof Error ? error.message : "Unknown Stripe refund error",
+    });
+  }
+}
+
 export async function completeMomentPayment(orderId: string, stripeSessionId: string) {
   const db = getSupabaseAdmin();
   if (!db) throw new Error("Booking database is not configured.");
   const order = await getOrderForCheckout(orderId);
 
+  if (order.payment_status === "refunded") return { status: "cancelled" as const };
+  if (order.status === "scheduled" || order.status === "booked") return { status: "scheduled" as const };
+
   const { error: paidError } = await db.from("anti_balcony_orders").update({
-    status: "paid",
+    status: "booking",
     payment_status: "paid",
     stripe_session_id: stripeSessionId,
     updated_at: new Date().toISOString(),
   }).eq("id", orderId);
   if (paidError) throw new Error(`Could not record payment: ${paidError.message}`);
-  await addOrderEvent(orderId, "payment_completed", "paid", { stripeSessionId });
+  await addOrderEvent(orderId, "payment_completed", "booking", { stripeSessionId });
+
+  const eventDate = order.event_date || String(order.requested_window_start).slice(0, 10);
+  const preferredWindow = order.preferred_window_code as DisplayWindowCode;
+  const backupWindow = (order.alternative_window_code || null) as DisplayWindowCode | null;
+  const tier = order.tier as MomentTier;
+  const board = (order.board === "nasdaq_tower" ? "nasdaq_tower" : "times_square_flexible") as "nasdaq_tower" | "times_square_flexible";
+
+  let availability;
+  try {
+    availability = await checkBlindspotAvailability({
+      orderId,
+      orderRef: order.order_ref,
+      occasion: order.occasion || "Moment",
+      tier,
+      eventDate,
+      preferredWindow,
+      backupWindow,
+      anyTimeSameDay: order.any_time_same_day !== false,
+      timezone: TIMEZONE,
+      board,
+    });
+  } catch (error) {
+    return movePaidOrderToManualReview(order, "Blindspot availability bridge error after payment", {
+      message: error instanceof Error ? error.message : "Unknown provider error",
+    });
+  }
+
+  if (availability.status === "unavailable") {
+    return refundMomentPayment(order, stripeSessionId, "No eligible Times Square inventory was available on the selected date across the permitted windows.");
+  }
+  if (availability.status === "manual_review") {
+    return movePaidOrderToManualReview(order, "Provider availability requires manual review after payment");
+  }
+
+  const resolvedCode = availability.resolvedWindow && availability.resolvedWindow !== "any"
+    ? availability.resolvedWindow
+    : null;
+  const resolvedBounds = resolvedCode ? displayWindowBounds(eventDate, resolvedCode) : null;
+  const provisionalStart = availability.resolvedWindowStart || resolvedBounds?.start || order.requested_window_start;
+  const provisionalEnd = availability.resolvedWindowEnd || resolvedBounds?.end || order.requested_window_end;
+
+  await db.from("anti_balcony_orders").update({
+    status: availability.holdRef ? "inventory_held" : "booking",
+    provider_ref: availability.providerRef || null,
+    provider_hold_ref: availability.holdRef || null,
+    provider_hold_expires_at: availability.holdExpiresAt || null,
+    provider_quote: availability.quote || {},
+    scheduled_window_start: provisionalStart,
+    scheduled_window_end: provisionalEnd,
+    updated_at: new Date().toISOString(),
+  }).eq("id", orderId);
+  await addOrderEvent(orderId, "post_payment_availability_result", availability.holdRef ? "inventory_held" : "booking", {
+    providerRef: availability.providerRef || null,
+    holdRef: availability.holdRef || null,
+    resolvedWindow: availability.resolvedWindow || null,
+  });
+
+  if (!order.creative_path || !order.creative_content_type || !order.creative_width || !order.creative_height) {
+    return refundMomentPayment(order, stripeSessionId, "Creative file metadata was incomplete after payment.");
+  }
+
+  let creativeReview;
+  try {
+    creativeReview = await reviewBlindspotCreative({
+      orderId,
+      orderRef: order.order_ref,
+      providerRef: availability.providerRef || null,
+      holdRef: availability.holdRef || null,
+      creativePath: order.creative_path,
+      contentType: order.creative_content_type,
+      width: order.creative_width,
+      height: order.creative_height,
+      durationSeconds: order.creative_duration_seconds,
+    });
+  } catch (error) {
+    return movePaidOrderToManualReview(order, "Creative preflight bridge error after payment", {
+      message: error instanceof Error ? error.message : "Unknown creative review error",
+    });
+  }
+
+  if (creativeReview.status === "needs_changes") {
+    return refundMomentPayment(order, stripeSessionId, creativeReview.notes || "The submitted creative could not be accepted for the selected media inventory.");
+  }
+  if (creativeReview.status === "manual_review") {
+    return movePaidOrderToManualReview(order, "Creative requires manual provider review after payment", {
+      notes: creativeReview.notes || null,
+    });
+  }
 
   const confirmation = await confirmBlindspotBooking({
     orderId,
     orderRef: order.order_ref,
-    holdRef: order.provider_hold_ref,
-    providerRef: order.provider_ref,
+    holdRef: availability.holdRef || null,
+    providerRef: availability.providerRef || null,
     stripeSessionId,
   });
 
-  if (confirmation.status !== "confirmed") {
-    const status = confirmation.status === "failed" ? "failed" : "manual_review";
-    await db.from("anti_balcony_orders").update({ status, updated_at: new Date().toISOString() }).eq("id", orderId);
-    await addOrderEvent(orderId, "provider_confirmation_result", status, confirmation as unknown as Record<string, unknown>);
-    return { status };
+  if (confirmation.status === "failed") {
+    return refundMomentPayment(order, stripeSessionId, "The provider could not finalize the eligible Times Square placement after payment.");
+  }
+  if (confirmation.status === "manual_review") {
+    return movePaidOrderToManualReview(order, "Provider confirmation requires manual review after payment");
   }
 
-  const scheduledWindowStart = confirmation.scheduledWindowStart || order.scheduled_window_start || order.requested_window_start;
-  const scheduledWindowEnd = confirmation.scheduledWindowEnd || order.scheduled_window_end || order.requested_window_end;
+  const scheduledWindowStart = confirmation.scheduledWindowStart || provisionalStart;
+  const scheduledWindowEnd = confirmation.scheduledWindowEnd || provisionalEnd;
 
   const { error: bookingError } = await db.from("anti_balcony_orders").update({
     status: "booked",
-    provider_ref: confirmation.providerRef || order.provider_ref,
-    provider_campaign_id: confirmation.campaignId || order.provider_campaign_id,
+    provider_ref: confirmation.providerRef || availability.providerRef || null,
+    provider_campaign_id: confirmation.campaignId || null,
     scheduled_window_start: scheduledWindowStart,
     scheduled_window_end: scheduledWindowEnd,
     updated_at: new Date().toISOString(),
@@ -285,7 +397,7 @@ export async function completeMomentPayment(orderId: string, stripeSessionId: st
   if (bookingError) throw new Error(`Could not confirm provider booking: ${bookingError.message}`);
 
   await addOrderEvent(orderId, "provider_booking_confirmed", "booked", {
-    providerRef: confirmation.providerRef || order.provider_ref,
+    providerRef: confirmation.providerRef || availability.providerRef || null,
     campaignId: confirmation.campaignId || null,
     scheduledWindowStart,
     scheduledWindowEnd,
@@ -294,11 +406,11 @@ export async function completeMomentPayment(orderId: string, stripeSessionId: st
   const capture = await armEarthCamCapture({
     orderId,
     orderRef: order.order_ref,
-    eventDate: order.event_date || order.requested_window_start.slice(0, 10),
+    eventDate,
     scheduledWindowStart,
     scheduledWindowEnd,
-    providerRef: confirmation.providerRef || order.provider_ref,
-    providerCampaignId: confirmation.campaignId || order.provider_campaign_id,
+    providerRef: confirmation.providerRef || availability.providerRef || null,
+    providerCampaignId: confirmation.campaignId || null,
   }).catch(() => ({ armed: false as const }));
 
   await db.from("anti_balcony_orders").update({
@@ -315,8 +427,8 @@ export async function completeMomentPayment(orderId: string, stripeSessionId: st
 
   await sendFounderEmail({
     to: order.email,
-    subject: `Your Times Square moment is booked — ${order.order_ref}`,
-    html: `<p>Your display date is confirmed for <strong>${order.event_date || "your selected date"}</strong>.</p><p>Your confirmed window is a four-hour Times Square window. The exact playback minute is determined by the media schedule.</p><p>We will send your proof after the display.</p>`,
+    subject: `Your Pop Moment is booked — ${order.order_ref}`,
+    html: `<p>Your Times Square display date is confirmed for <strong>${eventDate}</strong>.</p><p>Your confirmed placement sits inside a four-hour window. The exact playback minute is determined by the media schedule.</p><p>We will send your proof after the display.</p>`,
   });
 
   return { status: "scheduled" as const };
@@ -358,7 +470,7 @@ export async function updateMomentOrderFromProvider(input: {
   if (input.status === "proof_ready") {
     await sendFounderEmail({
       to: order.email,
-      subject: `Your Times Square proof is ready — ${order.order_ref}`,
+      subject: `Your Pop Moment proof is ready — ${order.order_ref}`,
       html: `<p>Your Times Square moment has been captured and the proof package is ready.</p>`,
     });
   }
