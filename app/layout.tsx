@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, VT323 } from "next/font/google";
+import { BookingLinkInterceptor } from "@/components/BookingLinkInterceptor";
 import "./globals.css";
 import "./blue-theme.css";
 import "./cinematic-hero.css";
@@ -11,6 +12,7 @@ import "./cinematic-brand.css";
 import "./legal-and-record.css";
 import "./moment-home.css";
 import "./moment-home-v2.css";
+import "./booking.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
@@ -45,7 +47,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${terminal.variable}`}>
-      <body>{children}</body>
+      <body>
+        <BookingLinkInterceptor />
+        {children}
+      </body>
     </html>
   );
 }
