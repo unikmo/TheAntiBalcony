@@ -9,6 +9,7 @@ import "./site-pages-excellence.css";
 import "./navigation-responsive.css";
 import "./cinematic-brand.css";
 import "./legal-and-record.css";
+import "./moment-home.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
@@ -16,28 +17,28 @@ const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-te
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com"),
   title: {
-    default: "Launch Your Startup in Public | The Anti-Balcony",
+    default: "Times Square Moments You Can Keep | The Anti-Balcony",
     template: "%s | The Anti-Balcony",
   },
-  description: "Create a dated public Ring for your startup, share the launch everywhere, and extend the moment to Times Square when it deserves more visibility.",
+  description: "Put a proposal, birthday, wedding, declaration of love, milestone or launch in Times Square, then keep proof of the moment after the screen goes dark.",
   applicationName: "The Anti-Balcony",
-  keywords: ["startup launch", "launch your startup", "public startup launch", "product launch", "build in public"],
+  keywords: ["Times Square billboard", "Times Square proposal", "Times Square birthday", "Times Square wedding", "Times Square message", "startup launch"],
   openGraph: {
-    title: "Launch Your Startup in Public | The Anti-Balcony",
-    description: "Create a dated public Ring for what you built and share the moment your startup entered the world.",
+    title: "Celebrate it. Show it. Keep it. | The Anti-Balcony",
+    description: "Your moment in Times Square, with proof you can keep.",
     type: "website",
     siteName: "The Anti-Balcony",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Launch Your Startup in Public | The Anti-Balcony",
-    description: "Step out. Ring in your startup.",
+    title: "Celebrate it. Show it. Keep it.",
+    description: "Your moment in Times Square, with proof you can keep.",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: "#070707",
-  colorScheme: "dark",
+  colorScheme: "dark light",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

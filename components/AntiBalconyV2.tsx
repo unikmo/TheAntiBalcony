@@ -2,25 +2,53 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-type Ring = {
-  id: string;
+type Moment = {
   slug: string;
-  startupName: string;
-  tagline?: string | null;
-  category?: string | null;
-  createdAt: string;
-  status?: string;
+  label: string;
+  question: string;
+  screen: string;
+  note: string;
+  art: string;
 };
 
-const packages = [
-  { name: "THE RING", price: "$0", label: "PUBLIC LAUNCH", text: "A dated public launch page and shareable Ring for the startup you built.", tier: "free" },
-  { name: "THE PROOF", price: "$399", label: "TIMES SQUARE", text: "Your Ring extended into a Times Square placement with provider-confirmed screenshot proof.", tier: "snapshot" },
-  { name: "THE CLIP", price: "$799", label: "LAUNCH FILM", text: "A 15-second launch film built from the placement for social posts, updates and pitch follow-ups.", tier: "video" },
-  { name: "THE MOMENT", price: "$2,999", label: "COORDINATED LAUNCH", text: "A coordinated launch experience with people on the ground, video and press-ready assets.", tier: "takeover" },
-  { name: "THE LEGEND", price: "$9,999", label: "FULL PRODUCTION", text: "The staffed Times Square launch production with professional video and PR workflow.", tier: "vip" },
+const moments: Moment[] = [
+  { slug: "proposal", label: "Proposal", question: "About to ask?", screen: "WILL YOU MARRY ME?", note: "Make the question impossible to miss.", art: "proposal" },
+  { slug: "wedding", label: "Wedding", question: "Saying I do?", screen: "THIS IS OUR DAY", note: "Put the date you will never forget above Times Square.", art: "wedding" },
+  { slug: "birthday", label: "Birthday", question: "Someone worth celebrating?", screen: "HAPPY BIRTHDAY", note: "For the person who deserves more than a post.", art: "birthday" },
+  { slug: "baby", label: "Baby shower", question: "A little one on the way?", screen: "HELLO, LITTLE ONE", note: "Welcome them to the world in the middle of it.", art: "baby" },
+  { slug: "love", label: "I love you", question: "Want to say it bigger?", screen: "I LOVE YOU", note: "Three words. One impossible-to-ignore screen.", art: "love" },
+  { slug: "memories", label: "Our memories", question: "A memory worth keeping?", screen: "OUR STORY", note: "Some moments deserve more than 24 hours.", art: "memories" },
+  { slug: "anniversary", label: "Anniversary", question: "Still choosing each other?", screen: "STILL US", note: "Mark the years with something that feels like them.", art: "anniversary" },
+  { slug: "graduation", label: "Graduation", question: "They did the work?", screen: "YOU DID IT", note: "Give the achievement a skyline.", art: "graduation" },
+  { slug: "achievement", label: "Big win", question: "Earned something big?", screen: "THIS IS YOUR MOMENT", note: "You earned it. Let it show.", art: "achievement" },
+  { slug: "launch", label: "Launch", question: "Built something?", screen: "WE'RE LIVE", note: "Ring the work into public when it is ready.", art: "launch" },
+];
+
+const offers = [
+  {
+    name: "SHOW IT",
+    price: "$399",
+    kicker: "TIMES SQUARE",
+    text: "Your creative placed in Times Square with provider-confirmed proof of the display.",
+    subject: "Show It — Times Square moment",
+  },
+  {
+    name: "SHOW + KEEP",
+    price: "$799",
+    kicker: "TIMES SQUARE + FILM",
+    text: "The display, proof, and a 15-second keepsake film built for sharing after the moment.",
+    subject: "Show + Keep — Times Square moment",
+    featured: true,
+  },
+  {
+    name: "THE MOMENT",
+    price: "$2,999",
+    kicker: "COORDINATED EXPERIENCE",
+    text: "A coordinated Times Square experience with on-the-ground coverage and a complete proof package.",
+    subject: "The Moment — coordinated Times Square experience",
+  },
 ];
 
 function playBell(fullCeremony = false) {
@@ -31,10 +59,11 @@ function playBell(fullCeremony = false) {
 
   const ctx = new AudioContextClass();
   const now = ctx.currentTime;
-  const duration = fullCeremony ? 8.4 : 1.25;
+  const duration = fullCeremony ? 8.4 : 1.2;
   const strikes = fullCeremony
     ? [0, 0.34, 0.7, 1.06, 1.43, 1.82, 2.21, 2.6, 3.01, 3.42, 3.84, 4.28, 4.73, 5.18, 5.65, 6.12, 6.6, 7.08, 7.55, 7.93]
     : [0];
+
   const compressor = ctx.createDynamicsCompressor();
   compressor.threshold.setValueAtTime(-18, now);
   compressor.knee.setValueAtTime(12, now);
@@ -68,268 +97,246 @@ function playBell(fullCeremony = false) {
       oscillator.start(strike);
       oscillator.stop(strike + 0.34);
     });
-
-    const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.045), ctx.sampleRate);
-    const samples = noiseBuffer.getChannelData(0);
-    for (let index = 0; index < samples.length; index += 1) samples[index] = Math.random() * 2 - 1;
-    const noise = ctx.createBufferSource();
-    const highPass = ctx.createBiquadFilter();
-    const noiseGain = ctx.createGain();
-    noise.buffer = noiseBuffer;
-    highPass.type = "highpass";
-    highPass.frequency.setValueAtTime(2600, strike);
-    noiseGain.gain.setValueAtTime(0.12, strike);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, strike + 0.045);
-    noise.connect(highPass);
-    highPass.connect(noiseGain);
-    noiseGain.connect(master);
-    noise.start(strike);
-    noise.stop(strike + 0.05);
   });
 
   window.setTimeout(() => void ctx.close(), (duration + 0.3) * 1000);
 }
 
-function formatRingDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Public launch";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+function mailto(subject: string) {
+  return `mailto:hello@antibalcony.com?subject=${encodeURIComponent(subject)}`;
 }
 
 export function AntiBalconyV2() {
-  const router = useRouter();
-  const [rings, setRings] = useState<Ring[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [ringing, setRinging] = useState(false);
   const [recordRevealed, setRecordRevealed] = useState(false);
-  const [activeMoment, setActiveMoment] = useState<"founder" | "record" | "times-square">("founder");
-  const [timesSquarePlaying, setTimesSquarePlaying] = useState(false);
-  const [displaySeconds, setDisplaySeconds] = useState(15);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const bellTimerRef = useRef<number | null>(null);
+  const ringTimerRef = useRef<number | null>(null);
+
+  const moment = moments[activeIndex];
 
   useEffect(() => {
-    fetch("/api/rings")
-      .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((data: { rings?: Ring[] }) => setRings(data.rings ?? []))
-      .catch(() => setRings([]));
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (paused || reducedMotion) return;
 
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % moments.length);
+    }, 3400);
+
+    return () => window.clearInterval(timer);
+  }, [paused]);
+
+  useEffect(() => {
     return () => {
-      if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
+      if (ringTimerRef.current) window.clearTimeout(ringTimerRef.current);
     };
   }, []);
 
-  function stopTimesSquareDemo() {
-    videoRef.current?.pause();
-    setTimesSquarePlaying(false);
-    setDisplaySeconds(15);
-  }
-
-  function showFounderDemo() {
-    stopTimesSquareDemo();
-    setActiveMoment("founder");
-    setRecordRevealed(false);
-  }
-
-  function ringUnikmoDemo() {
+  function ringDemo() {
     if (ringing) return;
-    stopTimesSquareDemo();
-    setActiveMoment("record");
     setRecordRevealed(false);
-    setRinging(false);
-    window.requestAnimationFrame(() => setRinging(true));
+    setRinging(true);
     playBell(true);
-    if (bellTimerRef.current) window.clearTimeout(bellTimerRef.current);
-    bellTimerRef.current = window.setTimeout(() => {
+
+    if (ringTimerRef.current) window.clearTimeout(ringTimerRef.current);
+    ringTimerRef.current = window.setTimeout(() => {
       setRinging(false);
       setRecordRevealed(true);
     }, 8400);
   }
 
-  function playTimesSquareDemo() {
-    stopTimesSquareDemo();
-    setActiveMoment("times-square");
-    setTimesSquarePlaying(true);
-    setDisplaySeconds(15);
-
-    const video = videoRef.current;
-    if (video) {
-      video.currentTime = 0;
-      void video.play();
-    }
-  }
-
-  function syncTimesSquareTimer() {
-    const elapsed = videoRef.current?.currentTime ?? 0;
-    setDisplaySeconds(Number(Math.max(0, 15 - elapsed).toFixed(1)));
-  }
-
-  function completeTimesSquareDemo() {
-    setDisplaySeconds(0);
-    setTimesSquarePlaying(false);
-  }
-
-  function startLaunch(tier?: string) {
-    setRinging(true);
-    playBell();
-    const suffix = tier && tier !== "free" ? `?tier=${encodeURIComponent(tier)}` : "";
-    window.setTimeout(() => router.push(`/launch${suffix}`), 420);
-  }
-
   return (
-    <main className="de-shell">
-      <header className="de-header">
-        <div className="de-container de-header-inner" style={{ justifyContent: "center" }}>
-          <Link className="de-brand" href="/" aria-label="The Anti-Balcony home">
-            <span className="de-brand-mark" aria-hidden="true" />
-            THE ANTI-BALCONY
-          </Link>
-        </div>
+    <main className="ab-home">
+      <header className="ab-header">
+        <Link className="ab-brand" href="/" aria-label="The Anti-Balcony home">
+          <span aria-hidden="true" />
+          THE ANTI-BALCONY
+        </Link>
       </header>
 
-      <section className="cinema-hero" aria-labelledby="home-title">
-        <div className="record-hero-title">
+      <section className="ab-hero" aria-labelledby="home-title">
+        <div className="ab-hero-copy">
+          <p>YOUR MOMENT · TIMES SQUARE</p>
           <h1 id="home-title">
-            <span>Your launch deserves</span>
-            <em>a public record.</em>
+            Celebrate it. Show it. <em>Keep it.</em>
           </h1>
+          <span>Proposal. Birthday. Wedding. Launch. Or simply: I love you.</span>
         </div>
-        <div className="visible-moments" aria-label="Interactive UNIKMO founder, bell and Times Square demonstration">
-          <article className={`visible-moment founder-moment ${activeMoment === "founder" ? "is-active" : ""}`}>
-            <button type="button" className="moment-button" onClick={showFounderDemo} aria-pressed={activeMoment === "founder"} aria-label="Show UNIKMO founder launch example">
-              <span className="moment-media founder-media">
-                <Image src="/antibalcony-founder-launch.webp" alt="A founder preparing the UNIKMO launch" fill priority sizes="(max-width: 850px) 100vw, 33vw" />
-                <span className="moment-status"><b>UNIKMO.COM</b><small>READY TO RING</small></span>
-              </span>
-              <span className="moment-caption"><small>01 · FOUNDER</small><strong>UNIKMO is ready to enter the public record.</strong><em>Click to restart the demonstration</em></span>
+
+        <div
+          className="ab-stage"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocusCapture={() => setPaused(true)}
+          onBlurCapture={() => setPaused(false)}
+        >
+          <video
+            className="ab-stage-city"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="/antibalcony-times-square.webp"
+            aria-hidden="true"
+          >
+            <source src="/antibalcony-times-square-loop-lite.mp4" type="video/mp4" />
+          </video>
+          <div className="ab-stage-shade" aria-hidden="true" />
+
+          <div className="ab-stage-question" key={`${moment.slug}-question`}>
+            <small>{moment.question}</small>
+            <strong>{moment.note}</strong>
+          </div>
+
+          <div className={`ab-screen ab-screen-${moment.art}`} key={moment.slug}>
+            <span>{moment.label}</span>
+            <strong>{moment.screen}</strong>
+            <small>THE ANTI-BALCONY · TIMES SQUARE</small>
+          </div>
+
+          <div className="ab-stage-location">TIMES SQUARE · NEW YORK</div>
+
+          <button
+            className="ab-stage-control ab-prev"
+            type="button"
+            aria-label="Previous moment"
+            onClick={() => setActiveIndex((current) => (current - 1 + moments.length) % moments.length)}
+          >
+            ←
+          </button>
+          <button
+            className="ab-stage-control ab-next"
+            type="button"
+            aria-label="Next moment"
+            onClick={() => setActiveIndex((current) => (current + 1) % moments.length)}
+          >
+            →
+          </button>
+        </div>
+
+        <div className="ab-moment-tabs" aria-label="Choose a moment">
+          {moments.map((item, index) => (
+            <button
+              key={item.slug}
+              type="button"
+              className={index === activeIndex ? "is-active" : undefined}
+              aria-pressed={index === activeIndex}
+              onClick={() => setActiveIndex(index)}
+            >
+              {item.label}
             </button>
+          ))}
+        </div>
+
+        <div className="ab-hero-after">
+          <p>15 seconds in Times Square. Proof you were there. A record that does not disappear.</p>
+          <a href={mailto(`My Times Square moment — ${moment.label}`)}>Make it yours</a>
+        </div>
+      </section>
+
+      <section className="ab-three" id="how" aria-labelledby="how-title">
+        <div className="ab-section-copy">
+          <p>THE WHOLE IDEA</p>
+          <h2 id="how-title">The moment should not end when the screen goes dark.</h2>
+        </div>
+        <div className="ab-three-grid">
+          <article>
+            <span>01</span>
+            <h3>Show it.</h3>
+            <p>Your photo, video or message appears in Times Square at the moment you chose.</p>
           </article>
-
-          <article className={`visible-moment bell-moment ${recordRevealed ? "has-record" : ""}`}>
-            <button type="button" className="moment-button" onClick={ringUnikmoDemo} disabled={ringing} aria-pressed={activeMoment === "record"} aria-label="Ring the bell for UNIKMO and reveal its public record">
-              <span className={`moment-media bell-demo-visual ${ringing ? "is-ringing" : ""}`}>
-                <Image src="/antibalcony-real-bell.webp" alt="A polished coral-red ceremonial launch bell" fill priority sizes="(max-width: 850px) 100vw, 33vw" />
-                <span className="bell-prompt"><b>{ringing ? "RINGING" : recordRevealed ? "RING AGAIN" : "RING"}</b></span>
-                <span className="bell-wave wave-one" aria-hidden="true" />
-                <span className="bell-wave wave-two" aria-hidden="true" />
-                {recordRevealed ? (
-                  <span className="public-record-demo" role="status" aria-live="polite">
-                    <small>PUBLIC RECORD</small>
-                    <strong>UNIKMO</strong>
-                    <span><b>UNIKMO.COM</b><b>RUNG · 26 AUG 2026</b></span>
-                  </span>
-                ) : null}
-              </span>
-              <span className="moment-caption"><small>02 · BELL</small><strong>{ringing ? "UNIKMO is ringing in." : recordRevealed ? "UNIKMO now has a dated public launch record." : "Ring it to see what becomes public."}</strong><em>No order or submission is created</em></span>
-            </button>
+          <article>
+            <span>02</span>
+            <h3>Prove it.</h3>
+            <p>You receive provider-confirmed proof that the creative was displayed.</p>
           </article>
-
-          <article className={`visible-moment times-square-moment ${activeMoment === "times-square" ? "is-active" : ""}`}>
-            <button type="button" className="moment-button" onClick={playTimesSquareDemo} aria-pressed={activeMoment === "times-square"} aria-label="Play the UNIKMO Nasdaq Tower display for 15 seconds">
-              <span className="moment-media times-square-media">
-                <video className="times-square-idle" autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Animated UNIKMO creative displayed on the Nasdaq Tower"><source src="/antibalcony-nasdaq-unikmo-idle.mp4" type="video/mp4" /></video>
-                <video ref={videoRef} className="times-square-proof" muted playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp" aria-label="Fifteen-second demonstration of the UNIKMO launch on the Nasdaq Tower" onTimeUpdate={syncTimesSquareTimer} onEnded={completeTimesSquareDemo}><source src="/antibalcony-nasdaq-unikmo-proof-v2.mp4" type="video/mp4" /></video>
-                <span className="display-progress" aria-hidden="true"><i style={{ transform: `scaleX(${timesSquarePlaying ? (15 - displaySeconds) / 15 : displaySeconds === 0 ? 1 : 0})` }} /></span>
-              </span>
-              <span className="moment-caption"><small>03 · NASDAQ TOWER</small><strong>UNIKMO, in Times Square.</strong><em>{timesSquarePlaying ? "Playing" : displaySeconds === 0 ? "Click to replay" : "Click to watch"}</em></span>
-            </button>
+          <article>
+            <span>03</span>
+            <h3>Keep it.</h3>
+            <p>The proof becomes something made to share, revisit and keep after the public moment is over.</p>
           </article>
         </div>
       </section>
 
-      <section className="de-principle">
-        <div className="de-container" style={{ maxWidth: 900, textAlign: "center" }}>
-          <p className="de-eyebrow" style={{ justifyContent: "center" }}>One launch. One public moment.</p>
-          <h2>Your launch should belong to you.</h2>
-          <div className="de-principle-copy" style={{ maxWidth: 720, margin: "30px auto 0" }}>
-            <p>Other channels can distribute the news. The Anti-Balcony gives the launch itself a permanent artifact: one Ring you can point people to before, during and after launch day.</p>
-          </div>
+      <section className="ab-founder-demo" aria-labelledby="founder-demo-title">
+        <div className="ab-founder-copy">
+          <p>FOR FOUNDERS, TOO</p>
+          <h2 id="founder-demo-title">A launch is simply another moment worth making public.</h2>
+          <span>UNIKMO stays here as the working demonstration—not as the hero of your story.</span>
         </div>
-      </section>
 
-      <section className="de-how" id="how" aria-labelledby="how-title">
-        <div className="de-container">
-          <div className="de-section-head" style={{ textAlign: "center", marginInline: "auto" }}>
-            <p className="de-eyebrow" style={{ justifyContent: "center" }}>How it works</p>
-            <h2 id="how-title">Three steps. One public moment.</h2>
-            <p>The startup stays in focus from first Ring to final proof.</p>
-          </div>
-          <div className="de-steps" style={{ gridTemplateColumns: "1fr", maxWidth: 900, marginInline: "auto" }}>
-            <article className="de-step"><span className="de-step-number">01</span><h3>Create the Ring</h3><p>Tell people what you built, who it is for and why it exists.</p></article>
-            <article className="de-step"><span className="de-step-number">02</span><h3>Make it public</h3><p>Your startup gets a dated public launch page designed to be understood and shared quickly.</p></article>
-            <article className="de-step"><span className="de-step-number">03</span><h3>Extend the moment</h3><p>Keep the Ring digital or extend the same launch into Times Square, film and production.</p></article>
-          </div>
-        </div>
-      </section>
-
-      <section className="de-packages" id="packages" aria-labelledby="packages-title">
-        <div className="de-container">
-          <div className="de-section-head" style={{ textAlign: "center", marginInline: "auto" }}>
-            <p className="de-eyebrow" style={{ justifyContent: "center" }}>From Ring to Times Square</p>
-            <h2 id="packages-title">Choose how big the moment becomes.</h2>
-            <p>Start free. Add visibility only when the launch needs it.</p>
-          </div>
-          <div className="de-package-list">
-            {packages.map((item) => (
-              <article key={item.tier} className={`de-package ${item.tier === "video" ? "is-featured" : ""}`}>
-                <div><span className="de-package-kicker">{item.label}</span><h3>{item.name}</h3></div>
-                <strong className="de-package-price">{item.price}</strong>
-                <p>{item.text}</p>
-                <button onClick={() => startLaunch(item.tier)}>{item.tier === "free" ? "Create your Ring" : "Start your launch"}</button>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="de-rings" aria-labelledby="rings-title">
-        <div className="de-container">
-          <div className="de-section-head-row">
-            <div className="de-section-head"><p className="de-eyebrow">Public startup launches</p><h2 id="rings-title">Recent Rings.</h2></div>
-            <Link className="de-text-link" href="/launches">Explore all launches →</Link>
-          </div>
-          {rings.length ? (
-            <div className="de-ring-list">
-              {rings.slice(0, 6).map((ring, index) => (
-                <Link key={ring.id} href={`/launches/${ring.slug || ring.id}`}>
-                  <span className="de-ring-index">{String(index + 1).padStart(2, "0")}</span>
-                  <div><h3>{ring.startupName}</h3><p>{ring.tagline || ring.category || "Public startup launch"}</p></div>
-                  <time>{formatRingDate(ring.createdAt)}</time>
-                </Link>
-              ))}
+        <div className="ab-demo-grid">
+          <button className={`ab-bell-card ${ringing ? "is-ringing" : ""}`} onClick={ringDemo} type="button" disabled={ringing}>
+            <div className="ab-bell-media">
+              <Image
+                src="/antibalcony-real-bell.webp"
+                alt="The Anti-Balcony ceremonial launch bell"
+                fill
+                sizes="(max-width: 850px) 100vw, 45vw"
+              />
+              <span>{ringing ? "RINGING" : recordRevealed ? "RING AGAIN" : "RING IT"}</span>
             </div>
-          ) : (
-            <div className="de-empty"><strong>The first public Rings are still open.</strong><p>No invented launches and no fake founder logos. The record begins when a real startup creates it.</p><button onClick={() => startLaunch()}>Create your Ring</button></div>
-          )}
-        </div>
-      </section>
+            <div className="ab-demo-caption">
+              <small>THE BELL</small>
+              <strong>{recordRevealed ? "UNIKMO entered the public record." : "Make the launch feel like an event."}</strong>
+            </div>
+          </button>
 
-      <section className="de-guides" aria-labelledby="guides-title">
-        <div className="de-container">
-          <div className="de-section-head"><p className="de-eyebrow">Launch better</p><h2 id="guides-title">Practical startup-launch guides.</h2></div>
-          <div className="de-guide-list">
-            <Link href="/guides/how-to-launch-a-startup"><span>Startup launch</span><strong>How to launch a startup</strong></Link>
-            <Link href="/guides/product-launch-checklist"><span>Checklist</span><strong>Product launch checklist</strong></Link>
-            <Link href="/guides/build-in-public"><span>Build in public</span><strong>Build in public without becoming content</strong></Link>
-            <Link href="/guides/product-hunt-alternatives"><span>Comparison</span><strong>Product Hunt alternatives</strong></Link>
+          <div className="ab-proof-card">
+            <video autoPlay muted loop playsInline preload="metadata" poster="/antibalcony-nasdaq-unikmo.webp">
+              <source src="/antibalcony-nasdaq-unikmo-idle.mp4" type="video/mp4" />
+            </video>
+            <div className="ab-demo-caption">
+              <small>THE PROOF</small>
+              <strong>UNIKMO, on the Nasdaq Tower.</strong>
+              <Link href="/launches">See public founder launches →</Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="de-final" aria-labelledby="final-title">
-        <div className="de-container">
-          <p className="de-eyebrow">The internet doesn&apos;t have a balcony</p>
-          <h2 id="final-title">Step out. Ring in your startup.</h2>
-          <p>Create the public record first. Decide how big the moment becomes after that.</p>
-          <button className="de-primary" onClick={() => startLaunch()}>Create your public Ring</button>
+      <section className="ab-offer" id="offer" aria-labelledby="offer-title">
+        <div className="ab-section-copy">
+          <p>KEEP THE OFFER SIMPLE</p>
+          <h2 id="offer-title">Choose how much of the moment you want to keep.</h2>
         </div>
+        <div className="ab-offer-list">
+          {offers.map((offer) => (
+            <article className={offer.featured ? "is-featured" : undefined} key={offer.name}>
+              <div>
+                <small>{offer.kicker}</small>
+                <h3>{offer.name}</h3>
+              </div>
+              <strong>{offer.price}</strong>
+              <p>{offer.text}</p>
+              <a href={mailto(offer.subject)}>Choose this</a>
+            </article>
+          ))}
+        </div>
+        <p className="ab-offer-note">Placement timing and final creative are confirmed before anything is booked.</p>
       </section>
 
-      <footer className="de-footer">
-        <div className="de-container de-footer-inner">
-          <div className="de-footer-brand"><strong>THE ANTI-BALCONY</strong><span>Public startup-launch platform</span></div>
-          <nav aria-label="Footer navigation"><Link href="/launch">Launch</Link><Link href="/launches">Launches</Link><Link href="/startup-launch">How it works</Link><Link href="/guides/how-to-launch-a-startup">Guides</Link><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav>
-          <span className="de-footer-copy">© {new Date().getFullYear()}</span>
+      <section className="ab-final" aria-labelledby="final-title">
+        <p>WORTH REMEMBERING?</p>
+        <h2 id="final-title">Then it is worth showing.</h2>
+        <a href={mailto("I want my moment in Times Square")}>Tell us your moment</a>
+      </section>
+
+      <footer className="ab-footer">
+        <div>
+          <strong>THE ANTI-BALCONY</strong>
+          <span>Times Square moments with proof you can keep.</span>
         </div>
+        <nav aria-label="Footer navigation">
+          <Link href="/launches">Founder launches</Link>
+          <Link href="/guides/how-to-launch-a-startup">Launch guides</Link>
+          <Link href="/imprint">Imprint</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <a href="mailto:hello@antibalcony.com">Contact</a>
+        </nav>
+        <span>© {new Date().getFullYear()}</span>
       </footer>
     </main>
   );
