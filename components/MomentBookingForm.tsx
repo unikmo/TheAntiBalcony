@@ -109,7 +109,7 @@ export function MomentBookingForm({
   const [backupWindow, setBackupWindow] = useState<WindowCode | "">("20-24");
   const [anyTimeSameDay, setAnyTimeSameDay] = useState(true);
   const [legalAccepted, setLegalAccepted] = useState(false);
-  const [phase, setPhase] = useState<"idle" | "checking" | "uploading" | "reviewing" | "checkout" | "pending">("idle");
+  const [phase, setPhase] = useState<"idle" | "saving" | "uploading" | "reviewing" | "checkout" | "pending">("idle");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const minDate = useMemo(tomorrow, []);
@@ -117,10 +117,13 @@ export function MomentBookingForm({
   if (checkout === "reserved") {
     return (
       <section className="booking-result booking-result-success">
-        <p className="booking-eyebrow">BOOKING RECEIVED</p>
-        <h2>Your Times Square moment is moving.</h2>
-        <p>Payment was received for <strong>{orderRef || "your booking"}</strong>. We are finalizing the provider booking against the held inventory. Your exact playback minute will be set by the media schedule inside your confirmed four-hour window.</p>
-        <Link href="/">Back to The Anti-Balcony</Link>
+        <p className="booking-eyebrow">PAYMENT RECEIVED</p>
+        <h2>Your Pop Moment is moving.</h2>
+        <p>
+          Payment was received for <strong>{orderRef || "your booking"}</strong>. We are now securing the best eligible Times Square placement on your selected date, using your preferred four-hour window, backup window and same-day flexibility where you allowed it.
+        </p>
+        <p>If an exceptional provider or inventory issue makes fulfillment impossible, the booking is automatically refunded in full.</p>
+        <Link href="/">Back to The Pop Moment</Link>
       </section>
     );
   }
@@ -129,8 +132,8 @@ export function MomentBookingForm({
     return (
       <section className="booking-result">
         <p className="booking-eyebrow">NO CHARGE</p>
-        <h2>Your booking was not paid.</h2>
-        <p>You can restart when you are ready. No Times Square booking is confirmed until payment completes.</p>
+        <h2>Your payment was not completed.</h2>
+        <p>Your saved booking has not been charged. You can restart payment whenever you are ready.</p>
         <Link href="/book">Return to booking</Link>
       </section>
     );
@@ -153,8 +156,8 @@ export function MomentBookingForm({
     }
 
     try {
-      setPhase("checking");
-      setMessage("Checking the date and your preferred four-hour window…");
+      setPhase("saving");
+      setMessage("Saving your date, window preferences and same-day flexibility…");
       const booking = await jsonPost<BookingResult>("/api/orders", {
         customerName: String(form.get("customerName") || ""),
         email: String(form.get("email") || ""),
@@ -169,15 +172,9 @@ export function MomentBookingForm({
         board: "times_square_flexible",
       });
 
-      if (booking.status === "unavailable") {
-        setPhase("pending");
-        setMessage("That date could not be secured across your preferred, backup and same-day fallback options. You have not been charged.");
-        return;
-      }
-
       const details = await inspectCreative(creative);
       setPhase("uploading");
-      setMessage("Uploading your creative securely…");
+      setMessage("Validating and uploading your creative securely…");
       const upload = await jsonPost<{ signedUrl: string; path: string }>("/api/orders/creative-upload-intent", {
         orderId: booking.orderId,
         accessToken: booking.accessToken,
@@ -197,7 +194,7 @@ export function MomentBookingForm({
       if (!uploadResponse.ok) throw new Error("Your creative could not be uploaded. Please try again.");
 
       setPhase("reviewing");
-      setMessage("Preflighting your creative before payment…");
+      setMessage("Running the final technical check before secure payment…");
       const review = await jsonPost<{ status: string; reviewStatus: string; checkoutReady: boolean; notes?: string | null }>("/api/orders/creative-upload-complete", {
         orderId: booking.orderId,
         accessToken: booking.accessToken,
@@ -205,18 +202,18 @@ export function MomentBookingForm({
 
       if (review.reviewStatus === "needs_changes") {
         setPhase("pending");
-        setMessage(review.notes || "The creative needs a change before we can book it. You have not been charged.");
+        setMessage(review.notes || "The creative needs a change before payment. You have not been charged.");
         return;
       }
 
       if (!review.checkoutReady) {
         setPhase("pending");
-        setMessage(`Request ${booking.orderRef} is saved. We will not charge you until the display window and creative are cleared.`);
+        setMessage(`Request ${booking.orderRef} is saved, but the file needs manual review before payment. You have not been charged.`);
         return;
       }
 
       setPhase("checkout");
-      setMessage("Inventory and creative are cleared. Opening secure payment…");
+      setMessage("Your file is ready. Opening secure Stripe payment…");
       const checkoutData = await jsonPost<{ url: string }>("/api/checkout", { orderId: booking.orderId });
       window.location.assign(checkoutData.url);
     } catch (err) {
@@ -276,11 +273,11 @@ export function MomentBookingForm({
         </div>
         <label className="booking-check booking-flexibility">
           <input type="checkbox" checked={anyTimeSameDay} onChange={(event) => setAnyTimeSameDay(event.target.checked)} />
-          <span><strong>Any time that day is fine.</strong> Maximize my chance of display if my two preferred windows are full.</span>
+          <span><strong>Any time that day is fine.</strong> Give us maximum freedom to secure your display if both selected windows fill.</span>
         </label>
         <div className="booking-promise">
-          <strong>The promise</strong>
-          <p>Once booked, your <b>date and confirmed four-hour window are guaranteed</b>. The exact playback minute is determined by the Times Square media schedule. We use flexible eligible Times Square inventory unless a specific screen is explicitly sold to you.</p>
+          <strong>Choose the day. Choose the part of day. We handle the exact Times Square scheduling.</strong>
+          <p>Your placement is fulfilled inside a confirmed four-hour window on your selected date. We route across eligible Times Square inventory unless a specific screen is explicitly sold to you. Exact playback minute is set by the media schedule.</p>
         </div>
       </section>
 
@@ -306,11 +303,13 @@ export function MomentBookingForm({
           <input type="checkbox" checked={legalAccepted} onChange={(event) => setLegalAccepted(event.target.checked)} required />
           <span>I confirm I have the rights to this content, accept the <Link href="/terms">Terms</Link>, acknowledge the <Link href="/privacy">Privacy Notice</Link>, and consent to licensed capture of the public display for my proof package.</span>
         </label>
-        <p className="booking-no-charge">We check inventory and creative <strong>before Stripe.</strong> If we cannot clear the booking, you are not charged.</p>
+        <p className="booking-no-charge">
+          We validate your file before Stripe. <strong>After payment, we secure the best eligible same-day Times Square placement using the flexibility you selected.</strong> If an exceptional provider or inventory issue makes fulfillment impossible, the payment is automatically refunded in full.
+        </p>
         {message && <p className={`booking-message ${phase === "pending" ? "is-pending" : ""}`}>{message}</p>}
         {error && <p className="booking-error" role="alert">{error}</p>}
         <button className="booking-submit" type="submit" disabled={working}>
-          {working ? "CHECKING YOUR MOMENT…" : "CHECK AVAILABILITY · NO CHARGE YET"}
+          {working ? "PREPARING YOUR MOMENT…" : "PREPARE MY MOMENT · NO CHARGE YET"}
         </button>
       </section>
     </form>
