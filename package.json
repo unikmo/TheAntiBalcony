@@ -9,16 +9,19 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:contracts": "node --experimental-strip-types scripts/nonpayment-contracts.mjs",
+    "test:pop": "node --experimental-strip-types scripts/pop-contracts.mjs && node scripts/pop-flow.mjs",
+    "test:discovery": "node scripts/discovery-check.mjs",
     "test:smoke": "node scripts/nonpayment-smoke.mjs",
     "test:e2e": "playwright test",
     "test:nonpayment": "npm run test:contracts && npm run test:smoke"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "2.112.4",
     "next": "^16.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "stripe": "^18.0.0"
+    "stripe": "^18.0.0",
+    "tus-js-client": "4.3.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

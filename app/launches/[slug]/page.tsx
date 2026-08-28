@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SeoShell } from "@/components/SeoPage";
 import { getRingBySlug } from "@/lib/rings";
 import { escapeHtmlAttribute, safeJsonLd } from "@/lib/security";
+import { absoluteUrl, pageMetadata, SITE_URL } from "@/lib/discovery";
 
 export const dynamic = "force-dynamic";
 
@@ -18,14 +19,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = ring.whatItDoes || ring.tagline || `${ring.startupName} launched in public on The Anti-Balcony.`;
   const searchReady = isSearchReady(ring);
   return {
-    title: `${ring.startupName} Startup Launch`,
-    description,
-    alternates: { canonical: `/launches/${ring.slug}` },
-    robots: searchReady ? { index: true, follow: true } : { index: false, follow: true },
+    ...pageMetadata(`${ring.startupName} Startup Launch`, description, `/launches/${ring.slug}`, searchReady),
     openGraph: {
       title: `${ring.startupName} launched in public`,
       description,
       type: "article",
+      url: absoluteUrl(`/launches/${ring.slug}`),
+      siteName: "The Pop Moment — AntiBalcony archive",
       images: ring.imageUrl ? [ring.imageUrl] : undefined,
     },
   };
@@ -37,7 +37,7 @@ export default async function RingPage({ params }: { params: Promise<{ slug: str
   if (!ring) notFound();
 
   const searchReady = isSearchReady(ring);
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com";
+  const site = SITE_URL;
   const launchUrl = `${site}/launches/${ring.slug}`;
   const badgeUrl = `${site}/api/rings/${ring.slug}/badge`;
   const embed = `<a href="${escapeHtmlAttribute(launchUrl)}"><img src="${escapeHtmlAttribute(badgeUrl)}" alt="${escapeHtmlAttribute(ring.startupName)} rung in on The Anti-Balcony" /></a>`;

@@ -1,160 +1,89 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-function captureRuntimeErrors(page: Page) {
+test("lean homepage explains POP without retired offers", async ({ page }) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text());
-  });
-  return errors;
-}
-
-test("homepage loads cleanly and explains the category", async ({ page }) => {
-  const errors = captureRuntimeErrors(page);
+  page.on("pageerror", e => errors.push(e.message));
   await page.goto("/");
-
-  await expect(page.getByRole("heading", { name: /Your launch deserves a public record/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Show UNIKMO founder launch example/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Ring the bell for UNIKMO/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Play the UNIKMO Nasdaq Tower display for 15 seconds/i })).toBeVisible();
-
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Celebrate it. Show it.");
+  await expect(page.locator("#packages article")).toHaveCount(3);
+  await expect(page.locator("#packages")).toContainText("$199");
+  await expect(page.locator("#packages")).toContainText("$549");
+  await expect(page.locator("#packages")).not.toContainText("$399");
+  await expect(page.getByRole("button", { name: /ring the bell/i })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test("bell demonstration reveals what a public record means without ordering", async ({ page }) => {
+test("preview loads video only after click and labels it as illustrative", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Ring the bell for UNIKMO/i }).click();
-  await expect(page.locator(".bell-demo-visual")).toHaveClass(/is-ringing/);
-  await expect(page.locator(".bell-demo-visual > img")).toHaveCSS("animation-duration", "0.24s");
-  await expect(page.locator(".bell-demo-visual > img")).toHaveCSS("animation-iteration-count", "35");
-  await expect(page.locator(".public-record-demo")).toHaveCount(0);
-  await expect(page.locator(".public-record-demo")).toBeVisible({ timeout: 10000 });
-  await expect(page.locator(".public-record-demo")).toContainText("UNIKMO.COM");
-  await expect(page.getByText(/UNIKMO now has a dated public launch record/i)).toBeVisible();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator(".pop-screen video")).toHaveCount(0);
+  await page.getByRole("button", { name: "Play the illustrative NASDAQ preview" }).click();
+  await expect(page.locator(".pop-screen video")).toBeVisible();
+  await expect(page.locator(".pop-screen")).toContainText("Not footage of a booked placement");
 });
 
-test("Nasdaq Tower tile switches from its animated UNIKMO screen to a minimal proof demonstration", async ({ page }) => {
-  await page.goto("/");
-  const tile = page.locator(".times-square-moment");
-  await expect(tile.locator(".times-square-idle")).toBeVisible();
-  await tile.getByRole("button", { name: /Play the UNIKMO Nasdaq Tower display for 15 seconds/i }).click();
-  await expect(tile.locator(".proof-metadata")).toHaveCount(0);
-  await expect(tile.locator(".display-timer")).toHaveCount(0);
-  await expect(tile.locator(".times-square-proof")).toHaveCSS("opacity", "1");
-  await expect(tile.locator("a")).toHaveCount(0);
+test("keep request computes 50 cards and never opens checkout", async ({ page }) => {
+  const checkoutCalls: string[] = [];
+  page.on("request", request => { if (request.url().includes("/api/checkout")) checkoutCalls.push(request.url()); });
+  await page.goto("/launch?offer=keep");
+  await page.getByLabel("Total UNIKMO cards").fill("50");
+  await expect(page.locator(".pop-summary")).toContainText("49 extra cards");
+  await expect(page.locator(".pop-summary")).toContainText("$588");
+  await expect(page.locator(".pop-summary")).toContainText("$787");
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+  expect(checkoutCalls).toEqual([]);
 });
 
-test("free package enters the base launch flow", async ({ page }) => {
-  await page.goto("/");
-  const freeCard = page.locator("#packages article", {
-    has: page.getByRole("heading", { name: "THE RING", exact: true }),
-  });
-  await freeCard.getByRole("button", { name: /Create your Ring/i }).click();
-  await expect(page).toHaveURL(/\/launch$/);
+test("NASDAQ is request-only and has an explicit capture acknowledgement", async ({ page }) => {
+  await page.goto("/launch?offer=nasdaq");
+  await expect(page.locator(".pop-alert")).toContainText("not a reservation");
+  await expect(page.getByLabel(/licensed capture must be confirmed/)).toBeVisible();
 });
 
-for (const item of [
-  { name: "THE PROOF", tier: "snapshot" },
-  { name: "THE CLIP", tier: "video" },
-  { name: "THE MOMENT", tier: "takeover" },
-  { name: "THE LEGEND", tier: "vip" },
-]) {
-  test(`${item.name} package preserves ${item.tier} tier`, async ({ page }) => {
+test("free submission sends only a link and does not fabricate success when offline", async ({ page }) => {
+  await page.goto("/launch");
+  await page.getByLabel("Your moment", { exact: true }).fill("Maya’s graduation");
+  await page.getByLabel("Your email").fill("test@example.com");
+  await page.getByLabel("The occasion").selectOption("Graduation");
+  await page.getByLabel("What’s your POP?").selectOption("Confetti");
+  await page.getByLabel("Occasion date").fill("2026-08-28");
+  await page.getByLabel("Your public video link").fill("https://www.youtube.com/watch?v=example");
+  await page.getByLabel(/I have permission/).check();
+  await page.getByLabel(/Publish my moment title/).check();
+  await page.getByLabel(/I’ve read the privacy/).check();
+  const pending = page.waitForResponse(r => r.url().endsWith("/api/pop"));
+  await page.getByRole("button", { name: "Submit your POP for review" }).click();
+  const response = await pending;
+  expect(response.status()).toBe(503);
+  const payload = response.request().postDataJSON();
+  expect(payload.totalCards).toBe(0);
+  expect(payload.sourceUrl).toContain("youtube.com");
+  expect(payload.featureConsent).toBe(false);
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByText("Request saved", { exact: true })).toHaveCount(0);
+});
+
+test("successful intake displays review not publication or a booking", async ({ page }) => {
+  await page.route("**/api/pop", route => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ reference: "test-reference", status: "submitted" }) }));
+  await page.goto("/launch?offer=keep");
+  await page.getByLabel("Your moment", { exact: true }).fill("Our milestone");
+  await page.getByLabel("Your email").fill("test@example.com");
+  await page.getByLabel("The occasion").selectOption("Company milestone");
+  await page.getByLabel("What’s your POP?").selectOption("Team cheer");
+  await page.getByLabel("Occasion date").fill("2026-08-28");
+  await page.getByLabel(/I have permission/).check();
+  await page.getByLabel(/I’ve read the privacy/).check();
+  await page.getByRole("button", { name: "Send your request" }).click();
+  await expect(page.getByRole("status")).toContainText("No payment has been made");
+  await expect(page.getByRole("status")).toContainText("test-reference");
+});
+
+for (const width of [375, 768, 1440]) {
+  test(`responsive layout has no horizontal overflow at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    const card = page.locator("#packages article", {
-      has: page.getByRole("heading", { name: item.name, exact: true }),
-    });
-    await expect(card).toBeVisible();
-    await card.getByRole("button", { name: /Start your launch/i }).click();
-    await expect(page).toHaveURL(new RegExp(`/launch\\?tier=${item.tier}$`));
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.goto("/launch?offer=keep");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 }
-
-test("complete Ring form submits every SEO field and returns indexable true", async ({ page }) => {
-  const errors = captureRuntimeErrors(page);
-  await page.goto("/launch");
-
-  await page.getByLabel("STARTUP NAME").fill("Browser Test Startup");
-  await page.getByLabel("ONE-LINE LAUNCH SIGNAL").fill("A public startup launch tested end to end.");
-  await page.getByLabel("WEBSITE").fill("https://example.com");
-  await page.getByLabel("SOCIAL LINK").fill("https://linkedin.com/company/example");
-  await page.getByLabel("WHAT DOES THE STARTUP DO?").fill("Helps founders coordinate and preserve a public startup launch.");
-  await page.getByLabel("WHO IS IT FOR?").fill("Startup founders and launch teams.");
-  await page.getByLabel("FOUNDER OR TEAM").fill("Browser Test Team");
-  await page.getByLabel("PRODUCT IMAGE URL").fill("https://example.com/product.jpg");
-  await page.getByLabel("WHAT PROBLEM ARE YOU SOLVING?").fill("Launch activity becomes fragmented across temporary channels.");
-  await page.getByLabel("SHORT FOUNDER STORY").fill("We built this to give founders a permanent launch artifact they can keep sharing.");
-
-  const browserPayload = await page.locator("form.launch-form-grid").evaluate((form) =>
-    Object.fromEntries(new FormData(form as HTMLFormElement).entries()),
-  );
-  for (const field of ["startupName", "category", "website", "socialUrl", "whatItDoes", "intendedCustomer", "founder", "imageUrl", "problem", "story"]) {
-    expect(browserPayload[field], `browser form must submit ${field}`).toBeTruthy();
-  }
-
-  const responsePromise = page.waitForResponse((response) =>
-    response.url().endsWith("/api/rings") && response.request().method() === "POST",
-  );
-  await page.getByRole("button", { name: /Ring in your startup/i }).click();
-  const response = await responsePromise;
-  const requestPayload = response.request().postDataJSON() as Record<string, unknown>;
-  for (const field of ["startupName", "category", "website", "socialUrl", "whatItDoes", "intendedCustomer", "founder", "imageUrl", "problem", "story"]) {
-    expect(requestPayload[field], `API request must contain ${field}`).toBeTruthy();
-  }
-
-  const responseData = await response.json() as { persisted: boolean; ring: { indexable: boolean; startupName: string } };
-  expect(response.status()).toBe(202);
-  expect(responseData.persisted).toBe(false);
-  expect(responseData.ring.startupName).toBe("Browser Test Startup");
-  expect(responseData.ring.indexable).toBe(true);
-
-  await expect(page.getByText("YOUR RING EXISTS")).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Browser Test Startup has entered the public record/i })).toBeVisible();
-  await expect(page.getByTestId("ring-index-status")).toContainText(/eligible for search indexing/i);
-  await expect(page.getByText(/Supabase is not connected/i)).toBeVisible();
-
-  expect(errors).toEqual([]);
-});
-
-test("thin Ring stays noindex in the customer success state", async ({ page }) => {
-  await page.goto("/launch");
-  await page.getByLabel("STARTUP NAME").fill("Thin Browser Ring");
-
-  const responsePromise = page.waitForResponse((response) =>
-    response.url().endsWith("/api/rings") && response.request().method() === "POST",
-  );
-  await page.getByRole("button", { name: /Ring in your startup/i }).click();
-  const response = await responsePromise;
-  const data = await response.json() as { ring: { indexable: boolean } };
-  expect(data.ring.indexable).toBe(false);
-  await expect(page.getByTestId("ring-index-status")).toContainText(/remains noindex/i);
-});
-
-test("paid upgrade fails gracefully when Stripe is not configured", async ({ page }) => {
-  await page.goto("/launch");
-  await page.getByLabel("STARTUP NAME").fill("No Stripe Browser Test");
-  await page.getByRole("button", { name: /Ring in your startup/i }).click();
-  await expect(page.getByText("YOUR RING EXISTS")).toBeVisible();
-
-  await page.getByLabel("Email for launch package delivery").fill("founder@example.com");
-  const proofButton = page.locator(".upgrade-inline button").filter({ hasText: "THE PROOF" });
-  await proofButton.click();
-  await expect(page.getByText(/Paid checkout is not configured yet/i)).toBeVisible();
-});
-
-test("launch directory is reachable from the homepage", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("link", { name: /Explore all launches/i }).click();
-  await expect(page).toHaveURL(/\/launches$/);
-  await expect(page.getByRole("heading", { name: /Explore launches/i })).toBeVisible();
-});
-
-test("mobile hero keeps the core action visible", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-
-  await expect(page.getByRole("heading", { name: /Your launch deserves a public record/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Ring the bell for UNIKMO/i })).toBeVisible();
-  await expect(page.locator(".bell-demo-visual")).toBeVisible();
-});

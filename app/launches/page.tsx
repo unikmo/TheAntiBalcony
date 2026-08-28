@@ -1,23 +1,20 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/discovery";
+import Link from "next/link";
 import { SeoShell } from "@/components/SeoPage";
 import { listRings } from "@/lib/rings";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Public Startup Launches",
-  description: "Browse public startup launches and shareable Rings created on The Anti-Balcony.",
-  alternates: { canonical: "/launches" },
-};
+export const metadata = pageMetadata("AntiBalcony launch archive", "Earlier public startup launch records from AntiBalcony. For new company and personal celebrations, explore The Pop Moment by UNIKMO.", "/launches");
 
 export default async function LaunchesPage() {
   const rings = await listRings(100);
   return (
     <SeoShell>
       <div className="seo-main">
-        <p className="seo-breadcrumb">Public startup launches</p>
-        <h1>Explore launches.</h1>
-        <p className="seo-lede">Every Ring marks a startup launch in public. Complete profiles can become indexable launch pages; incomplete profiles stay out of search until they contain enough useful information.</p>
+        <p className="seo-breadcrumb">Public startup launches · Archive</p>
+        <h1>The launch archive.</h1>
+        <p className="seo-lede">Earlier AntiBalcony Rings remain here. New company and personal celebrations now live in the POP collection.</p>
 
         {rings.length ? (
           <div className="launch-grid">
@@ -32,8 +29,8 @@ export default async function LaunchesPage() {
           </div>
         ) : (
           <section className="seo-cta">
-            <div><h2>The first public launch is still open.</h2><p>No fabricated inventory. Create the Ring and become the record.</p></div>
-            <a href="/launch">Create your Ring</a>
+            <div><h2>No archived launches to display.</h2><p>Explore the new moments wall or start your own celebration.</p></div>
+            <Link href="/moments">Explore POP moments</Link>
           </section>
         )}
       </div>

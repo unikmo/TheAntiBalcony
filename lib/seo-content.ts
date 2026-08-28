@@ -17,7 +17,7 @@ export const GUIDES: Guide[] = [
     intro: "A startup launch is not one post or one platform. It is a coordinated moment that makes the product understandable, gives people something concrete to react to and creates proof you can keep sharing after launch day.",
     sections: [
       { heading: "1. Decide what the launch must achieve", body: ["Choose one primary outcome: awareness, signups, customers, feedback, investor visibility or partner attention. A launch with five equal goals usually produces weak messaging.", "Write one sentence that says what changed for the customer now that your product exists. That sentence should guide the homepage, launch post and founder outreach."] },
-      { heading: "2. Build a launch asset before distribution", body: ["Prepare a clear product page, one strong visual, a short founder explanation and a permanent public launch page. The public page matters because social posts decay quickly while an owned launch artifact remains linkable.", "On The Anti-Balcony that artifact is a Ring: a dated public record of the moment your startup entered the world."] },
+      { heading: "2. Build a launch asset before distribution", body: ["Prepare a clear product page, one strong visual, a short founder explanation and a launch page on a domain you control. Keep that page updated so people can find useful context after a social post leaves their feed.", "Earlier AntiBalcony launch records were called Rings and remain in the archive. New celebrations use The Pop Moment by UNIKMO; it creates memory films, not a substitute for your product website."] },
       { heading: "3. Sequence distribution", body: ["Use the channels where you already have a plausible audience first: customers, email, LinkedIn, X, communities, partners and relevant launch platforms. Product Hunt can be one channel, but it should not be the whole launch plan."] },
       { heading: "4. Keep the proof", body: ["Save screenshots, launch metrics, quotes, customer reactions and any media generated around launch day. Turn them into follow-up posts and sales proof instead of treating launch day as an isolated event."] },
     ],
@@ -60,7 +60,7 @@ export const GUIDES: Guide[] = [
     sections: [
       { heading: "Share decisions, not noise", body: ["Useful public updates explain what changed, why it changed and what you learned. Avoid posting activity simply to maintain a streak."] },
       { heading: "Create milestones people can reference", body: ["Launches, major releases, customer milestones and important pivots deserve permanent pages. They give later readers context that a timeline of disconnected posts cannot."] },
-      { heading: "Use public proof across channels", body: ["A Ring can sit alongside Product Hunt, LinkedIn, X, Hacker News or your own newsletter. The goal is not to replace those channels but to give every post the same permanent launch destination."] },
+      { heading: "Use public proof across channels", body: ["Use your own product or milestone page as the destination across your launch channels. The Pop Moment can preserve the celebration in a curated film and UNIKMO cards; it does not guarantee discovery, distribution or permanent hosting of free social videos."] },
     ],
     related: ["how-to-launch-a-startup", "startup-launch-announcement", "where-to-launch-your-startup"],
   },
@@ -86,7 +86,7 @@ export const GUIDES: Guide[] = [
     sections: [
       { heading: "Use discovery platforms for reach", body: ["Platforms with an existing audience can expose a product to people you do not already know. Their strength is distribution; their weakness is that attention is rented and time-limited."] },
       { heading: "Use communities for relevance", body: ["Founder, developer, industry and customer communities can deliver higher-quality conversations when the product genuinely fits the group."] },
-      { heading: "Use an owned launch artifact for permanence", body: ["The Anti-Balcony is designed around the launch moment itself. A Ring is a founder-owned public artifact you can share before, during or after launching elsewhere. It complements discovery platforms rather than pretending to have their audience on day one."] },
+      { heading: "Keep an owned destination", body: ["Maintain a product launch page on a domain you control. Earlier AntiBalcony Rings remain accessible as an archive, while The Pop Moment by UNIKMO now focuses on celebrating and curating milestone memories. It is not a product-discovery network or a promise of audience reach."] },
     ],
     related: ["how-to-launch-on-product-hunt", "where-to-launch-your-startup", "build-in-public"],
   },
@@ -110,10 +110,10 @@ export const GUIDES: Guide[] = [
     eyebrow: "STARTUP LAUNCH WEBSITES",
     intro: "The best place to launch depends on who must notice. Most startups should combine an owned launch page with a small number of distribution channels rather than trying to appear everywhere.",
     sections: [
-      { heading: "Owned audience", body: ["Email lists, existing customers, founder networks and your own website usually convert better because context and trust already exist."] },
+      { heading: "Owned audience", body: ["Start by considering email subscribers, existing customers, founder networks and your own website. Test which audiences produce useful conversations and conversions rather than assuming a channel will perform best."] },
       { heading: "Launch and discovery platforms", body: ["Use product-discovery sites when you want exposure, early adopters and feedback. Measure downstream behavior, not only ranking or reactions."] },
       { heading: "Communities", body: ["Choose communities where the problem already matters. Tailor the message to the community instead of reposting the same launch copy everywhere."] },
-      { heading: "Public launch record", body: ["Create a permanent, shareable Ring that can accompany all of those channels. It gives your launch a canonical public artifact rather than leaving the event scattered across third-party posts."] },
+      { heading: "Public launch record", body: ["Create a maintained, shareable launch page on your own site. For the celebration itself, The Pop Moment offers a free social-link page after review or a paid curated film with a UNIKMO card. A free social link is not a permanent video archive."] },
     ],
     related: ["product-hunt-alternatives", "how-to-launch-a-startup", "build-in-public"],
   },

@@ -1,24 +1,27 @@
 import type { MetadataRoute } from "next";
 import { GUIDES } from "@/lib/seo-content";
 import { listRings } from "@/lib/rings";
+import { IS_PREVIEW, SITE_URL } from "@/lib/discovery";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com";
-  const now = new Date();
+  if (IS_PREVIEW) return [];
+  const site = SITE_URL;
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: site, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${site}/launch`, lastModified: now, changeFrequency: "monthly", priority: 0.95 },
-    { url: `${site}/startup-launch`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${site}/launches`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${site}/imprint`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${site}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${site}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: site, changeFrequency: "weekly", priority: 1 },
+    { url: `${site}/about`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${site}/capture-guide`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${site}/moments`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${site}/guides`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${site}/startup-launch`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${site}/launches`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${site}/imprint`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${site}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${site}/terms`, changeFrequency: "yearly", priority: 0.3 },
     ...GUIDES.map((guide) => ({
       url: `${site}/guides/${guide.slug}`,
-      lastModified: now,
       changeFrequency: "monthly" as const,
       priority: 0.75,
     })),
@@ -30,7 +33,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((ring) => ring.indexable && Boolean(ring.socialUrl))
       .map((ring) => ({
         url: `${site}/launches/${ring.slug}`,
-        lastModified: new Date(ring.createdAt),
         changeFrequency: "monthly" as const,
         priority: 0.65,
       }));

@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
-import { AntiBalconyV2 } from "@/components/AntiBalconyV2";
+import { PopHome } from "@/components/PopHome";
+import { StructuredData } from "@/components/StructuredData";
+import { homeSchema, pageMetadata, SITE_DESCRIPTION } from "@/lib/discovery";
 
-export const metadata: Metadata = {
-  title: "Launch Your Startup in Public",
-  description: "Create a public Ring for what you built and share the moment your startup entered the world.",
-  alternates: { canonical: "/" },
-};
+export const metadata = pageMetadata("Celebrate it. Show it. Keep it.", SITE_DESCRIPTION, "/");
 
 export default function Home() {
-  return <AntiBalconyV2 />;
+  return <><StructuredData data={homeSchema()} /><PopHome /></>;
 }

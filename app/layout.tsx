@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, VT323 } from "next/font/google";
+import { IS_PREVIEW, SITE_DESCRIPTION, SITE_URL } from "@/lib/discovery";
 import "./globals.css";
 import "./blue-theme.css";
 import "./cinematic-hero.css";
@@ -14,24 +15,25 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Launch Your Startup in Public | The Anti-Balcony",
-    template: "%s | The Anti-Balcony",
+    default: "The Pop Moment by UNIKMO",
+    template: "%s | The Pop Moment",
   },
-  description: "Create a dated public Ring for your startup, share the launch everywhere, and extend the moment to Times Square when it deserves more visibility.",
-  applicationName: "The Anti-Balcony",
-  keywords: ["startup launch", "launch your startup", "public startup launch", "product launch", "build in public"],
+  description: SITE_DESCRIPTION,
+  robots: IS_PREVIEW ? { index: false, follow: false } : undefined,
+  applicationName: "The Pop Moment",
+  keywords: ["celebration film", "milestone memory", "UNIKMO card", "Times Square moment"],
   openGraph: {
-    title: "Launch Your Startup in Public | The Anti-Balcony",
-    description: "Create a dated public Ring for what you built and share the moment your startup entered the world.",
+    title: "The Pop Moment by UNIKMO",
+    description: "Celebrate it. Show it. Keep it.",
     type: "website",
-    siteName: "The Anti-Balcony",
+    siteName: "The Pop Moment",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Launch Your Startup in Public | The Anti-Balcony",
-    description: "Step out. Ring in your startup.",
+    card: "summary",
+    title: "The Pop Moment by UNIKMO",
+    description: "Celebrate it. Show it. Keep it.",
   },
 };
 

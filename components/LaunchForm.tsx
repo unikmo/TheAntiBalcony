@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { FormEvent, useState } from "react";
+
+const PackageRequestForm = dynamic(
+  () => import("@/components/PackageRequestForm").then((module) => module.PackageRequestForm),
+  { loading: () => <p className="launch-help">Preparing the private upload…</p> },
+);
 
 type Tier = "snapshot" | "video" | "takeover" | "vip";
 
@@ -24,10 +30,9 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
   const [persisted, setPersisted] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [allowSocial, setAllowSocial] = useState(false);
-  const [checkoutError, setCheckoutError] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<Tier | null>(
+    PAID.some((item) => item.tier === initialTier) ? initialTier as Tier : null,
+  );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,32 +58,7 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
     }
   }
 
-  async function checkout(tier: Tier) {
-    if (!ring) return;
-    if (!email.trim()) {
-      setCheckoutError("Add an email for delivery before choosing a paid package.");
-      return;
-    }
-    if (!acceptedTerms) {
-      setCheckoutError("Accept the Terms and acknowledge the Privacy Notice before continuing.");
-      return;
-    }
-    setCheckoutError("");
-    const response = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ringId: ring.id, startupName: ring.startupName, email, tier, allowSocial }),
-    });
-    const data = await response.json() as { url?: string; error?: string };
-    if (!response.ok || !data.url) {
-      setCheckoutError(data.error || "Checkout is not configured yet.");
-      return;
-    }
-    window.location.assign(data.url);
-  }
-
   if (ring) {
-    const selected = PAID.find((item) => item.tier === initialTier);
     return (
       <section className="launch-success">
         <p className="seo-breadcrumb">Your Ring exists</p>
@@ -94,24 +74,15 @@ export function LaunchForm({ initialTier }: { initialTier?: string }) {
         <div className="seo-section launch-upgrade">
           <h2>Take the moment further</h2>
           <div>
-            <p>Add Times Square proof without changing what the Ring is: your permanent public launch artifact.</p>
-            <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="founder@startup.com" aria-label="Email for launch package delivery" />
-            <label className="launch-consent">
-              <input type="checkbox" checked={allowSocial} onChange={(event) => setAllowSocial(event.target.checked)} />
-              <span>Publish confirmed proof through The Anti-Balcony social workflow.</span>
-            </label>
-            <label className="launch-consent">
-              <input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} />
-              <span>I accept the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link>.</span>
-            </label>
+            <p>Choose a package, upload the moment, and request a NASDAQ Tower window. Availability and creative approval come before payment.</p>
             <div className="upgrade-inline">
               {PAID.map((item) => (
-                <button key={item.tier} onClick={() => checkout(item.tier)} className={selected?.tier === item.tier ? "is-selected" : undefined}>
+                <button type="button" key={item.tier} onClick={() => setSelectedTier(item.tier)} className={selectedTier === item.tier ? "is-selected" : undefined}>
                   <span>{item.name}</span><strong>{item.price}</strong>
                 </button>
               ))}
             </div>
-            {checkoutError && <p className="launch-error" role="alert">{checkoutError}</p>}
+            {selectedTier && <PackageRequestForm ringId={ring.id} startupName={ring.startupName} tier={selectedTier} />}
           </div>
         </div>
       </section>

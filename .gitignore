@@ -5,5 +5,9 @@ out
 .env.local
 .env.*.local
 .vercel
+*.tsbuildinfo
+next-env.d.ts
+test-results/
+supabase/.temp/
 *.log
 .DS_Store

@@ -52,6 +52,26 @@
 .upgrade-inline button:hover,.upgrade-inline button.is-selected{border-color:var(--de-accent);background:#161214}
 .upgrade-inline button span{color:#9f9d98;font-size:10px;font-weight:800;letter-spacing:.08em}
 .upgrade-inline button strong{font-size:18px}
+.package-request-form{margin-top:28px;padding:28px;border:1px solid var(--de-line-strong);background:#0d0d0f;display:grid;grid-template-columns:1fr 1fr;gap:20px 16px}
+.package-request-head{grid-column:1/-1;padding-bottom:22px;border-bottom:1px solid var(--de-line)}
+.package-request-head small,.package-request-confirmation small{color:var(--de-accent);font-size:9px;font-weight:850;letter-spacing:.14em}
+.package-request-head h3,.package-request-confirmation h3{margin:10px 0 8px;font-size:clamp(24px,3vw,38px);font-weight:520;letter-spacing:-.04em}
+.package-request-head p,.package-request-confirmation p{margin:0;color:#9f9d98;line-height:1.65}
+.package-request-form>label{display:flex;flex-direction:column;gap:9px;color:#8f8d89;font-size:9px;font-weight:850;letter-spacing:.13em}
+.package-request-form .full{grid-column:1/-1}
+.package-request-form input,.package-request-form select{width:100%;border:1px solid var(--de-line-strong);border-radius:0;background:#111113;color:#f4f2ed;padding:14px 15px;font:500 14px/1.45 var(--font-inter),Arial,sans-serif;letter-spacing:0;text-transform:none}
+.package-request-form input:focus,.package-request-form select:focus{border-color:#74716c;outline:none}
+.creative-upload-field{padding:20px;border:1px dashed #4b4946;background:#111113}
+.creative-upload-field input{padding:0;border:0;background:transparent}
+.creative-upload-field span{color:#6f6d69;font-size:10px;letter-spacing:0;text-transform:none}
+.package-legal{display:grid;gap:12px;padding:20px 0;border-top:1px solid var(--de-line);border-bottom:1px solid var(--de-line)}
+.package-legal .launch-consent{margin:0;display:grid;grid-template-columns:18px 1fr;align-items:start;gap:10px;color:#aaa7a1;font-size:11px;font-weight:500;letter-spacing:0;line-height:1.5;text-transform:none}
+.package-legal .launch-consent input{width:16px;height:16px;margin-top:1px;padding:0;accent-color:var(--de-accent)}
+.package-legal a{color:#f4f2ed;text-decoration:underline;text-underline-offset:3px}
+.upload-progress{position:relative;height:40px;border:1px solid var(--de-line-strong);overflow:hidden;display:grid;place-items:center}
+.upload-progress span{position:absolute;inset:0 auto 0 0;background:#4d1d17;transition:width .2s ease}
+.upload-progress b{position:relative;font-size:9px;letter-spacing:.13em}
+.package-request-confirmation{margin-top:28px;padding:28px;border:1px solid #5b3028;background:#14100f}
 
 .launch-grid{margin-top:72px;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--de-line-strong)}
 .launch-card{min-height:235px;padding:30px 28px 30px 0;border-bottom:1px solid var(--de-line);display:flex;flex-direction:column;transition:background .16s ease,padding .16s ease}
@@ -98,6 +118,7 @@
   .seo-content{margin-top:64px}.seo-section{padding:32px 0}.seo-cta{grid-template-columns:1fr}.seo-cta>a{justify-self:start}
   .launch-form-grid{grid-template-columns:1fr;margin-top:56px}.launch-form-grid label.full{grid-column:auto}.launch-help,.launch-error,.launch-submit{grid-column:auto}.launch-submit{width:100%;justify-self:stretch}
   .upgrade-inline{grid-template-columns:1fr}
+  .package-request-form{grid-template-columns:1fr;padding:20px}.package-request-form .full,.package-request-head{grid-column:auto}
   .launch-grid{grid-template-columns:1fr}.launch-card,.launch-card:nth-child(odd),.launch-card:nth-child(even){padding:26px 0;border-right:0}
   .ring-detail-head{gap:42px}.ring-detail-image,.ring-detail-image img,.ring-detail-placeholder{min-height:280px}.ring-body{grid-template-columns:1fr}.ring-body article,.ring-body article:nth-child(odd),.ring-body article:nth-child(even){min-height:auto;padding:28px 0;border-right:0}.ring-badge{margin-top:64px}
   .seo-shell .ab2-actions{align-items:stretch;flex-direction:column}.seo-shell .ab2-primary,.seo-shell .ab2-secondary{width:100%}

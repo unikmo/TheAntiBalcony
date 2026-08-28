@@ -29,9 +29,16 @@ const env = {
   SOCIAL_PUBLISH_WEBHOOK_URL: "",
   RESEND_API_KEY: "",
   RESEND_FROM: "",
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "",
+  OPS_API_SECRET: secret,
+  LICENSED_CAPTURE_CALLBACK_SECRET: secret,
+  BLINDSPOT_BOOKING_WEBHOOK_URL: "",
+  LICENSED_CAPTURE_WEBHOOK_URL: "",
+  EARTHCAM_CAPTURE_WEBHOOK_URL: "",
+  SHOTSTACK_API_KEY: "",
 };
 
-const server = spawn(process.execPath, [nextBin, "start", "-p", String(port)], {
+const server = spawn(process.execPath, [nextBin, "start", "-H", "127.0.0.1", "-p", String(port)], {
   env,
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -80,18 +87,24 @@ try {
   assert.equal(health.supabase, false);
   assert.equal(health.database, false);
   assert.equal(health.stripe, false);
+  assert.equal(health.orderIntake, false);
+  assert.equal(health.storage, false);
+  assert.equal(health.blindspot, "manual_required");
+  assert.equal(health.capture, "manual_required");
+  assert.equal(health.packaging, "manual_required");
+  assert.equal(health.email, false);
   assert.equal(health.fulfillment, false);
   assert.equal(health.proof, false);
   assert.equal(health.social, false);
 
   const homepage = await (await get("/")).text();
-  assert.match(homepage, /Launch your/i);
-  assert.match(homepage, /The Anti-Balcony/i);
-  assert.match(homepage, /public startup-launch platform/i);
+  assert.match(homepage, /Celebrate it\. Show it/i);
+  assert.match(homepage, /the pop moment/i);
+  assert.match(homepage, /UNIKMO card/i);
 
   const launchPage = await (await get("/launch")).text();
-  assert.match(launchPage, /RING IN YOUR STARTUP/i);
-  assert.match(launchPage, /WHAT DOES THE STARTUP DO/i);
+  assert.match(launchPage, /your moment/i);
+  assert.match(launchPage, /Choose your experience/i);
 
   const categoryPage = await (await get("/startup-launch")).text();
   assert.match(categoryPage, /startup launch/i);
@@ -130,52 +143,35 @@ try {
   const ringsList = await (await get("/api/rings")).json();
   assert.deepEqual(ringsList.rings, []);
 
-  const invalidName = await postJson("/api/rings", { startupName: "A" }, 400);
-  assert.match((await invalidName.json()).error, /2–80 characters/);
-
-  const invalidScheme = await postJson("/api/rings", {
-    startupName: "Scheme Test",
-    website: "ftp://example.com/file",
-  }, 400);
-  assert.match((await invalidScheme.json()).error, /HTTP or HTTPS/);
-
-  const thin = await postJson("/api/rings", {
-    startupName: "  Thin   Ring  ",
-    website: "example.com",
-    tagline: "A lightweight public launch.",
-  }, 202);
-  const thinData = await thin.json();
-  assert.equal(thinData.persisted, false);
-  assert.equal(thinData.ring.startupName, "Thin Ring");
-  assert.equal(thinData.ring.website, "https://example.com/");
-  assert.equal(thinData.ring.indexable, false);
-  assert.match(thinData.ring.slug, /^thin-ring-[a-f0-9]{6}$/);
-
-  const rich = await postJson("/api/rings", {
-    startupName: "Rich Ring",
-    website: "https://example.com",
-    socialUrl: "https://linkedin.com/company/example",
-    tagline: "A complete public startup launch.",
-    category: "SaaS",
-    whatItDoes: "Helps startup teams coordinate a public product launch.",
-    intendedCustomer: "Early-stage startup founders and launch teams.",
-    founder: "Test Founder",
-    problem: "Startup launches are fragmented across temporary social posts.",
-    story: "Built to give startup launches a permanent public artifact founders can keep sharing.",
-    imageUrl: "https://example.com/product.jpg",
-  }, 202);
-  const richData = await rich.json();
-  assert.equal(richData.persisted, false);
-  assert.equal(richData.ring.indexable, true);
-  assert.equal(richData.ring.status, "rung");
-  assert.equal(richData.ring.tier, "free");
+  const retiredRing = await postJson("/api/rings", { startupName: "Retired Test" }, 410);
+  assert.match((await retiredRing.json()).error, /retired/i);
 
   const checkout = await postJson("/api/checkout", {
     startupName: "No Stripe Test",
     email: "founder@example.com",
     tier: "snapshot",
-  }, 503);
-  assert.match((await checkout.json()).error, /not configured/i);
+  }, 410);
+  assert.match((await checkout.json()).error, /retired/i);
+
+  const order = await postJson("/api/orders", {
+    ringId: "00000000-0000-4000-8000-000000000000",
+    tier: "snapshot",
+  }, 410);
+  assert.match((await order.json()).error, /retired/i);
+
+  const unauthorizedOrderTransition = await postJson("/api/operations/orders/00000000-0000-4000-8000-000000000000/transition", {
+    status: "creative_review",
+  }, 401);
+  assert.match((await unauthorizedOrderTransition.json()).error, /Unauthorized/);
+
+  const unauthorizedCapture = await postJson("/api/providers/capture/callback", {
+    orderId: "00000000-0000-4000-8000-000000000000",
+    provider: "licensed-camera",
+  }, 401);
+  assert.match((await unauthorizedCapture.json()).error, /Unauthorized/);
+
+  const missingShotstackCapability = await postJson("/api/providers/shotstack/callback", {}, 401);
+  assert.match((await missingShotstackCapability.json()).error, /Missing callback capability/);
 
   const unauthorized = await postJson("/api/fulfillment/callback", {
     ringId: "ring-test",

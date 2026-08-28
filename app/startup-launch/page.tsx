@@ -1,36 +1,36 @@
-import type { Metadata } from "next";
+import Link from "next/link";
+import { pageMetadata, webpageSchema } from "@/lib/discovery";
+import { StructuredData } from "@/components/StructuredData";
 import { SeoCta, SeoShell } from "@/components/SeoPage";
 
-export const metadata: Metadata = {
-  title: "Startup Launch Platform",
-  description: "Launch your startup in public with a permanent Ring you can share across Product Hunt, LinkedIn, X, communities and your own audience.",
-  alternates: { canonical: "/startup-launch" },
-};
+const description = "Celebrate a startup launch with a customer-filmed POP, a curated milestone film and UNIKMO memory cards. Earlier AntiBalcony Rings remain in the launch archive.";
+export const metadata = pageMetadata("Startup launch celebrations", description, "/startup-launch");
 
 export default function StartupLaunchPage() {
   return (
     <SeoShell>
+      <StructuredData data={webpageSchema("/startup-launch", "Startup launch celebrations", description)} />
       <div className="seo-main">
-        <p className="seo-breadcrumb">STARTUP LAUNCH PLATFORM</p>
+        <p className="seo-breadcrumb">COMPANY MILESTONES</p>
         <h1>A launch moment, not a launch competition.</h1>
-        <p className="seo-lede">The Anti-Balcony is a public startup-launch platform built around a shareable launch ritual called a Ring. It gives founders a permanent launch artifact without asking them to win a leaderboard first.</p>
+        <p className="seo-lede">The Pop Moment by UNIKMO helps teams celebrate a launch and keep the memory. You choose the POP, film it with our guidance and decide whether to share it or commission a curated film.</p>
 
         <div className="seo-content">
           <section className="seo-section">
-            <h2>What a Ring is</h2>
-            <div><p>A Ring is the public record of a startup entering the world: what it does, who it is for, the founder behind it, the problem it solves and the date it launched.</p><p>It is designed to be shared before, during or after a launch on other platforms. The Ring belongs to the launch itself, not to one distribution channel.</p></div>
+            <h2>Start with your team’s POP</h2>
+            <div><p>Confetti, a cork pop or a team cheer: choose a celebration that belongs to your team. Capture anticipation, the burst and the reactions using the <Link href="/capture-guide">free filming guide</Link>. Arrange your own props and filming.</p></div>
           </section>
           <section className="seo-section">
             <h2>Where it fits</h2>
-            <div><p>Product Hunt can provide discovery and feedback. LinkedIn and X can distribute founder stories. Hacker News and specialist communities can create high-quality discussion. Email can activate the audience you already own.</p><p>The Anti-Balcony complements those channels by giving every one of them the same permanent public destination.</p></div>
+            <div><p>A celebration film complements your product launch; it is not a replacement for customer acquisition, product demonstrations or an owned product page. Free POP submissions link to your existing public social video after review. Social features and audience reach are not guaranteed.</p></div>
           </section>
           <section className="seo-section">
-            <h2>Why public launches matter</h2>
-            <div><p>Launch day disappears quickly when it exists only as a social post. A structured public launch page can keep founder context, product proof and launch date together in a form that remains searchable and linkable.</p><p>Complete Rings can become indexable. Thin Rings remain noindex so the platform does not manufacture empty SEO inventory.</p></div>
+            <h2>Keep the memory together</h2>
+            <div><p>Keep it includes a curated 30–45 second film from your footage, one revision and one physical UNIKMO card. Additional same-memory cards can share the film with your team. See the <Link href="/#packages">current collection and prices</Link>.</p></div>
           </section>
           <section className="seo-section">
-            <h2>From Ring to Times Square</h2>
-            <div><p>The public Ring is free. Founders who want a larger launch moment can add Times Square screenshot proof, a short launch film or a coordinated staffed takeover.</p><p>The media package amplifies the Ring; it does not replace the owned public launch record.</p></div>
+            <h2>Times Square is optional</h2>
+            <div><p>The NASDAQ experience is request-only. Screen availability, creative approval, licensed capture and the final quote must be confirmed before payment or booking. We do not promise a placement from an enquiry or use a play log as a substitute for the agreed video.</p><p>Earlier AntiBalcony <Link href="/launches">Rings remain in the archive</Link>. New Ring orders, generic billboard packages and staffed takeovers are retired.</p></div>
           </section>
         </div>
         <SeoCta />

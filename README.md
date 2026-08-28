@@ -21,7 +21,10 @@ The product changes materially at $2,999: lower paid tiers sell verified media p
 - Next.js 16 / React 19
 - Node 22+
 - Supabase / PostgreSQL
-- Stripe Checkout + verified webhooks
+- Signed/resumable private Supabase Storage uploads
+- Blindspot operations adapter with a manual-dashboard fallback
+- Licensed capture callback, optional Shotstack packaging and Resend delivery
+- Stripe Checkout code remains dormant until payment work resumes
 - Zapier for notification bridges, not business-state ownership
 - Optional Resend founder emails
 - Vercel deployment
@@ -33,11 +36,15 @@ The application uses server-managed Supabase access. The core tables are:
 - `anti_balcony_rings`
 - `anti_balcony_fulfillment_events`
 - `anti_balcony_fulfillment_jobs`
+- `anti_balcony_orders`
+- `anti_balcony_order_events`
 
 The migration lives in:
 
 ```text
 supabase/migrations/20260824012000_create_anti_balcony_backend.sql
+supabase/migrations/20260827011303_anti_balcony_fulfillment_v2.sql
+supabase/migrations/20260827020500_anti_balcony_creative_validation.sql
 ```
 
 Row Level Security is enabled on all three tables and the app does not expose direct anonymous table access. Public Ring data is served through the Next.js application.
@@ -50,7 +57,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The visual launch ritual still works without database credentials. Without Supabase server credentials, new Rings are returned as non-persisted and paid fulfillment is unavailable.
+The visual launch ritual still works without database credentials. Without Supabase server credentials, new Rings are returned as non-persisted and package requests are unavailable. The package request does not call Stripe.
 
 ## Supabase environment
 
@@ -65,9 +72,10 @@ Legacy service-role JWTs are supported through:
 
 ```text
 SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-Never expose the secret/service-role key through a `NEXT_PUBLIC_*` variable.
+Never expose the secret/service-role key through a `NEXT_PUBLIC_*` variable. The publishable key is browser-safe and is paired with short-lived signed upload tokens.
 
 ## Ring behavior
 
@@ -87,7 +95,7 @@ A Ring can contain:
 
 A Ring is indexable only when the full required profile is present. Incomplete Rings remain `noindex`. Qualified Rings can appear in `/launches`, individual launch pages and the dynamic sitemap.
 
-## Stripe
+## Stripe (deferred)
 
 Create four one-time Prices:
 
@@ -111,25 +119,21 @@ Webhook endpoint:
 https://YOUR_DOMAIN/api/stripe/webhook
 ```
 
-Stripe metadata carries the Ring/customer/package context. Payment starts fulfillment; it does **not** automatically mark a placement live or a physical Takeover scheduled.
+The current storefront does not invoke `/api/checkout`. It creates an availability request and leaves payment as `not_requested` until operations has confirmed availability and creative approval. Legacy checkout routes remain isolated for the later Stripe phase.
 
 Stripe event idempotency is stored in `anti_balcony_fulfillment_events`.
 
 ## Fulfillment state model
 
-Digital:
-
 ```text
-manual_review -> scheduled -> live -> proof_ready
+creative_upload_pending -> availability_check -> creative_review -> payment_pending
+-> booked -> scheduled -> played -> capture_processing -> capture_ready
+-> packaging -> proof_ready -> delivered
 ```
 
-Physical:
+The state machine also includes explicit manual fallbacks (`capture_required`, `packaging_required`), revision (`needs_changes`) and terminal (`cancelled`, `failed`) states. Booking is blocked until manual payment or a waiver is recorded. `played` requires proof-of-play and an exact timestamp; `proof_ready` requires a private stored deliverable.
 
-```text
-ops_review -> scheduled -> live -> proof_ready
-```
-
-Physical packages require operations clearance before they can move from `scheduled` to `live`. `proof_ready` requires a real proof URL. Completed or failed jobs cannot silently restart.
+Full runbook: [`docs/TIMES_SQUARE_FULFILLMENT.md`](docs/TIMES_SQUARE_FULFILLMENT.md).
 
 ## Zapier architecture
 
@@ -176,6 +180,8 @@ Configure:
 
 ```text
 FULFILLMENT_CALLBACK_SECRET=
+OPS_API_SECRET=
+LICENSED_CAPTURE_CALLBACK_SECRET=
 ```
 
 The callback endpoint validates status transitions and asset URLs before writing to Supabase.
@@ -214,13 +220,11 @@ If absent, fulfillment continues without email rather than failing the purchase.
 
 ## Production checklist
 
-1. Configure Supabase server credentials in Vercel.
-2. Confirm the Supabase migration is applied.
-3. Create the four Stripe Prices and webhook secret.
-4. Keep the two Zapier notification hooks configured.
-5. Set `FULFILLMENT_CALLBACK_SECRET` in Vercel and any approved callback client.
-6. Finalize the Times Square media/vendor contract and current creative specs.
-7. Build the physical operations/vendor bench before enabling premium checkout publicly.
-8. Confirm legal rights to screenshot/video/live/BTS proof assets.
-9. Add rate limits and public-content moderation before meaningful traffic.
-10. Track actual gross margin and jobs stuck in operational states.
+1. Configure Supabase server credentials and the publishable key in Vercel.
+2. Configure `OPS_API_SECRET` and the licensed-capture callback secret.
+3. Keep the operations notification hook configured for manual Blindspot booking unless a contracted endpoint is available.
+4. Configure only commercially licensed capture infrastructure.
+5. Add Shotstack and Resend credentials when those accounts and domains are ready.
+6. Confirm the current NASDAQ Tower template and operator creative rules for every campaign.
+7. Track orders stuck in operational fallback states.
+8. Configure Stripe separately when payment work resumes.

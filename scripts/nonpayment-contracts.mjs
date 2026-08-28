@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 
 const { PACKAGE_OPERATIONS, submitBillboardJob } = await import("../lib/providers/billboard.ts");
 const { assertFulfillmentTransition } = await import("../lib/fulfillment-state.ts");
+const { assertOrderTransition, isOrderStatus } = await import("../lib/order-state.ts");
+const { validateCreativeSpec } = await import("../lib/creative-spec.ts");
 const { escapeHtmlAttribute, safeJsonLd } = await import("../lib/security.ts");
 
 const snapshot = PACKAGE_OPERATIONS.snapshot;
@@ -85,6 +87,44 @@ const forbiddenTransitions = [
 for (const transition of forbiddenTransitions) {
   assert.throws(() => assertFulfillmentTransition(transition), undefined, `${transition.current} -> ${transition.next} must be rejected`);
 }
+
+const orderTransitions = [
+  ["creative_upload_pending", "availability_check"],
+  ["availability_check", "creative_review"],
+  ["creative_review", "payment_pending"],
+  ["payment_pending", "booked"],
+  ["booked", "scheduled"],
+  ["scheduled", "played"],
+  ["played", "capture_processing"],
+  ["capture_processing", "capture_ready"],
+  ["capture_ready", "packaging"],
+  ["packaging", "proof_ready"],
+  ["proof_ready", "delivered"],
+];
+for (const [current, next] of orderTransitions) {
+  assert.doesNotThrow(() => assertOrderTransition({ current, next, paymentStatus: "manual_paid" }));
+}
+assert.throws(
+  () => assertOrderTransition({ current: "payment_pending", next: "booked", paymentStatus: "pending" }),
+  /cannot be confirmed before manual payment/i,
+);
+assert.throws(
+  () => assertOrderTransition({ current: "availability_check", next: "scheduled", paymentStatus: "waived" }),
+  /Invalid order transition/,
+);
+assert.equal(isOrderStatus("capture_processing"), true);
+assert.equal(isOrderStatus("paid"), false);
+
+assert.doesNotThrow(() => validateCreativeSpec({ contentType: "image/webp", width: 1080, height: 1920, durationSeconds: null }));
+assert.doesNotThrow(() => validateCreativeSpec({ contentType: "video/mp4", width: 1080, height: 1920, durationSeconds: 15.02 }));
+assert.throws(
+  () => validateCreativeSpec({ contentType: "video/mp4", width: 1920, height: 1080, durationSeconds: 15 }),
+  /vertical 9:16/,
+);
+assert.throws(
+  () => validateCreativeSpec({ contentType: "video/mp4", width: 1080, height: 1920, durationSeconds: 18 }),
+  /15 seconds/,
+);
 
 const hostileJsonLd = safeJsonLd({ founder: "</script><script>window.__xss=1</script>", ampersand: "A&B" });
 assert.equal(hostileJsonLd.includes("</script>"), false, "JSON-LD must not contain a literal script-closing sequence");
