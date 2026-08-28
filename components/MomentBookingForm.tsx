@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 
 type WindowCode = "08-12" | "12-16" | "16-20" | "20-24";
-type Tier = "snapshot" | "video" | "takeover";
+type Tier = "snapshot" | "video";
 
 type BookingResult = {
   orderId: string;
@@ -16,18 +16,7 @@ type BookingResult = {
   backupWindowLabel: string | null;
 };
 
-const OCCASIONS = [
-  "Proposal",
-  "Wedding",
-  "Birthday",
-  "Baby shower",
-  "I love you",
-  "Our memories",
-  "Anniversary",
-  "Graduation",
-  "Big win",
-  "Launch",
-];
+const OCCASIONS = ["Proposal", "Wedding", "Birthday", "Baby shower", "I love you", "Our memories", "Anniversary", "Graduation", "Big win", "Launch"];
 
 const WINDOWS: { value: WindowCode; label: string }[] = [
   { value: "08-12", label: "8 AM–12 PM ET" },
@@ -38,8 +27,7 @@ const WINDOWS: { value: WindowCode; label: string }[] = [
 
 const PACKAGES: { tier: Tier; name: string; price: string; detail: string }[] = [
   { tier: "snapshot", name: "Show It", price: "$399", detail: "Times Square display + verified proof" },
-  { tier: "video", name: "Show + Keep", price: "$799", detail: "Display + proof + 15-second keepsake film" },
-  { tier: "takeover", name: "The Moment", price: "$2,999", detail: "Coordinated experience + complete proof package" },
+  { tier: "video", name: "Show + Keep", price: "$549", detail: "Display + proof + 15-second keepsake film" },
 ];
 
 function tomorrow() {
@@ -60,21 +48,15 @@ async function inspectCreative(file: File) {
       });
       return { ...dimensions, durationSeconds: null as number | null };
     }
-
     if (file.type.startsWith("video/")) {
       return await new Promise<{ width: number; height: number; durationSeconds: number }>((resolve, reject) => {
         const video = document.createElement("video");
         video.preload = "metadata";
-        video.onloadedmetadata = () => resolve({
-          width: video.videoWidth,
-          height: video.videoHeight,
-          durationSeconds: video.duration,
-        });
+        video.onloadedmetadata = () => resolve({ width: video.videoWidth, height: video.videoHeight, durationSeconds: video.duration });
         video.onerror = () => reject(new Error("Could not read this video."));
         video.src = url;
       });
     }
-
     throw new Error("Use a photo or 15-second video.");
   } finally {
     URL.revokeObjectURL(url);
@@ -82,18 +64,14 @@ async function inspectCreative(file: File) {
 }
 
 async function jsonPost<T>(url: string, body: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const data = await response.json() as T & { error?: string };
   if (!response.ok) throw new Error(data.error || "Something went wrong.");
   return data;
 }
 
 export function MomentBookingForm({
-  initialTier = "video",
+  initialTier = "snapshot",
   initialOccasion = "Proposal",
   checkout,
   orderRef,
@@ -119,9 +97,7 @@ export function MomentBookingForm({
       <section className="booking-result booking-result-success">
         <p className="booking-eyebrow">PAYMENT RECEIVED</p>
         <h2>Your Pop Moment is moving.</h2>
-        <p>
-          Payment was received for <strong>{orderRef || "your booking"}</strong>. We are now securing the best eligible Times Square placement on your selected date, using your preferred four-hour window, backup window and same-day flexibility where you allowed it.
-        </p>
+        <p>Payment was received for <strong>{orderRef || "your booking"}</strong>. We are now securing the best eligible Times Square placement on your selected date, using your preferred four-hour window, backup window and same-day flexibility where you allowed it.</p>
         <p>If an exceptional provider or inventory issue makes fulfillment impossible, the booking is automatically refunded in full.</p>
         <Link href="/">Back to The Pop Moment</Link>
       </section>
@@ -143,7 +119,6 @@ export function MomentBookingForm({
     event.preventDefault();
     setError("");
     setMessage("");
-
     const form = new FormData(event.currentTarget);
     const creative = form.get("creative");
     if (!(creative instanceof File) || !creative.size) {
@@ -157,7 +132,7 @@ export function MomentBookingForm({
 
     try {
       setPhase("saving");
-      setMessage("Saving your date, window preferences and same-day flexibility…");
+      setMessage("Saving your date and window preferences…");
       const booking = await jsonPost<BookingResult>("/api/orders", {
         customerName: String(form.get("customerName") || ""),
         email: String(form.get("email") || ""),
@@ -185,27 +160,20 @@ export function MomentBookingForm({
         height: details.height,
         durationSeconds: details.durationSeconds,
       });
-
-      const uploadResponse = await fetch(upload.signedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": creative.type },
-        body: creative,
-      });
+      const uploadResponse = await fetch(upload.signedUrl, { method: "PUT", headers: { "Content-Type": creative.type }, body: creative });
       if (!uploadResponse.ok) throw new Error("Your creative could not be uploaded. Please try again.");
 
       setPhase("reviewing");
-      setMessage("Running the final technical check before secure payment…");
+      setMessage("Running the technical check before secure payment…");
       const review = await jsonPost<{ status: string; reviewStatus: string; checkoutReady: boolean; notes?: string | null }>("/api/orders/creative-upload-complete", {
         orderId: booking.orderId,
         accessToken: booking.accessToken,
       });
-
       if (review.reviewStatus === "needs_changes") {
         setPhase("pending");
         setMessage(review.notes || "The creative needs a change before payment. You have not been charged.");
         return;
       }
-
       if (!review.checkoutReady) {
         setPhase("pending");
         setMessage(`Request ${booking.orderRef} is saved, but the file needs manual review before payment. You have not been charged.`);
@@ -229,22 +197,16 @@ export function MomentBookingForm({
       <section className="booking-block">
         <p className="booking-eyebrow">01 · YOUR MOMENT</p>
         <div className="booking-choice-grid booking-occasion-grid">
-          {OCCASIONS.map((item) => (
-            <button key={item} type="button" className={occasion === item ? "is-selected" : ""} onClick={() => setOccasion(item)}>
-              {item}
-            </button>
-          ))}
+          {OCCASIONS.map((item) => <button key={item} type="button" className={occasion === item ? "is-selected" : ""} onClick={() => setOccasion(item)}>{item}</button>)}
         </div>
       </section>
 
       <section className="booking-block">
-        <p className="booking-eyebrow">02 · HOW MUCH DO YOU WANT TO KEEP?</p>
+        <p className="booking-eyebrow">02 · CHOOSE YOUR TIMES SQUARE PACKAGE</p>
         <div className="booking-package-grid">
           {PACKAGES.map((item) => (
             <button key={item.tier} type="button" className={tier === item.tier ? "is-selected" : ""} onClick={() => setTier(item.tier)}>
-              <span>{item.name}</span>
-              <strong>{item.price}</strong>
-              <small>{item.detail}</small>
+              <span>{item.name}</span><strong>{item.price}</strong><small>{item.detail}</small>
             </button>
           ))}
         </div>
@@ -253,32 +215,12 @@ export function MomentBookingForm({
       <section className="booking-block">
         <p className="booking-eyebrow">03 · CHOOSE THE DAY</p>
         <div className="booking-fields booking-fields-three">
-          <label>
-            <span>DISPLAY DATE</span>
-            <input name="eventDate" type="date" min={minDate} required />
-          </label>
-          <label>
-            <span>PREFERRED 4-HOUR WINDOW</span>
-            <select value={preferredWindow} onChange={(event) => setPreferredWindow(event.target.value as WindowCode)}>
-              {WINDOWS.map((window) => <option key={window.value} value={window.value}>{window.label}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>BACKUP WINDOW</span>
-            <select value={backupWindow} onChange={(event) => setBackupWindow(event.target.value as WindowCode | "")}>
-              <option value="">No backup window</option>
-              {WINDOWS.filter((window) => window.value !== preferredWindow).map((window) => <option key={window.value} value={window.value}>{window.label}</option>)}
-            </select>
-          </label>
+          <label><span>DISPLAY DATE</span><input name="eventDate" type="date" min={minDate} required /></label>
+          <label><span>PREFERRED 4-HOUR WINDOW</span><select value={preferredWindow} onChange={(event) => setPreferredWindow(event.target.value as WindowCode)}>{WINDOWS.map((window) => <option key={window.value} value={window.value}>{window.label}</option>)}</select></label>
+          <label><span>BACKUP WINDOW</span><select value={backupWindow} onChange={(event) => setBackupWindow(event.target.value as WindowCode | "")}><option value="">No backup window</option>{WINDOWS.filter((window) => window.value !== preferredWindow).map((window) => <option key={window.value} value={window.value}>{window.label}</option>)}</select></label>
         </div>
-        <label className="booking-check booking-flexibility">
-          <input type="checkbox" checked={anyTimeSameDay} onChange={(event) => setAnyTimeSameDay(event.target.checked)} />
-          <span><strong>Any time that day is fine.</strong> Give us maximum freedom to secure your display if both selected windows fill.</span>
-        </label>
-        <div className="booking-promise">
-          <strong>Choose the day. Choose the part of day. We handle the exact Times Square scheduling.</strong>
-          <p>Your placement is fulfilled inside a confirmed four-hour window on your selected date. We route across eligible Times Square inventory unless a specific screen is explicitly sold to you. Exact playback minute is set by the media schedule.</p>
-        </div>
+        <label className="booking-check booking-flexibility"><input type="checkbox" checked={anyTimeSameDay} onChange={(event) => setAnyTimeSameDay(event.target.checked)} /><span><strong>Any time that day is fine.</strong> Give us maximum freedom to secure your display if both selected windows fill.</span></label>
+        <div className="booking-promise"><strong>Choose the day. Choose the part of day. We handle the exact Times Square scheduling.</strong><p>Your placement is fulfilled inside a confirmed four-hour window on your selected date. We route across eligible Times Square inventory unless a specific screen is explicitly sold to you. Exact playback minute is set by the media schedule.</p></div>
       </section>
 
       <section className="booking-block">
@@ -287,30 +229,16 @@ export function MomentBookingForm({
           <label><span>YOUR NAME</span><input name="customerName" required minLength={2} maxLength={120} autoComplete="name" /></label>
           <label><span>EMAIL</span><input name="email" required type="email" autoComplete="email" /></label>
         </div>
-        <label className="booking-wide-field">
-          <span>MESSAGE ON THE MOMENT</span>
-          <input name="creativeMessage" maxLength={240} placeholder="Will you marry me? · Happy 40th, Maya · I love you…" />
-        </label>
-        <label className="booking-upload">
-          <span>PHOTO OR 15-SECOND VIDEO · VERTICAL 9:16</span>
-          <input name="creative" type="file" required accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" />
-          <small>JPG, PNG, WEBP, MP4, MOV or WEBM · up to 250 MB. Video must be 15 seconds.</small>
-        </label>
+        <label className="booking-wide-field"><span>MESSAGE ON THE MOMENT</span><input name="creativeMessage" maxLength={240} placeholder="Will you marry me? · Happy 40th, Maya · I love you…" /></label>
+        <label className="booking-upload"><span>PHOTO OR 15-SECOND VIDEO · VERTICAL 9:16</span><input name="creative" type="file" required accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" /><small>JPG, PNG, WEBP, MP4, MOV or WEBM · up to 250 MB. Video must be 15 seconds.</small></label>
       </section>
 
       <section className="booking-block booking-final-block">
-        <label className="booking-check">
-          <input type="checkbox" checked={legalAccepted} onChange={(event) => setLegalAccepted(event.target.checked)} required />
-          <span>I confirm I have the rights to this content, accept the <Link href="/terms">Terms</Link>, acknowledge the <Link href="/privacy">Privacy Notice</Link>, and consent to licensed capture of the public display for my proof package.</span>
-        </label>
-        <p className="booking-no-charge">
-          We validate your file before Stripe. <strong>After payment, we secure the best eligible same-day Times Square placement using the flexibility you selected.</strong> If an exceptional provider or inventory issue makes fulfillment impossible, the payment is automatically refunded in full.
-        </p>
+        <label className="booking-check"><input type="checkbox" checked={legalAccepted} onChange={(event) => setLegalAccepted(event.target.checked)} required /><span>I confirm I have the rights to this content, accept the <Link href="/terms">Terms</Link>, acknowledge the <Link href="/privacy">Privacy Notice</Link>, and consent to licensed capture of the public display for my proof package.</span></label>
+        <p className="booking-no-charge">We validate your file before Stripe. <strong>After payment, we secure the best eligible same-day Times Square placement using the flexibility you selected.</strong> If an exceptional provider or inventory issue makes fulfillment impossible, the payment is automatically refunded in full.</p>
         {message && <p className={`booking-message ${phase === "pending" ? "is-pending" : ""}`}>{message}</p>}
         {error && <p className="booking-error" role="alert">{error}</p>}
-        <button className="booking-submit" type="submit" disabled={working}>
-          {working ? "PREPARING YOUR MOMENT…" : "PREPARE MY MOMENT · NO CHARGE YET"}
-        </button>
+        <button className="booking-submit" type="submit" disabled={working}>{working ? "PREPARING YOUR MOMENT…" : "PREPARE MY MOMENT · NO CHARGE YET"}</button>
       </section>
     </form>
   );

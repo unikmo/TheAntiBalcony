@@ -12,21 +12,16 @@ const LEGACY_TIER_PRICES: Record<ProofTier, string | undefined> = {
   vip: process.env.STRIPE_PRICE_VIP,
 };
 
-const MOMENT_PRICES: Record<"snapshot" | "video" | "takeover", { amount: number; name: string; description: string }> = {
+const MOMENT_PRICES: Record<"snapshot" | "video", { amount: number; name: string; description: string }> = {
   snapshot: {
     amount: 39900,
     name: "The Pop Moment — Show It",
     description: "Times Square display + verified proof",
   },
   video: {
-    amount: 79900,
+    amount: 54900,
     name: "The Pop Moment — Show + Keep",
     description: "Times Square display + proof + 15-second keepsake film",
-  },
-  takeover: {
-    amount: 299900,
-    name: "The Pop Moment — The Moment",
-    description: "Coordinated Times Square experience + complete proof package",
   },
 };
 
@@ -49,10 +44,12 @@ export async function POST(request: Request) {
 
     if (body.orderId) {
       const order = await getOrderForCheckout(body.orderId);
-      const tier = order.tier as "snapshot" | "video" | "takeover";
+      if (order.tier !== "snapshot" && order.tier !== "video") {
+        return NextResponse.json({ error: "Choose Show It or Show + Keep for a Pop Moment booking." }, { status: 400 });
+      }
+      const tier = order.tier;
       const price = MOMENT_PRICES[tier];
 
-      if (!price) return NextResponse.json({ error: "Choose a valid Pop Moment package." }, { status: 400 });
       if (!order.creative_path || !order.creative_received_at) {
         return NextResponse.json({ error: "Upload and validate your creative before payment." }, { status: 409 });
       }
@@ -83,10 +80,7 @@ export async function POST(request: Request) {
             product_data: {
               name: price.name,
               description: price.description,
-              metadata: {
-                product: "the_pop_moment",
-                package: tier,
-              },
+              metadata: { product: "the_pop_moment", package: tier },
             },
           },
         }],
@@ -115,16 +109,13 @@ export async function POST(request: Request) {
             orderRef: order.order_ref,
           },
         },
-      }, {
-        idempotencyKey: `${order.id}:checkout`,
-      });
+      }, { idempotencyKey: `${order.id}:checkout` });
 
       if (!session.url) throw new Error("Stripe did not return a checkout URL.");
       await markOrderPaymentPending(order.id, session.id);
       return NextResponse.json({ url: session.url });
     }
 
-    // Legacy founder-launch checkout remains available until those older flows are retired.
     const startupName = body.startupName?.trim().slice(0, 80);
     const email = body.email?.trim().slice(0, 254);
     const tier: ProofTier = body.tier && VALID_TIERS.includes(body.tier) ? body.tier : "snapshot";

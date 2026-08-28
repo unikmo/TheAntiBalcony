@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/book" },
 };
 
-type Tier = "snapshot" | "video" | "takeover";
+type Tier = "snapshot" | "video";
 
 export default async function BookPage({
   searchParams,
@@ -16,7 +16,7 @@ export default async function BookPage({
   searchParams: Promise<{ package?: string; occasion?: string; checkout?: string; order_ref?: string }>;
 }) {
   const params = await searchParams;
-  const initialTier: Tier = params.package === "snapshot" || params.package === "takeover" ? params.package : "video";
+  const initialTier: Tier = params.package === "video" ? "video" : "snapshot";
 
   return (
     <main className="booking-page">
@@ -29,7 +29,7 @@ export default async function BookPage({
         <section className="booking-intro">
           <p className="booking-eyebrow">TIMES SQUARE · NEW YORK</p>
           <h1>Choose the day.<br />We handle the exact scheduling.</h1>
-          <p>Pick the moment, package and part of the day. We validate your creative, take secure payment, then route the booking across eligible Times Square inventory using the flexibility you selected.</p>
+          <p>Pick the moment, one of the two Times Square packages, and the part of day. We validate your creative, take secure payment, then route the booking across eligible inventory using the flexibility you selected.</p>
           <div className="booking-contract">
             <span><b>Your day</b> selected by you</span>
             <span><b>Your window</b> preferred + backup flexibility</span>
@@ -38,12 +38,7 @@ export default async function BookPage({
           <p className="booking-risk-note">If an exceptional provider or inventory issue makes fulfillment impossible, the payment is automatically refunded in full.</p>
         </section>
 
-        <MomentBookingForm
-          initialTier={initialTier}
-          initialOccasion={params.occasion || "Proposal"}
-          checkout={params.checkout}
-          orderRef={params.order_ref}
-        />
+        <MomentBookingForm initialTier={initialTier} initialOccasion={params.occasion || "Proposal"} checkout={params.checkout} orderRef={params.order_ref} />
       </div>
 
       <footer className="booking-footer">
