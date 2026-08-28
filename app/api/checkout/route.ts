@@ -13,16 +13,8 @@ const LEGACY_TIER_PRICES: Record<ProofTier, string | undefined> = {
 };
 
 const MOMENT_PRICES: Record<"snapshot" | "video", { amount: number; name: string; description: string }> = {
-  snapshot: {
-    amount: 39900,
-    name: "The Pop Moment — Show It",
-    description: "Times Square display + verified proof",
-  },
-  video: {
-    amount: 54900,
-    name: "The Pop Moment — Show + Keep",
-    description: "Times Square display + proof + 15-second keepsake film",
-  },
+  snapshot: { amount: 39900, name: "The Pop Moment — Show It", description: "Times Square display + verified proof" },
+  video: { amount: 54900, name: "The Pop Moment — Show + Keep", description: "Times Square display + proof + 15-second keepsake film" },
 };
 
 const VALID_TIERS: ProofTier[] = ["snapshot", "video", "takeover", "vip"];
@@ -32,14 +24,7 @@ export async function POST(request: Request) {
   if (!stripe) return NextResponse.json({ error: "Paid checkout is not configured yet." }, { status: 503 });
 
   try {
-    const body = (await request.json()) as {
-      orderId?: string;
-      ringId?: string;
-      startupName?: string;
-      email?: string;
-      allowSocial?: boolean;
-      tier?: ProofTier;
-    };
+    const body = (await request.json()) as { orderId?: string; ringId?: string; startupName?: string; email?: string; allowSocial?: boolean; tier?: ProofTier };
     const site = process.env.NEXT_PUBLIC_SITE_URL || "https://antibalcony.com";
 
     if (body.orderId) {
@@ -47,24 +32,14 @@ export async function POST(request: Request) {
       if (order.tier !== "snapshot" && order.tier !== "video") {
         return NextResponse.json({ error: "Choose Show It or Show + Keep for a Pop Moment booking." }, { status: 400 });
       }
-      const tier = order.tier;
+      const tier = order.tier as "snapshot" | "video";
       const price = MOMENT_PRICES[tier];
 
-      if (!order.creative_path || !order.creative_received_at) {
-        return NextResponse.json({ error: "Upload and validate your creative before payment." }, { status: 409 });
-      }
-      if (order.status === "needs_changes") {
-        return NextResponse.json({ error: "Your creative needs a change before payment." }, { status: 409 });
-      }
-      if (["cancelled", "failed"].includes(order.status)) {
-        return NextResponse.json({ error: "This booking can no longer be paid. Start a new booking." }, { status: 409 });
-      }
-      if (order.payment_status === "paid") {
-        return NextResponse.json({ error: "This booking has already been paid." }, { status: 409 });
-      }
-      if (order.payment_status === "refunded") {
-        return NextResponse.json({ error: "This booking was refunded. Start a new booking." }, { status: 409 });
-      }
+      if (!order.creative_path || !order.creative_received_at) return NextResponse.json({ error: "Upload and validate your creative before payment." }, { status: 409 });
+      if (order.status === "needs_changes") return NextResponse.json({ error: "Your creative needs a change before payment." }, { status: 409 });
+      if (["cancelled", "failed"].includes(order.status)) return NextResponse.json({ error: "This booking can no longer be paid. Start a new booking." }, { status: 409 });
+      if (order.payment_status === "paid") return NextResponse.json({ error: "This booking has already been paid." }, { status: 409 });
+      if (order.payment_status === "refunded") return NextResponse.json({ error: "This booking was refunded. Start a new booking." }, { status: 409 });
       if (order.payment_status === "pending" && order.stripe_session_id) {
         const existing = await stripe.checkout.sessions.retrieve(order.stripe_session_id).catch(() => null);
         if (existing?.url && existing.status === "open") return NextResponse.json({ url: existing.url });
@@ -72,43 +47,16 @@ export async function POST(request: Request) {
 
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
-        line_items: [{
-          quantity: 1,
-          price_data: {
-            currency: "usd",
-            unit_amount: price.amount,
-            product_data: {
-              name: price.name,
-              description: price.description,
-              metadata: { product: "the_pop_moment", package: tier },
-            },
-          },
-        }],
+        line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: price.amount, product_data: { name: price.name, description: price.description, metadata: { product: "the_pop_moment", package: tier } } } }],
         customer_email: order.email,
         success_url: `${site}/book?checkout=reserved&order_ref=${encodeURIComponent(order.order_ref)}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/book?checkout=cancelled`,
         client_reference_id: order.id,
         metadata: {
-          flow: "moment_booking",
-          brand: "the_pop_moment",
-          operatingProject: "PlanetHike Project",
-          orderId: order.id,
-          orderRef: order.order_ref,
-          tier,
-          eventDate: order.event_date || "",
-          preferredWindow: order.preferred_window_code || "",
-          backupWindow: order.alternative_window_code || "",
-          anyTimeSameDay: order.any_time_same_day === false ? "false" : "true",
+          flow: "moment_booking", brand: "the_pop_moment", operatingProject: "PlanetHike Project", orderId: order.id, orderRef: order.order_ref, tier,
+          eventDate: order.event_date || "", preferredWindow: order.preferred_window_code || "", backupWindow: order.alternative_window_code || "", anyTimeSameDay: order.any_time_same_day === false ? "false" : "true",
         },
-        payment_intent_data: {
-          metadata: {
-            flow: "moment_booking",
-            brand: "the_pop_moment",
-            operatingProject: "PlanetHike Project",
-            orderId: order.id,
-            orderRef: order.order_ref,
-          },
-        },
+        payment_intent_data: { metadata: { flow: "moment_booking", brand: "the_pop_moment", operatingProject: "PlanetHike Project", orderId: order.id, orderRef: order.order_ref } },
       }, { idempotencyKey: `${order.id}:checkout` });
 
       if (!session.url) throw new Error("Stripe did not return a checkout URL.");
