@@ -32,6 +32,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Creative upload metadata is incomplete." }, { status: 400 });
     }
 
+    // Provider preflight is opportunistic before payment. Local validation already enforces
+    // file type, aspect ratio, duration and size. If Blindspot is not yet reachable, the
+    // customer may still pay and final provider review happens during paid fulfillment.
     const review = await reviewBlindspotCreative({
       orderId: order.id,
       orderRef: order.order_ref,
@@ -45,16 +48,14 @@ export async function POST(request: Request) {
     }).catch((error) => ({
       status: "manual_review" as const,
       moderationStatus: null,
-      notes: error instanceof Error ? error.message : "Creative preflight requires manual review.",
+      notes: error instanceof Error ? error.message : "Provider preflight will finish after payment.",
     }));
 
-    const checkoutReady = review.status === "approved" && Boolean(
-      order.provider_hold_ref || process.env.BLINDSPOT_ALLOW_UNHELD_CHECKOUT === "true",
-    );
-    const nextStatus = review.status === "approved"
-      ? order.provider_hold_ref ? "inventory_held" : "available"
-      : review.status === "needs_changes"
-        ? "needs_changes"
+    const checkoutReady = review.status !== "needs_changes";
+    const nextStatus = review.status === "needs_changes"
+      ? "needs_changes"
+      : review.status === "approved"
+        ? "creative_review"
         : "manual_review";
 
     const now = new Date().toISOString();
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
         reviewStatus: review.status,
         moderationStatus: review.moderationStatus || null,
         checkoutReady,
+        paymentPolicy: "charge_then_allocate_with_refund_fallback",
       },
       idempotency_key: `${order.id}:creative:${order.creative_path}`,
     });
@@ -85,7 +87,9 @@ export async function POST(request: Request) {
       status: nextStatus,
       reviewStatus: review.status,
       checkoutReady,
-      notes: review.notes || null,
+      notes: review.status === "manual_review"
+        ? "Your file passed our technical checks. Final media-provider clearance will happen automatically after payment."
+        : review.notes || null,
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Could not complete creative review." }, { status: 400 });
