@@ -3,6 +3,146 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 type RingTier = "free" | "snapshot" | "video" | "takeover" | "vip";
 type PaidTier = Exclude<RingTier, "free">;
 
+type OrderRow = {
+  id: string;
+  order_ref: string;
+  access_token_hash: string;
+  ring_id: string | null;
+  startup_name: string;
+  customer_name: string | null;
+  occasion: string | null;
+  creative_message: string | null;
+  email: string;
+  tier: PaidTier;
+  board: string;
+  master_format: string;
+  timezone: string;
+  event_date: string | null;
+  preferred_window_code: string | null;
+  alternative_window_code: string | null;
+  requested_window_start: string;
+  requested_window_end: string;
+  alternative_window_start: string | null;
+  alternative_window_end: string | null;
+  any_time_same_day: boolean;
+  allow_social: boolean;
+  rights_accepted_at: string;
+  qr_policy_accepted_at: string;
+  capture_consent_at: string;
+  terms_accepted_at: string;
+  privacy_acknowledged_at: string;
+  status: string;
+  payment_status: string;
+  creative_path: string | null;
+  creative_filename: string | null;
+  creative_content_type: string | null;
+  creative_size_bytes: number | null;
+  creative_received_at: string | null;
+  creative_review_notes: string | null;
+  creative_width: number | null;
+  creative_height: number | null;
+  creative_duration_seconds: number | null;
+  provider_name: string;
+  provider_campaign_id: string | null;
+  provider_ref: string | null;
+  provider_moderation_status: string | null;
+  provider_proof_of_play_ref: string | null;
+  provider_hold_ref: string | null;
+  provider_hold_expires_at: string | null;
+  provider_quote: Json;
+  stripe_session_id: string | null;
+  scheduled_window_start: string | null;
+  scheduled_window_end: string | null;
+  played_at: string | null;
+  capture_provider: string | null;
+  capture_job_id: string | null;
+  capture_path: string | null;
+  capture_started_at: string | null;
+  capture_completed_at: string | null;
+  render_provider: string | null;
+  render_job_id: string | null;
+  render_callback_token_hash: string | null;
+  render_error: string | null;
+  deliverable_video_path: string | null;
+  deliverable_image_path: string | null;
+  delivery_email_id: string | null;
+  delivered_at: string | null;
+  failure_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type OrderInsert = {
+  id: string;
+  order_ref: string;
+  access_token_hash: string;
+  ring_id?: string | null;
+  startup_name: string;
+  customer_name?: string | null;
+  occasion?: string | null;
+  creative_message?: string | null;
+  email: string;
+  tier: PaidTier;
+  board?: string;
+  master_format?: string;
+  timezone: string;
+  event_date?: string | null;
+  preferred_window_code?: string | null;
+  alternative_window_code?: string | null;
+  requested_window_start: string;
+  requested_window_end: string;
+  alternative_window_start?: string | null;
+  alternative_window_end?: string | null;
+  any_time_same_day?: boolean;
+  allow_social?: boolean;
+  rights_accepted_at: string;
+  qr_policy_accepted_at: string;
+  capture_consent_at: string;
+  terms_accepted_at: string;
+  privacy_acknowledged_at: string;
+  status?: string;
+  payment_status?: string;
+  creative_path?: string | null;
+  creative_filename?: string | null;
+  creative_content_type?: string | null;
+  creative_size_bytes?: number | null;
+  creative_received_at?: string | null;
+  creative_review_notes?: string | null;
+  creative_width?: number | null;
+  creative_height?: number | null;
+  creative_duration_seconds?: number | null;
+  provider_name?: string;
+  provider_campaign_id?: string | null;
+  provider_ref?: string | null;
+  provider_moderation_status?: string | null;
+  provider_proof_of_play_ref?: string | null;
+  provider_hold_ref?: string | null;
+  provider_hold_expires_at?: string | null;
+  provider_quote?: Json;
+  stripe_session_id?: string | null;
+  scheduled_window_start?: string | null;
+  scheduled_window_end?: string | null;
+  played_at?: string | null;
+  capture_provider?: string | null;
+  capture_job_id?: string | null;
+  capture_path?: string | null;
+  capture_started_at?: string | null;
+  capture_completed_at?: string | null;
+  render_provider?: string | null;
+  render_job_id?: string | null;
+  render_callback_token_hash?: string | null;
+  render_error?: string | null;
+  deliverable_video_path?: string | null;
+  deliverable_image_path?: string | null;
+  delivery_email_id?: string | null;
+  delivered_at?: string | null;
+  failure_reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type OrderUpdate = Partial<OrderInsert>;
+
 export type Database = {
   public: {
     Tables: {
@@ -70,18 +210,9 @@ export type Database = {
         Relationships: [];
       };
       anti_balcony_fulfillment_events: {
-        Row: {
-          event_id: string;
-          created_at: string;
-        };
-        Insert: {
-          event_id: string;
-          created_at?: string;
-        };
-        Update: {
-          event_id?: string;
-          created_at?: string;
-        };
+        Row: { event_id: string; created_at: string };
+        Insert: { event_id: string; created_at?: string };
+        Update: { event_id?: string; created_at?: string };
         Relationships: [];
       };
       anti_balcony_fulfillment_jobs: {
@@ -166,6 +297,61 @@ export type Database = {
             columns: ["ring_id"];
             isOneToOne: false;
             referencedRelation: "anti_balcony_rings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      anti_balcony_orders: {
+        Row: OrderRow;
+        Insert: OrderInsert;
+        Update: OrderUpdate;
+        Relationships: [
+          {
+            foreignKeyName: "anti_balcony_orders_ring_id_fkey";
+            columns: ["ring_id"];
+            isOneToOne: false;
+            referencedRelation: "anti_balcony_rings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      anti_balcony_order_events: {
+        Row: {
+          id: string;
+          order_id: string;
+          event_type: string;
+          source: string;
+          status: string | null;
+          metadata: Json;
+          idempotency_key: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          order_id: string;
+          event_type: string;
+          source: string;
+          status?: string | null;
+          metadata?: Json;
+          idempotency_key?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          event_type?: string;
+          source?: string;
+          status?: string | null;
+          metadata?: Json;
+          idempotency_key?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "anti_balcony_order_events_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "anti_balcony_orders";
             referencedColumns: ["id"];
           },
         ];
