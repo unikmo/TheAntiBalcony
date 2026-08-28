@@ -7,10 +7,7 @@ export function GET() {
   );
   const stripe = Boolean(
     process.env.STRIPE_SECRET_KEY &&
-    process.env.STRIPE_WEBHOOK_SECRET &&
-    process.env.STRIPE_PRICE_SNAPSHOT &&
-    process.env.STRIPE_PRICE_VIDEO &&
-    process.env.STRIPE_PRICE_TAKEOVER,
+    process.env.STRIPE_WEBHOOK_SECRET,
   );
   const blindspot = Boolean(process.env.BLINDSPOT_BOOKING_BRIDGE_URL || process.env.BLINDSPOT_API_BRIDGE_URL);
   const earthcam = Boolean(process.env.EARTHCAM_CAPTURE_BRIDGE_URL);
@@ -28,15 +25,24 @@ export function GET() {
   );
   const social = Boolean(process.env.ZAPIER_SOCIAL_WEBHOOK_URL || process.env.SOCIAL_PUBLISH_WEBHOOK_URL);
 
+  const paymentsReady = supabase && stripe;
+  const fulfillmentAutomationReady = paymentsReady && blindspot && providerCallback;
+  const licensedCaptureReady = earthcam && providerCallback;
+
   return NextResponse.json({
     ok: true,
+    brand: "the_pop_moment",
+    operatingProject: "PlanetHike Project",
     database: supabase,
     supabase,
     stripe,
+    paymentsReady,
     blindspot,
     earthcam,
     providerCallback,
-    bookingReady: supabase && stripe && blindspot && providerCallback,
+    fulfillmentAutomationReady,
+    licensedCaptureReady,
+    bookingReady: paymentsReady,
     proofReady: proof && providerCallback,
     legacyOperations: operations,
     social,
