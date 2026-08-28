@@ -55,6 +55,8 @@ export function PopHeroCarousel() {
       if (!(event.target instanceof Element) || !event.target.closest("[data-rotation-control]")) setPaused(true);
     }}
     onKeyDown={event => {
+      // Let the native occasion picker handle its own arrows and Home/End.
+      if (event.target instanceof HTMLSelectElement) return;
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
       select(event.key === "Home" ? 0 : event.key === "End" ? POP_HERO_SLIDES.length - 1 : active + (event.key === "ArrowRight" ? 1 : -1));
@@ -88,14 +90,13 @@ export function PopHeroCarousel() {
       </div>)}
     </div>
     <div className="pop-carousel-bar">
-      <p className="pop-carousel-caption">Illustrative scenes</p>
+      <p className="pop-carousel-caption">Illustrative scenes · {active + 1} / {POP_HERO_SLIDES.length}</p>
       <div className="pop-carousel-controls">
         <button type="button" aria-label="Previous Times Square scene" aria-controls="pop-hero-slides" onClick={() => select(active - 1)}><span aria-hidden="true">←</span></button>
-        <div className="pop-carousel-dots" role="group" aria-label="Choose a scene">
-          {POP_HERO_SLIDES.map((slide, index) => <button key={slide.src} type="button"
-            aria-label={`Show ${slide.label.toLowerCase()}`} aria-pressed={active === index}
-            aria-controls="pop-hero-slides" onClick={() => select(index)}><span /></button>)}
-        </div>
+        <select className="pop-carousel-picker" aria-label="Find your moment" aria-controls="pop-hero-slides"
+          value={active} onChange={event => select(Number(event.target.value))}>
+          {POP_HERO_SLIDES.map((slide, index) => <option key={slide.src} value={index}>{slide.label}</option>)}
+        </select>
         <button type="button" aria-label="Next Times Square scene" aria-controls="pop-hero-slides" onClick={() => select(active + 1)}><span aria-hidden="true">→</span></button>
         <button data-rotation-control type="button" disabled={!canAnimate}
           aria-label={!canAnimate ? "Automatic rotation off: reduced motion" : paused ? "Play carousel" : "Pause carousel"}

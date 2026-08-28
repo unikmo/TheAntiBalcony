@@ -45,11 +45,12 @@ try {
   assert.doesNotMatch(hero, /UNIKMO|unikmo-lady|unikmo-card/);
   assert.match(hero, /href="\/launch\?offer=nasdaq"/);
   assert.match(hero, /aria-roledescription="carousel"/);
-  for (const copy of ["Your hard work.", "Up in lights.", "Your love.", "Larger than life.", "You earned this.", "Let it show.", "Picture your team in Times Square.", "Imagine their face when they look up.", "A bigger stage for your next chapter."]) {
+  for (const copy of ["Your forever.", "One question.", "Their day.", "Your little beginning.", "Three little words.", "Your favourite people.", "Still you.", "You earned this.", "Your hard work.", "We did it."]) {
     assert.ok(hero.includes(copy), `Missing server-rendered hero copy: ${copy}`);
   }
-  assert.equal((hero.match(/class="pop-carousel-story"/g) || []).length, 3);
-  for (const scene of ["launch", "together", "graduation"]) {
+  assert.equal((hero.match(/class="pop-carousel-story"/g) || []).length, 10);
+  assert.match(hero, /aria-label="Find your moment"/);
+  for (const scene of ["wedding", "proposal", "birthday", "baby-shower", "together", "memories", "anniversary", "graduation", "launch", "team-win"]) {
     assert.ok(hero.includes(`pop-times-square-${scene}.webp`), `Missing ${scene} scene`);
     const { response } = await get(`/pop-times-square-${scene}.webp`);
     assert.match(response.headers.get("content-type"), /image\/webp/);

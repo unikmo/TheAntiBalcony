@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { POP_HERO_SLIDES } from "../lib/pop-hero";
 
 test("lean homepage explains POP without retired offers", async ({ page }) => {
   const errors: string[] = [];
@@ -17,17 +18,22 @@ test("Times Square carousel has distinct scenes and points to NASDAQ", async ({ 
   await page.goto("/");
   const hero = page.locator(".pop-hero");
   await expect(hero).not.toContainText("UNIKMO");
-  await expect(hero.locator(".pop-carousel-slide")).toHaveCount(3);
-  await hero.getByRole("button", { name: "Show your love", exact: true }).click();
-  await expect(hero.getByRole("button", { name: "Show your love", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(hero.locator(".pop-carousel-slide")).toHaveCount(10);
+  const picker = hero.getByRole("combobox", { name: "Find your moment" });
+  await expect(picker.locator("option")).toHaveCount(10);
+  await picker.selectOption({ label: "I love you" });
+  await expect(picker).toHaveValue("4");
   await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /couple/);
-  await expect(hero.getByRole("heading", { name: "Your love. Larger than life." })).toBeVisible();
-  await expect(hero.getByText("Imagine their face when they look up.")).toBeVisible();
+  await expect(hero.getByRole("heading", { name: "Three little words. One giant gesture." })).toBeVisible();
+  await expect(hero.getByRole("button", { name: "Play carousel" })).toBeVisible();
+  await picker.selectOption({ label: "Anniversary" });
   await hero.getByRole("button", { name: "Next Times Square scene" }).press("ArrowRight");
   await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /graduate/);
   await expect(hero.getByRole("heading", { name: "You earned this. Let it show." })).toBeVisible();
   await hero.getByRole("button", { name: "Next Times Square scene" }).press("Home");
-  await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /team/);
+  await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /newlywed/);
+  await expect(hero.getByRole("heading", { name: "Your forever. Up in lights." })).toBeVisible();
+  await picker.selectOption({ label: "Launch" });
   await expect(hero.getByRole("heading", { name: "Your hard work. Up in lights." })).toBeVisible();
   await expect(hero.getByText("Picture your team in Times Square.")).toBeVisible();
   await expect(hero.getByRole("link", { name: "See yourself here" })).toHaveAttribute("href", "/launch?offer=nasdaq");
@@ -39,7 +45,21 @@ test("reduced motion disables automatic carousel rotation", async ({ page }) => 
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Automatic rotation off: reduced motion" })).toBeDisabled();
   await page.getByRole("button", { name: "Next Times Square scene" }).click();
-  await expect(page.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /couple/);
+  await expect(page.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /proposal/);
+});
+
+test("every occasion opens its own image and invitation immediately", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.locator(".pop-hero");
+  const picker = hero.getByRole("combobox", { name: "Find your moment" });
+  for (const slide of POP_HERO_SLIDES) {
+    await picker.selectOption({ label: slide.label });
+    await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", slide.alt);
+    await expect(hero.getByRole("heading", { name: slide.headline.join(" "), exact: true })).toBeVisible();
+    await expect(hero.getByText(slide.invitation, { exact: true })).toBeVisible();
+  }
+  await hero.getByRole("button", { name: "Next Times Square scene" }).click();
+  await expect(picker).toHaveValue("0");
 });
 
 test("preview loads video only after click and labels it as illustrative", async ({ page }) => {

@@ -4,8 +4,9 @@ import { quotePop, validatePopSubmission, validateSourceUrl, POP_OFFERS } from "
 import { heroSlideIndex, POP_HERO_INTERVAL_MS, POP_HERO_SLIDES } from "../lib/pop-hero.ts";
 
 assert.equal(POP_HERO_INTERVAL_MS, 4000);
-assert.equal(POP_HERO_SLIDES.length, 3);
-assert.equal(new Set(POP_HERO_SLIDES.map(slide => slide.src)).size, 3);
+assert.equal(POP_HERO_SLIDES.length, 10);
+assert.equal(new Set(POP_HERO_SLIDES.map(slide => slide.src)).size, 10);
+assert.deepEqual(POP_HERO_SLIDES.map(slide => slide.label), ["Wedding", "Proposal", "Birthday", "Baby shower", "I love you", "Our memories", "Anniversary", "Graduation", "Launch", "Team win"]);
 for (const slide of POP_HERO_SLIDES) {
   assert.match(slide.alt, /Illustrative Times Square/);
   assert.doesNotMatch(slide.src + slide.alt, /unikmo/i);
@@ -15,8 +16,8 @@ for (const slide of POP_HERO_SLIDES) {
   assert.ok(slide.invitation.length > 0 && slide.invitation.length <= 50);
   assert.doesNotMatch(slide.occasion + slide.headline.join(" ") + slide.invitation, /unikmo|guaranteed/i);
 }
-assert.equal(heroSlideIndex(-1), 2);
-assert.equal(heroSlideIndex(3), 0);
+assert.equal(heroSlideIndex(-1), 9);
+assert.equal(heroSlideIndex(10), 0);
 assert.equal(heroSlideIndex(1), 1);
 
 assert.deepEqual(Object.keys(POP_OFFERS), ["free", "keep", "nasdaq"]);
