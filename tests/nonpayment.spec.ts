@@ -21,10 +21,15 @@ test("Times Square carousel has distinct scenes and points to NASDAQ", async ({ 
   await hero.getByRole("button", { name: "Show your love", exact: true }).click();
   await expect(hero.getByRole("button", { name: "Show your love", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /couple/);
+  await expect(hero.getByRole("heading", { name: "Your love. Larger than life." })).toBeVisible();
+  await expect(hero.getByText("Imagine their face when they look up.")).toBeVisible();
   await hero.getByRole("button", { name: "Next Times Square scene" }).press("ArrowRight");
   await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /graduate/);
+  await expect(hero.getByRole("heading", { name: "You earned this. Let it show." })).toBeVisible();
   await hero.getByRole("button", { name: "Next Times Square scene" }).press("Home");
   await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /team/);
+  await expect(hero.getByRole("heading", { name: "Your hard work. Up in lights." })).toBeVisible();
+  await expect(hero.getByText("Picture your team in Times Square.")).toBeVisible();
   await expect(hero.getByRole("link", { name: "See yourself here" })).toHaveAttribute("href", "/launch?offer=nasdaq");
   await expect(page.locator("#packages article").first()).toHaveAttribute("id", "nasdaq");
 });

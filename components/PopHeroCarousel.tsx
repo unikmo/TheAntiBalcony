@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { heroSlideIndex, POP_HERO_SLIDES } from "@/lib/pop-hero";
+import { heroSlideIndex, POP_HERO_INTERVAL_MS, POP_HERO_SLIDES } from "@/lib/pop-hero";
 import "@/app/pop-hero.css";
 
 function subscribeMotion(callback: () => void) {
@@ -39,7 +39,7 @@ export function PopHeroCarousel() {
 
   useEffect(() => {
     if (!rotating) return;
-    const timer = window.setInterval(() => setActive(index => heroSlideIndex(index + 1)), 6500);
+    const timer = window.setInterval(() => setActive(index => heroSlideIndex(index + 1)), POP_HERO_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [rotating, active]);
 
@@ -80,6 +80,11 @@ export function PopHeroCarousel() {
         <Image src={slide.src} alt={slide.alt} fill
           sizes="(max-width: 720px) calc(100vw - 40px), (max-width: 1184px) calc(100vw - 64px), 1120px"
           priority={index === 0} loading={index === 0 ? undefined : "lazy"} />
+        <div className="pop-carousel-story">
+          <p className="pop-carousel-occasion">{slide.occasion}</p>
+          <h2>{slide.headline[0]}<br />{slide.headline[1]}</h2>
+          <p className="pop-carousel-invitation">{slide.invitation}</p>
+        </div>
       </div>)}
     </div>
     <div className="pop-carousel-bar">

@@ -22,10 +22,48 @@
   inset: 0;
   opacity: 0;
   visibility: hidden;
-  transition: opacity .65s ease, visibility .65s;
+  transition: opacity .35s ease, visibility .35s;
 }
 .pop-carousel-slide.is-active { opacity: 1; visibility: visible; }
 .pop-carousel-slide img { object-fit: cover; object-position: center; }
+.pop-carousel-slide::after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  background: linear-gradient(180deg, transparent, rgba(12, 13, 15, .64) 55%, rgba(12, 13, 15, .93));
+  pointer-events: none;
+}
+.pop-carousel-story {
+  position: absolute;
+  z-index: 1;
+  left: 40px;
+  right: 40px;
+  bottom: 36px;
+  text-align: left;
+  color: #fffaf4;
+  pointer-events: none;
+}
+.pop-site .pop-carousel-occasion {
+  margin: 0 0 12px;
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.pop-site .pop-carousel-story h2 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 450;
+  line-height: 1.06;
+  letter-spacing: -.045em;
+  color: inherit;
+}
+.pop-site .pop-carousel-invitation {
+  margin: 0;
+  max-width: 25em;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .pop-carousel-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; }
 .pop-site .pop-carousel-caption { font-size: 11px; color: var(--pop-muted); margin: 0; text-align: left; }
 .pop-carousel-controls, .pop-carousel-dots { display: flex; align-items: center; }
@@ -55,6 +93,10 @@
   .pop-site .pop-hero { padding-top: 28px; }
   .pop-site .pop-hero h1 { margin-bottom: 24px; }
   .pop-carousel-stage { aspect-ratio: 4 / 5; border-radius: 8px; }
+  .pop-carousel-story { left: 22px; right: 22px; bottom: 24px; }
+  .pop-site .pop-carousel-occasion { font-size: 9px; margin-bottom: 10px; }
+  .pop-site .pop-carousel-story h2 { margin-bottom: 10px; }
+  .pop-site .pop-carousel-invitation { font-size: 12px; }
   .pop-carousel-controls { gap: 0; }
   .pop-carousel-controls button { width: 36px; min-height: 44px; }
   .pop-carousel-dots button { width: 24px; }

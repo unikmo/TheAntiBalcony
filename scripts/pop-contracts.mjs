@@ -1,13 +1,19 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { quotePop, validatePopSubmission, validateSourceUrl, POP_OFFERS } from "../lib/pop-offers.ts";
-import { heroSlideIndex, POP_HERO_SLIDES } from "../lib/pop-hero.ts";
+import { heroSlideIndex, POP_HERO_INTERVAL_MS, POP_HERO_SLIDES } from "../lib/pop-hero.ts";
 
+assert.equal(POP_HERO_INTERVAL_MS, 4000);
 assert.equal(POP_HERO_SLIDES.length, 3);
 assert.equal(new Set(POP_HERO_SLIDES.map(slide => slide.src)).size, 3);
 for (const slide of POP_HERO_SLIDES) {
   assert.match(slide.alt, /Illustrative Times Square/);
   assert.doesNotMatch(slide.src + slide.alt, /unikmo/i);
+  assert.ok(slide.occasion.length > 0 && slide.occasion.length <= 30);
+  assert.equal(slide.headline.length, 2);
+  assert.ok(slide.headline.every(line => line.length <= 24));
+  assert.ok(slide.invitation.length > 0 && slide.invitation.length <= 50);
+  assert.doesNotMatch(slide.occasion + slide.headline.join(" ") + slide.invitation, /unikmo|guaranteed/i);
 }
 assert.equal(heroSlideIndex(-1), 2);
 assert.equal(heroSlideIndex(3), 0);

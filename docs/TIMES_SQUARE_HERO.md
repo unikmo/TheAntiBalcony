@@ -6,6 +6,18 @@ The aspiration is appearing in Times Square. The headline remains **Celebrate it
 The hero and header do not mention UNIKMO. The brand relationship and physical keepsake remain below the hero and in the footer/About content.
 The primary CTA targets `/launch?offer=nasdaq`. NASDAQ leads the package collection; the existing prices and request-only capture/availability conditions are unchanged.
 
+## In-image invitation
+
+Each scene has server-rendered HTML copy, not text embedded in the image. The visitor sees their occasion, a short personal headline and an invitation to imagine the outcome. This is a creative hypothesis, not a measured conversion claim.
+
+| Occasion | Headline | Invitation |
+| --- | --- | --- |
+| Launches & milestones | Your hard work. Up in lights. | Picture your team in Times Square. |
+| Weddings & anniversaries | Your love. Larger than life. | Imagine their face when they look up. |
+| Graduations & achievements | You earned this. Let it show. | A bigger stage for your next chapter. |
+
+Warm-white copy sits at the lower left over a dark gradient, leaving the tower and portraits as the main image. Smaller type and insets on mobile. No added purchase button, card language or specification copy inside the image.
+
 ## Assets
 
 Three original AI-generated illustrative images, not actual booked placements or examples of licensed camera delivery:
@@ -21,7 +33,7 @@ Visible caption: **Illustrative scenes**. Do not present these images as complet
 ## Carousel and discovery
 
 - First image server-rendered and prioritized; the remaining images load lazily.
-- Gentle rotation every 6.5 seconds only while visible/in view, unless paused.
+- Rotation every 4 seconds with a 350ms crossfade, only while visible/in view, unless paused. Timing is shared in `POP_HERO_INTERVAL_MS` and covered by the contract check.
 - Pointer hover pauses temporarily. Keyboard focus and manual selection stop rotation until Play is selected.
 - Previous/next, scene selectors, Home/End/arrow keys and touch swipes.
 - Automatic rotation disabled for reduced-motion preferences.

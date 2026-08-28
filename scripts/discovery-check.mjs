@@ -45,6 +45,10 @@ try {
   assert.doesNotMatch(hero, /UNIKMO|unikmo-lady|unikmo-card/);
   assert.match(hero, /href="\/launch\?offer=nasdaq"/);
   assert.match(hero, /aria-roledescription="carousel"/);
+  for (const copy of ["Your hard work.", "Up in lights.", "Your love.", "Larger than life.", "You earned this.", "Let it show.", "Picture your team in Times Square.", "Imagine their face when they look up.", "A bigger stage for your next chapter."]) {
+    assert.ok(hero.includes(copy), `Missing server-rendered hero copy: ${copy}`);
+  }
+  assert.equal((hero.match(/class="pop-carousel-story"/g) || []).length, 3);
   for (const scene of ["launch", "together", "graduation"]) {
     assert.ok(hero.includes(`pop-times-square-${scene}.webp`), `Missing ${scene} scene`);
     const { response } = await get(`/pop-times-square-${scene}.webp`);
