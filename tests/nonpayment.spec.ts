@@ -86,6 +86,9 @@ test("NASDAQ is request-only and has an explicit capture acknowledgement", async
   await page.goto("/launch?offer=nasdaq");
   await expect(page.locator(".pop-alert")).toContainText("not a reservation");
   await expect(page.getByLabel(/licensed capture must be confirmed/)).toBeVisible();
+  for (const slide of POP_HERO_SLIDES) {
+    await expect(page.getByLabel("The occasion").getByRole("option", { name: slide.label, exact: true })).toHaveCount(1);
+  }
 });
 
 test("free submission sends only a link and does not fabricate success when offline", async ({ page }) => {

@@ -11,6 +11,7 @@
 .pop-carousel { width: 100%; }
 .pop-carousel-stage {
   position: relative;
+  width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 10px;

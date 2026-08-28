@@ -7,7 +7,7 @@ export const POP_OFFERS = {
 export type PopOffer = keyof typeof POP_OFFERS;
 export const EXTRA_CARD_CENTS = 1200;
 export const MAX_CARDS = 500;
-export const OCCASIONS = ["Company milestone", "Launch", "Wedding", "Birthday", "Graduation", "Achievement", "Something else"] as const;
+export const OCCASIONS = ["Wedding", "Proposal", "Birthday", "Baby shower", "I love you", "Our memories", "Anniversary", "Graduation", "Launch", "Team win", "Company milestone", "Achievement", "Something else"] as const;
 export const POP_CHOICES = ["Confetti", "Cork pop", "Streamers", "Balloons", "Team cheer", "My own POP"] as const;
 
 export function isPopOffer(value: unknown): value is PopOffer {

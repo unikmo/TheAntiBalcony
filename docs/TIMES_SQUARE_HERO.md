@@ -5,6 +5,7 @@
 The aspiration is appearing in Times Square. The headline remains **Celebrate it. Show it. Keep it.**, with italic Keep it, per the user's final direction. The occasion carousel carries the Times Square aspiration visually.
 The hero and header do not mention UNIKMO. The brand relationship and physical keepsake remain below the hero and in the footer/About content.
 The primary CTA targets `/launch?offer=nasdaq`. NASDAQ leads the package collection; the existing prices and request-only capture/availability conditions are unchanged.
+All ten hero occasions are also available in the request form and accepted by its server-side validator. Existing company milestone, achievement and other options remain supported.
 
 ## In-image invitation
 

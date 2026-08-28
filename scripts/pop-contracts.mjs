@@ -33,6 +33,9 @@ assert.throws(() => quotePop("free", 1));
 for (const offer of ["snapshot", "video", "takeover", "vip", "billboard", "__proto__"]) assert.throws(() => quotePop(offer, 1));
 const base = { submissionKey: randomUUID(), offer: "free", totalCards: 0, title: "Maya’s graduation", email: "family@example.com", occasion: "Graduation", celebration: "Confetti", momentDate: "2026-08-28", sourceUrl: "https://www.youtube.com/watch?v=example", rightsAccepted: true, publicConsent: true, privacyAcknowledged: true };
 assert.equal(validatePopSubmission(base).publicConsent, true);
+for (const slide of POP_HERO_SLIDES) {
+  assert.equal(validatePopSubmission({ ...base, occasion: slide.label }).occasion, slide.label, `Hero occasion must be accepted by intake: ${slide.label}`);
+}
 for (const key of ["rightsAccepted", "publicConsent", "privacyAcknowledged"]) assert.throws(() => validatePopSubmission({ ...base, [key]: false }));
 for (const momentDate of ["2026-02-30", "2026-13-01", "August 28", ""]) assert.throws(() => validatePopSubmission({ ...base, momentDate }));
 for (const url of ["javascript:alert(1)", "https://username:password@youtube.com/", "https://youtube.com.evil.test/", "https://localhost/test", "https://127.0.0.1/", "https://[::1]/", "http://youtube.com/test", "data:video/mp4;base64,test", "https://youtube.com:444/test"]) assert.throws(() => validateSourceUrl(url, true));
