@@ -1,0 +1,39 @@
+# The Pop Moment — hero asset prompts
+
+Built-in image_gen used: exactly three independent parallel generation calls, no retries or variants. Each asset is 1536 × 1024. Official Nasdaq image was inspected for architecture only. Reference image is not an asset for site delivery.
+
+## launch.png
+
+Use case: photorealistic-natural
+Asset type: original premium website hero-carousel photograph, landscape 1536 x 1024.
+Primary request: An aspirational, photorealistic illustrative company launch celebration displayed on the REAL cylindrical Nasdaq Tower LED facade at 4 Times Square, New York. Create a completely new independent photograph, not an edit or recreation of any supplied photo.
+Scene/backdrop: Luminous blue hour, refined editorial city photography from pedestrian eye height with a gently upward 28mm architectural lens. The recognizable Nasdaq MarketSite cylindrical tower dominates the centered composition. Its tall gently convex wraparound LED facade has staggered small square architectural window openings interrupting the upper LED surface, with the curved glass MarketSite entrance below, surrounding NYC high-rises, real street scale, a few yellow taxis and pedestrians along the lower edge.
+Subject: A joyous original portrait of a small company team of four adults, smiling naturally together after launching their company, appears AS THE LED CONTENT physically wrapped onto the actual cylindrical screen. Their portrait fills most of the advertising screen in a tasteful coral and warm cream editorial composition, subtle celebration energy without props or slogans. The billboard creative follows the facade curvature and is visibly interrupted by actual window apertures and architectural seams; emitted LED light is believable on the street.
+Style/medium: Premium photorealistic architectural campaign image with restrained Apple / Bang & Olufsen-like visual discipline, natural skin texture and honest city texture, no glossy artificial CGI feeling.
+Composition: Landscape, tower dominant and centered, full advertising face in frame, portrait readable from street scale, enough surrounding city to make Times Square recognizable, no extreme fisheye or tilted horizon.
+Lighting: Luminous deep-blue twilight sky, warm window lights, coral screen glow balanced with quiet neutral city tones.
+Constraints: New fictional people, illustrative advertising concept only. The modest Nasdaq identification band may appear as an architectural detail only, never as endorsement. No website text, no slogan, no UNIKMO, no key symbol, no cards or payment imagery, no '15 sec', no buttons, no UI, no watermark. No invented flat rectangle on skyscraper; do not show a freestanding or floating billboard. No extra large text anywhere. Photo only, no border.
+
+## together.png
+
+Use case: photorealistic-natural
+Asset type: original premium website hero-carousel photograph, landscape 1536 x 1024.
+Primary request: An aspirational, photorealistic illustrative couple's milestone portrait on the REAL cylindrical Nasdaq Tower LED facade at 4 Times Square, New York. Create a completely new independent photograph, not an edit or recreation of any supplied photo.
+Scene/backdrop: Warm early evening at Times Square, refined editorial city photography from pedestrian eye height with a gently upward 28mm architectural lens. The recognizable Nasdaq MarketSite cylindrical tower dominates the centered composition. Its tall gently convex wraparound LED facade has staggered small square architectural window openings interrupting the upper LED surface, with the curved glass MarketSite entrance below, surrounding NYC high-rises, real street scale, a few yellow taxis and pedestrians along the lower edge.
+Subject: An original close affectionate portrait of a smiling adult couple sharing a joyful milestone, in tasteful understated everyday formal clothes. Their human portrait is the actual LED billboard content, physically wrapped onto the curved cylindrical screen, in restrained champagne, ivory, sand and softly warm photographic tones. Their portrait occupies most of the advertising face and tells the celebration story without any text or wine props. The creative conforms to the cylinder, interrupted by the real small square window apertures and architectural seams, not a graphic pasted on top.
+Style/medium: Premium photorealistic architectural campaign image with restrained Apple / Bang & Olufsen-like visual discipline, natural skin and fabric texture, believable street details, polished but not glossy CGI.
+Composition: Landscape, tower dominant and centered, full advertising face in frame, portrait readable from street scale, enough surrounding city to make Times Square recognizable, no extreme fisheye or tilted horizon.
+Lighting: Warm early-evening sunlight catching surrounding stone and glass, gentle golden shadows, ivory screen glow, sophisticated neutral tonal balance.
+Constraints: New fictional people, illustrative advertising concept only. Modest Nasdaq identification can appear only as an architectural detail, not endorsement. No website text, no slogan, no UNIKMO, no key symbol, no cards or payment imagery, no '15 sec', no buttons, no UI, no watermark. No invented flat rectangle on skyscraper, no freestanding or floating billboard. No extra large text anywhere. Photo only, no border.
+
+## graduation.png
+
+Use case: photorealistic-natural
+Asset type: original premium website hero-carousel photograph, landscape 1536 x 1024.
+Primary request: An aspirational, photorealistic illustrative graduation celebration portrait on the REAL cylindrical Nasdaq Tower LED facade at 4 Times Square, New York. Create a completely new independent photograph, not an edit or recreation of any supplied photo.
+Scene/backdrop: Clean bright daylight in Times Square, refined editorial city photography from pedestrian eye height with a gently upward 28mm architectural lens. The recognizable Nasdaq MarketSite cylindrical tower dominates the centered composition. Its tall gently convex wraparound LED facade has staggered small square architectural window openings interrupting the upper LED surface, with curved glass MarketSite entrance below, surrounding NYC high-rises, real street scale, a few yellow taxis and pedestrians along the lower edge.
+Subject: A joyful original portrait of one young adult graduate in a simple dark graduation gown and mortarboard, smiling with unmistakable pride. Their portrait is the actual LED billboard content, physically wrapped onto the cylindrical tower screen in a tasteful cool teal and warm cream photographic composition. The portrait fills most of the advertising face and communicates a personal milestone with no text needed. LED content follows the actual facade curvature and is interrupted by the building's small square window apertures and seams, never a pasted flat image.
+Style/medium: Premium photorealistic architectural campaign image, restrained Apple / Bang & Olufsen-like visual discipline, natural face and fabric texture, credible NYC everyday detail, not glossy artificial CGI.
+Composition: Landscape, tower dominant and centered, full advertising face in frame, portrait readable from street scale, enough surrounding city to make Times Square recognizable, no extreme fisheye or tilted horizon.
+Lighting: Bright clean daytime with soft clear sky, crisp urban detail, balanced highlights, cool teal screen color and neutral warm stone.
+Constraints: New fictional person, illustrative advertising concept only. Modest Nasdaq identification can appear only as architectural detail, not endorsement. No website text, no slogan, no UNIKMO, no key symbol, no cards or payment imagery, no '15 sec', no buttons, no UI, no watermark. No invented flat rectangle on skyscraper, no freestanding or floating billboard. No extra large text anywhere. Photo only, no border.

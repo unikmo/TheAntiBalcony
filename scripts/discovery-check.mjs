@@ -40,6 +40,16 @@ try {
   const origin = new URL(canonical(home)).origin;
   assert.equal((home.match(/<h1[ >]/g) || []).length, 1);
   assert.match(home, /Celebrate it\. Show it\./);
+  const hero = home.match(/<section class="pop-hero pop-wrap"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(hero, "Times Square hero is server rendered");
+  assert.doesNotMatch(hero, /UNIKMO|unikmo-lady|unikmo-card/);
+  assert.match(hero, /href="\/launch\?offer=nasdaq"/);
+  assert.match(hero, /aria-roledescription="carousel"/);
+  for (const scene of ["launch", "together", "graduation"]) {
+    assert.ok(hero.includes(`pop-times-square-${scene}.webp`), `Missing ${scene} scene`);
+    const { response } = await get(`/pop-times-square-${scene}.webp`);
+    assert.match(response.headers.get("content-type"), /image\/webp/);
+  }
   const nodes = graph(home).flatMap(item => item["@graph"] || [item]);
   for (const type of ["Organization", "Brand", "WebSite", "WebPage", "FAQPage", "Service"]) assert.ok(nodes.some(n => n["@type"] === type), type);
   const organization = nodes.find(n => n["@type"] === "Organization");

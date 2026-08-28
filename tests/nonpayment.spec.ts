@@ -13,6 +13,30 @@ test("lean homepage explains POP without retired offers", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test("Times Square carousel has distinct scenes and points to NASDAQ", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.locator(".pop-hero");
+  await expect(hero).not.toContainText("UNIKMO");
+  await expect(hero.locator(".pop-carousel-slide")).toHaveCount(3);
+  await hero.getByRole("button", { name: "Show your love", exact: true }).click();
+  await expect(hero.getByRole("button", { name: "Show your love", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /couple/);
+  await hero.getByRole("button", { name: "Next Times Square scene" }).press("ArrowRight");
+  await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /graduate/);
+  await hero.getByRole("button", { name: "Next Times Square scene" }).press("Home");
+  await expect(hero.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /team/);
+  await expect(hero.getByRole("link", { name: "See yourself here" })).toHaveAttribute("href", "/launch?offer=nasdaq");
+  await expect(page.locator("#packages article").first()).toHaveAttribute("id", "nasdaq");
+});
+
+test("reduced motion disables automatic carousel rotation", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Automatic rotation off: reduced motion" })).toBeDisabled();
+  await page.getByRole("button", { name: "Next Times Square scene" }).click();
+  await expect(page.locator(".pop-carousel-slide.is-active img")).toHaveAttribute("alt", /couple/);
+});
+
 test("preview loads video only after click and labels it as illustrative", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".pop-screen video")).toHaveCount(0);

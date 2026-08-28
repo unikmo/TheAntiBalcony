@@ -15,7 +15,7 @@ export function canonicalOrigin(value = process.env.NEXT_PUBLIC_SITE_URL) {
 export const SITE_URL = canonicalOrigin();
 export const SITE_NAME = "The Pop Moment";
 export const IS_PREVIEW = process.env.VERCEL_ENV === "preview";
-export const SITE_DESCRIPTION = "The Pop Moment by UNIKMO creates curated celebration films and physical memory cards for company milestones, weddings, birthdays and personal achievements. An AntiBalcony experience.";
+export const SITE_DESCRIPTION = "The Pop Moment brings your celebration to Times Square through request-only NASDAQ experiences, with curated films and UNIKMO keepsakes. For company milestones, weddings, birthdays and achievements. An AntiBalcony experience; booking and licensed capture require confirmation.";
 export const absoluteUrl = (path: string) => new URL(path, `${SITE_URL}/`).toString();
 
 export function pageMetadata(title: string, description: string, path: string, index = true): Metadata {

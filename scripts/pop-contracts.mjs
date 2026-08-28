@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { quotePop, validatePopSubmission, validateSourceUrl, POP_OFFERS } from "../lib/pop-offers.ts";
+import { heroSlideIndex, POP_HERO_SLIDES } from "../lib/pop-hero.ts";
+
+assert.equal(POP_HERO_SLIDES.length, 3);
+assert.equal(new Set(POP_HERO_SLIDES.map(slide => slide.src)).size, 3);
+for (const slide of POP_HERO_SLIDES) {
+  assert.match(slide.alt, /Illustrative Times Square/);
+  assert.doesNotMatch(slide.src + slide.alt, /unikmo/i);
+}
+assert.equal(heroSlideIndex(-1), 2);
+assert.equal(heroSlideIndex(3), 0);
+assert.equal(heroSlideIndex(1), 1);
 
 assert.deepEqual(Object.keys(POP_OFFERS), ["free", "keep", "nasdaq"]);
 assert.equal(quotePop("keep", 1).subtotalCents, 19900);

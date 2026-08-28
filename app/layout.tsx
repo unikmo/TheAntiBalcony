@@ -17,7 +17,7 @@ const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-te
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "The Pop Moment by UNIKMO",
+    default: "The Pop Moment | Times Square celebrations",
     template: "%s | The Pop Moment",
   },
   description: SITE_DESCRIPTION,
@@ -25,15 +25,15 @@ export const metadata: Metadata = {
   applicationName: "The Pop Moment",
   keywords: ["celebration film", "milestone memory", "UNIKMO card", "Times Square moment"],
   openGraph: {
-    title: "The Pop Moment by UNIKMO",
-    description: "Celebrate it. Show it. Keep it.",
+    title: "The Pop Moment | Times Square celebrations",
+    description: SITE_DESCRIPTION,
     type: "website",
     siteName: "The Pop Moment",
   },
   twitter: {
     card: "summary",
-    title: "The Pop Moment by UNIKMO",
-    description: "Celebrate it. Show it. Keep it.",
+    title: "The Pop Moment | Times Square celebrations",
+    description: SITE_DESCRIPTION,
   },
 };
 
