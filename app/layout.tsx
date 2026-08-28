@@ -10,6 +10,7 @@ import "./navigation-responsive.css";
 import "./cinematic-brand.css";
 import "./legal-and-record.css";
 import "./moment-home.css";
+import "./moment-home-v2.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const terminal = VT323({ weight: "400", subsets: ["latin"], variable: "--font-terminal", display: "swap" });
