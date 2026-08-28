@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       durationSeconds: order.creative_duration_seconds,
     }).catch((error) => ({
       status: "manual_review" as const,
+      moderationStatus: null,
       notes: error instanceof Error ? error.message : "Creative preflight requires manual review.",
     }));
 
