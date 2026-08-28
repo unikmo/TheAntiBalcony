@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { beginPaidFulfillment, claimStripeEvent } from "@/lib/fulfillment";
+import { completeMomentPayment } from "@/lib/orders";
 import type { ProofTier } from "@/lib/providers/billboard";
 
 export const runtime = "nodejs";
@@ -30,13 +31,16 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
+
+    if (metadata.flow === "moment_booking" && metadata.orderId) {
+      await completeMomentPayment(metadata.orderId, session.id);
+      return NextResponse.json({ received: true, flow: "moment_booking" });
+    }
+
     const startupName = metadata.startupName;
     const email = session.customer_details?.email || metadata.email;
     const tier = (VALID_TIERS.includes(metadata.tier as ProofTier) ? metadata.tier : "snapshot") as ProofTier;
-
-    if (!startupName || !email) {
-      return NextResponse.json({ error: "Checkout metadata is incomplete." }, { status: 422 });
-    }
+    if (!startupName || !email) return NextResponse.json({ error: "Checkout metadata is incomplete." }, { status: 422 });
 
     await beginPaidFulfillment({
       eventId: event.id,
