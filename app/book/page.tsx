@@ -4,7 +4,7 @@ import { MomentBookingForm } from "@/components/MomentBookingForm";
 
 export const metadata: Metadata = {
   title: "Book Your Times Square Moment",
-  description: "Choose your date and four-hour Times Square display window. We check inventory and creative before payment, then confirm the booking and proof workflow.",
+  description: "Choose your date and four-hour Times Square display window, upload your creative, pay securely, and let The Pop Moment handle the exact media scheduling and proof workflow.",
   alternates: { canonical: "/book" },
 };
 
@@ -21,7 +21,7 @@ export default async function BookPage({
   return (
     <main className="booking-page">
       <header className="booking-header">
-        <Link href="/" className="booking-brand"><span aria-hidden="true" />THE ANTI-BALCONY</Link>
+        <Link href="/" className="booking-brand"><span aria-hidden="true" />THE POP MOMENT</Link>
         <Link href="/">Back to moments</Link>
       </header>
 
@@ -29,12 +29,13 @@ export default async function BookPage({
         <section className="booking-intro">
           <p className="booking-eyebrow">TIMES SQUARE · NEW YORK</p>
           <h1>Choose the day.<br />We handle the exact scheduling.</h1>
-          <p>Pick the moment, package and part of the day. We check eligible Times Square inventory and your creative before you pay.</p>
+          <p>Pick the moment, package and part of the day. We validate your creative, take secure payment, then route the booking across eligible Times Square inventory using the flexibility you selected.</p>
           <div className="booking-contract">
-            <span><b>Guaranteed</b> selected date</span>
-            <span><b>Guaranteed</b> confirmed 4-hour window</span>
-            <span><b>Flexible</b> exact playback minute</span>
+            <span><b>Your day</b> selected by you</span>
+            <span><b>Your window</b> preferred + backup flexibility</span>
+            <span><b>Our job</b> exact playback scheduling + proof</span>
           </div>
+          <p className="booking-risk-note">If an exceptional provider or inventory issue makes fulfillment impossible, the payment is automatically refunded in full.</p>
         </section>
 
         <MomentBookingForm
@@ -46,7 +47,7 @@ export default async function BookPage({
       </div>
 
       <footer className="booking-footer">
-        <span>© {new Date().getFullYear()} The Anti-Balcony</span>
+        <span>© {new Date().getFullYear()} The Pop Moment · A PlanetHike Project</span>
         <nav><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/imprint">Imprint</Link></nav>
       </footer>
     </main>
