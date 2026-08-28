@@ -33,7 +33,7 @@ For a reachable deployment: `node scripts/discovery-check.mjs https://DEPLOYMENT
 
 ## Release gates not implied by code completion
 
-1. Deploy and verify the exact preview commit. Production needs separate approval.
+1. Deploy and verify the exact preview commit. Production needs separate approval and a fresh production-target build: do not promote a preview artifact with build-time noindex controls baked in.
 2. On the approved production release, verify HTTPS, the canonical host, actual crawler access through Vercel/CDN, HTML, robots, sitemap and noindex boundaries. User-agent simulation does not prove access from real crawler IPs.
 3. Verify the owned domain in Google Search Console and Bing Webmaster Tools; submit the sitemap and inspect public landing pages. No account setup or indexing submission is claimed by this implementation.
 4. Run Google's Rich Results Test for supported types and Schema.org Validator for the whole graph. Service markup and FAQ markup do not guarantee a rich result.
