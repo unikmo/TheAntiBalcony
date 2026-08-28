@@ -113,14 +113,14 @@ const offers = [
     price: "$399",
     kicker: "TIMES SQUARE",
     text: "Your creative placed in Times Square with provider-confirmed proof of the display.",
-    subject: "Show It — Times Square moment",
+    tier: "snapshot",
   },
   {
     name: "SHOW + KEEP",
     price: "$799",
     kicker: "TIMES SQUARE + FILM",
     text: "The display, proof, and a 15-second keepsake film built for sharing after the moment.",
-    subject: "Show + Keep — Times Square moment",
+    tier: "video",
     featured: true,
   },
   {
@@ -128,7 +128,7 @@ const offers = [
     price: "$2,999",
     kicker: "COORDINATED EXPERIENCE",
     text: "A coordinated Times Square experience with on-the-ground coverage and a complete proof package.",
-    subject: "The Moment — coordinated Times Square experience",
+    tier: "takeover",
   },
 ];
 
@@ -183,8 +183,11 @@ function playBell(fullCeremony = false) {
   window.setTimeout(() => void ctx.close(), (duration + 0.3) * 1000);
 }
 
-function mailto(subject: string) {
-  return `mailto:hello@antibalcony.com?subject=${encodeURIComponent(subject)}`;
+function bookingUrl({ tier, occasion }: { tier?: string; occasion?: string } = {}) {
+  const params = new URLSearchParams();
+  if (tier) params.set("package", tier);
+  if (occasion) params.set("occasion", occasion);
+  return `/book${params.size ? `?${params.toString()}` : ""}`;
 }
 
 export function AntiBalconyV2() {
@@ -230,9 +233,9 @@ export function AntiBalconyV2() {
     <main className="ab-home">
       <header className="ab-header">
         <div className="ab-header-inner">
-          <Link className="ab-brand" href="/" aria-label="The Anti-Balcony home">
+          <Link className="ab-brand" href="/" aria-label="The Pop Moment home">
             <span aria-hidden="true" />
-            THE ANTI-BALCONY
+            THE POP MOMENT
           </Link>
           <nav aria-label="Main navigation">
             <a href="#how">How it works</a>
@@ -240,7 +243,7 @@ export function AntiBalconyV2() {
             <a href="#proof">What you get</a>
             <a href="#offer">Pricing</a>
           </nav>
-          <a className="ab-header-cta" href={mailto("I want my Times Square moment")}>Book your moment</a>
+          <Link className="ab-header-cta" href="/book">Book your moment</Link>
         </div>
       </header>
 
@@ -286,7 +289,7 @@ export function AntiBalconyV2() {
           >
             <span>{moment.label}</span>
             <strong>{moment.screen}</strong>
-            <small>THE ANTI-BALCONY · TIMES SQUARE</small>
+            <small>THE POP MOMENT · TIMES SQUARE</small>
           </div>
 
           <div className="ab-stage-location">TIMES SQUARE · NEW YORK</div>
@@ -332,7 +335,7 @@ export function AntiBalconyV2() {
 
         <div className="ab-hero-after">
           <p><strong>15 seconds in Times Square.</strong> Verified proof you were there. A keepsake that does not disappear when the screen goes dark.</p>
-          <a href={mailto(`My Times Square moment — ${moment.label}`)}>Make it yours</a>
+          <Link href={bookingUrl({ occasion: moment.label })}>Make it yours</Link>
         </div>
       </section>
 
@@ -345,7 +348,7 @@ export function AntiBalconyV2() {
           <article>
             <span>01</span>
             <h3>Show it.</h3>
-            <p>Your photo, video or message appears in Times Square at the moment you chose.</p>
+            <p>Your photo, video or message appears in Times Square on the day and within the part of day you chose.</p>
           </article>
           <article>
             <span>02</span>
@@ -372,7 +375,7 @@ export function AntiBalconyV2() {
             <div className="ab-bell-media">
               <Image
                 src="/antibalcony-real-bell.webp"
-                alt="The Anti-Balcony ceremonial launch bell"
+                alt="The Pop Moment ceremonial launch bell"
                 fill
                 sizes="(max-width: 850px) 100vw, 45vw"
               />
@@ -411,23 +414,23 @@ export function AntiBalconyV2() {
               </div>
               <strong>{offer.price}</strong>
               <p>{offer.text}</p>
-              <a href={mailto(offer.subject)}>Choose this</a>
+              <Link href={bookingUrl({ tier: offer.tier })}>Choose this</Link>
             </article>
           ))}
         </div>
-        <p className="ab-offer-note">Placement timing and final creative are confirmed before anything is booked.</p>
+        <p className="ab-offer-note">Choose your date and four-hour preference. We handle the exact Times Square scheduling. Exceptional non-fulfillment is refunded in full.</p>
       </section>
 
       <section className="ab-final" aria-labelledby="final-title">
         <p>WORTH REMEMBERING?</p>
         <h2 id="final-title">Then it is worth showing.</h2>
-        <a href={mailto("I want my moment in Times Square")}>Tell us your moment</a>
+        <Link href="/book">Tell us your moment</Link>
       </section>
 
       <footer className="ab-footer">
         <div>
-          <strong>THE ANTI-BALCONY</strong>
-          <span>Times Square moments with proof you can keep.</span>
+          <strong>THE POP MOMENT</strong>
+          <span>Times Square moments with proof you can keep. A PlanetHike Project.</span>
         </div>
         <nav aria-label="Footer navigation">
           <Link href="/launches">Founder launches</Link>
