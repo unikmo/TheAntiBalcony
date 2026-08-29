@@ -15,6 +15,7 @@ import "./moment-home-v2.css";
 import "./pop-moment-v3.css";
 import "./pop-moment-card.css";
 import "./pop-moment-v4.css";
+import "./nasdaq-hero.css";
 import "./admin/admin.css";
 import "./booking.css";
 

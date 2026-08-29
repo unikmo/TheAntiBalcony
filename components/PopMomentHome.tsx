@@ -38,7 +38,7 @@ export function PopMomentHome() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Preload every occasion image so the billboard swaps instantly instead of waiting on the network.
+    // Preload every occasion image so the Nasdaq facade swaps instantly.
     moments.forEach(({ image }) => {
       const preload = new window.Image();
       preload.src = image;
@@ -74,8 +74,8 @@ export function PopMomentHome() {
         </div>
 
         <div className="pm4-stage-wrap">
-          <div className="pm4-stage">
-            <img className="pm4-stage-photo" src="/antibalcony-times-square.webp" alt="Times Square at night" />
+          <div className="pm4-stage pm4-nasdaq-stage">
+            <img className="pm4-stage-photo" src="/antibalcony-nasdaq-unikmo.webp" alt="Nasdaq MarketSite tower in Times Square" />
             <div className="pm4-billboard" key={moment.slug}>
               <img src={moment.image} alt="" />
               <div className="pm4-billboard-shade" />
@@ -85,6 +85,7 @@ export function PopMomentHome() {
                 <span>THE POP MOMENT</span>
               </div>
             </div>
+            <div className="pm4-nasdaq-label">Nasdaq Tower · visual example</div>
             <div className="pm4-stage-line">
               <span>{moment.label}</span>
               <strong>{moment.prompt}</strong>
