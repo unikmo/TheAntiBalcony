@@ -32,7 +32,6 @@ export function GET() {
   return NextResponse.json({
     ok: true,
     brand: "the_pop_moment",
-    operatingProject: "PlanetHike Project",
     database: supabase,
     supabase,
     stripe,
