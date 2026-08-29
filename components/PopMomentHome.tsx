@@ -33,14 +33,21 @@ const offers = [
 
 export function PopMomentHome() {
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
   const moment = moments[active];
 
   useEffect(() => {
-    if (paused || typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => setActive((value) => (value + 1) % moments.length), 4600);
+    if (typeof window === "undefined") return;
+
+    // Preload every occasion image so the billboard swaps instantly instead of waiting on the network.
+    moments.forEach(({ image }) => {
+      const preload = new window.Image();
+      preload.src = image;
+    });
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => setActive((value) => (value + 1) % moments.length), 2600);
     return () => window.clearInterval(timer);
-  }, [paused]);
+  }, []);
 
   return (
     <main className="pm4">
@@ -66,7 +73,7 @@ export function PopMomentHome() {
           <p className="pm4-window">Choose your date and a four-hour window. We handle the exact Times Square scheduling.</p>
         </div>
 
-        <div className="pm4-stage-wrap" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}>
+        <div className="pm4-stage-wrap">
           <div className="pm4-stage">
             <img className="pm4-stage-photo" src="/antibalcony-times-square.webp" alt="Times Square at night" />
             <div className="pm4-billboard" key={moment.slug}>
