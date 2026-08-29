@@ -13,6 +13,7 @@ import "./legal-and-record.css";
 import "./moment-home.css";
 import "./moment-home-v2.css";
 import "./pop-moment-v3.css";
+import "./pop-moment-card.css";
 import "./booking.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
