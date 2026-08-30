@@ -1,6 +1,6 @@
 /* Nasdaq MarketSite hero treatment.
-   The hero uses our existing Nasdaq scene as a visual example while the commercial
-   promise remains an eligible Times Square screen unless a specific screen is confirmed. */
+   The tower/building is the frame. Occasion artwork must remain strictly inside the
+   illuminated media surface and never cover the surrounding Nasdaq structure. */
 
 .pm4-nasdaq-stage{
   aspect-ratio:16/9;
@@ -21,31 +21,43 @@
     linear-gradient(90deg,rgba(0,0,0,.2) 0%,transparent 29%,transparent 70%,rgba(0,0,0,.14) 100%);
 }
 
-/* The Nasdaq facade is a tall, curved media surface. This mask follows that visual
-   language so the occasion creative reads as part of the tower, not as a card floating
-   over a photograph. */
+/* Outer box follows the tower. The clip-path is deliberately inset from the box so
+   the tower's physical frame remains visible around the creative. */
 .pm4-nasdaq-stage .pm4-billboard{
   left:37.7%;
   top:3.1%;
   width:25.1%;
   height:77.6%;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:42% 42% 13% 13% / 5% 5% 4% 4%;
-  clip-path:polygon(8% 0,92% 0,100% 88%,92% 100%,8% 100%,0 88%);
+  border:0;
+  border-radius:0;
+  clip-path:polygon(
+    14% 2%,
+    86% 2%,
+    93% 86%,
+    87% 96%,
+    13% 96%,
+    7% 86%
+  );
   transform:perspective(1200px) rotateY(-1.25deg) rotateX(.35deg);
   transform-origin:center center;
-  box-shadow:0 0 38px rgba(117,190,255,.16),0 22px 48px rgba(0,0,0,.34);
+  box-shadow:none;
+  overflow:hidden;
 }
 
 .pm4-nasdaq-stage .pm4-billboard>img{
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
   object-position:center 42%;
-  transform:scale(1.03);
+  transform:scale(1.01);
 }
 
 .pm4-nasdaq-stage .pm4-billboard-shade{
+  inset:0;
   background:
-    linear-gradient(90deg,rgba(0,0,0,.22),transparent 25%,transparent 70%,rgba(0,0,0,.2)),
-    linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.28));
+    linear-gradient(90deg,rgba(0,0,0,.2),transparent 24%,transparent 72%,rgba(0,0,0,.18)),
+    linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.27));
 }
 
 .pm4-nasdaq-stage .pm4-billboard:after{
@@ -55,27 +67,27 @@
   inset:0;
   pointer-events:none;
   background:
-    linear-gradient(90deg,rgba(255,255,255,.12),transparent 14%,transparent 77%,rgba(255,255,255,.07)),
-    linear-gradient(104deg,transparent 34%,rgba(255,255,255,.08) 48%,transparent 60%);
+    linear-gradient(90deg,rgba(255,255,255,.1),transparent 15%,transparent 78%,rgba(255,255,255,.06)),
+    linear-gradient(104deg,transparent 34%,rgba(255,255,255,.07) 48%,transparent 60%);
   mix-blend-mode:screen;
 }
 
 .pm4-nasdaq-stage .pm4-billboard-copy{
   z-index:3;
-  padding:17% 15% 21%;
+  padding:18% 19% 22%;
   text-shadow:0 3px 18px rgba(0,0,0,.82);
 }
 
 .pm4-nasdaq-stage .pm4-billboard-copy small,
 .pm4-nasdaq-stage .pm4-billboard-copy span{
-  font-size:clamp(6px,2.7cqw,11px);
+  font-size:clamp(6px,2.6cqw,11px);
   letter-spacing:.15em;
 }
 
 .pm4-nasdaq-stage .pm4-billboard-copy strong{
-  max-width:82%;
+  max-width:78%;
   margin:5.5cqw 0;
-  font-size:clamp(19px,10.5cqw,47px);
+  font-size:clamp(19px,9.8cqw,45px);
   line-height:.88;
   letter-spacing:-.05em;
 }
@@ -115,13 +127,21 @@
     top:3.8%;
     width:33.2%;
     height:74.5%;
+    clip-path:polygon(
+      15% 3%,
+      85% 3%,
+      92% 85%,
+      86% 95%,
+      14% 95%,
+      8% 85%
+    );
   }
   .pm4-nasdaq-stage .pm4-billboard-copy{
-    padding:18% 13% 22%;
+    padding:19% 18% 23%;
   }
   .pm4-nasdaq-stage .pm4-billboard-copy strong{
-    max-width:88%;
-    font-size:clamp(16px,10.2cqw,35px);
+    max-width:80%;
+    font-size:clamp(16px,9.4cqw,33px);
   }
   .pm4-nasdaq-label{
     top:12px;
