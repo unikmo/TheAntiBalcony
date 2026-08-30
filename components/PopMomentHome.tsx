@@ -38,7 +38,6 @@ export function PopMomentHome() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Preload every occasion image so the Nasdaq facade swaps instantly.
     moments.forEach(({ image }) => {
       const preload = new window.Image();
       preload.src = image;
@@ -65,12 +64,12 @@ export function PopMomentHome() {
         <div className="pm4-hero-copy">
           <p className="pm4-kicker">THE POP MOMENT · TIMES SQUARE</p>
           <h1>Celebrate it.<br />Show it. <em>Keep it.</em></h1>
-          <p className="pm4-sub">Your message on one of the world&apos;s most famous stages. Then a piece of the moment you can keep.</p>
+          <p className="pm4-sub">Have a pop moment in mind? Put it on a Times Square screen and keep the memory afterwards.</p>
           <div className="pm4-actions">
             <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-primary">Create your Pop Moment</Link>
             <a href="#moments" className="pm4-secondary">See the moments</a>
           </div>
-          <p className="pm4-window">Choose your date and a four-hour window. We handle the exact Times Square scheduling.</p>
+          <p className="pm4-window">Choose your date and a 4-hour window. We handle the exact scheduling.</p>
         </div>
 
         <div className="pm4-stage-wrap">
@@ -79,10 +78,10 @@ export function PopMomentHome() {
             <div className="pm4-billboard" key={moment.slug}>
               <img src={moment.image} alt="" />
               <div className="pm4-billboard-shade" />
-              <div className="pm4-billboard-copy">
-                <small>{moment.label}</small>
-                <strong>{moment.screen}</strong>
-                <span>THE POP MOMENT</span>
+              <div className="pm4-billboard-copy pm4-billboard-invite">
+                <small>PROPOSAL · BIRTHDAY · WEDDING · LAUNCH</small>
+                <strong>THIS COULD BE YOUR MOMENT</strong>
+                <span>THE POP MOMENT · TIMES SQUARE</span>
               </div>
             </div>
             <div className="pm4-nasdaq-label">Nasdaq Tower · visual example</div>
