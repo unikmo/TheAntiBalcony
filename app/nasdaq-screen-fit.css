@@ -1,0 +1,54 @@
+/* Final screen-fit correction: the rotating creative must sit clearly inside the Nasdaq media surface. */
+.pm4-nasdaq-stage .pm4-billboard{
+  left:39.2%;
+  top:5.2%;
+  width:21.6%;
+  height:70.8%;
+  clip-path:polygon(13% 0,87% 0,95% 84%,88% 96%,12% 96%,5% 84%);
+  transform:perspective(1200px) rotateY(-1deg) rotateX(.25deg);
+  transform-origin:center center;
+  overflow:hidden;
+  border:0;
+  border-radius:0;
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.45);
+}
+
+.pm4-nasdaq-stage .pm4-billboard>img{
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 42%;
+  transform:none;
+}
+
+.pm4-nasdaq-stage .pm4-billboard-shade,
+.pm4-nasdaq-stage .pm4-billboard:after{
+  inset:0;
+}
+
+.pm4-nasdaq-stage .pm4-billboard-copy{
+  padding:19% 21% 24%;
+}
+
+.pm4-nasdaq-stage .pm4-billboard-copy strong{
+  max-width:72%;
+  font-size:clamp(17px,8.6cqw,40px);
+}
+
+@media(max-width:720px){
+  .pm4-nasdaq-stage .pm4-billboard{
+    left:36.1%;
+    top:5.5%;
+    width:27.8%;
+    height:68.8%;
+    clip-path:polygon(14% 1%,86% 1%,94% 83%,87% 95%,13% 95%,6% 83%);
+  }
+  .pm4-nasdaq-stage .pm4-billboard-copy{
+    padding:20% 20% 25%;
+  }
+  .pm4-nasdaq-stage .pm4-billboard-copy strong{
+    max-width:74%;
+    font-size:clamp(15px,8.4cqw,30px);
+  }
+}
