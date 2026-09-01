@@ -26,15 +26,14 @@
 .pm4-natural .pm4-secondary:hover{border-color:#c99532;color:#171512}
 .pm4-natural .pm4-kicker{color:#9f6f1c}
 .pm4-natural .pm4-sub{color:#5f594f}
-.pm4-natural .pm4-window{color:#817a70}
 
-.pm4-natural .pm4-hero{padding-top:60px}
-.pm4-natural .pm4-hero-copy{max-width:840px;margin-bottom:38px}
+.pm4-natural .pm4-hero{padding-top:50px}
+.pm4-natural .pm4-hero-copy{max-width:840px;margin-bottom:30px}
 .pm4-natural .pm4-hero h1{
   color:#171512;
-  font-size:clamp(46px,5.2vw,76px);
-  line-height:.96;
-  letter-spacing:-.042em;
+  font-size:clamp(40px,4.2vw,60px);
+  line-height:.98;
+  letter-spacing:-.038em;
 }
 .pm4-natural .pm4-stage-wrap{max-width:1320px}
 .pm4-natural .pm4-stage.pm4-natural-stage{
@@ -68,7 +67,31 @@
   font-size:12px;
 }
 .pm4-natural .pm4-natural-caption strong{color:#171512;font-size:12px;letter-spacing:.05em}
-.pm4-natural .pm4-tabs{justify-content:center;padding-top:18px}
+
+.pm4-natural .pm4-post-visual{
+  max-width:820px;
+  margin:52px auto 8px;
+  text-align:center;
+}
+.pm4-natural .pm4-post-visual h2{
+  margin:0;
+  color:#171512;
+  font-family:Georgia,"Times New Roman",serif;
+  font-weight:400;
+  font-size:clamp(36px,4vw,56px);
+  line-height:1;
+  letter-spacing:-.035em;
+}
+.pm4-natural .pm4-post-visual .pm4-sub{
+  max-width:720px;
+  margin:20px auto 0;
+  color:#5f594f;
+  font-size:18px;
+  line-height:1.55;
+}
+.pm4-natural .pm4-post-visual .pm4-actions{margin-top:24px}
+
+.pm4-natural .pm4-tabs{justify-content:center;padding-top:28px}
 .pm4-natural .pm4-tabs button{
   background:#fffaf1;
   color:#5f594f;
@@ -130,16 +153,23 @@
 .pm4-natural .pm4-footer a{color:#171512}
 
 @media(max-width:1050px){
-  .pm4-natural .pm4-hero h1{font-size:clamp(48px,7vw,60px)}
+  .pm4-natural .pm4-hero h1{font-size:clamp(38px,5.8vw,48px)}
+  .pm4-natural .pm4-post-visual h2{font-size:clamp(34px,5vw,46px)}
 }
 
 @media(max-width:720px){
-  .pm4-natural .pm4-hero{padding-top:38px}
-  .pm4-natural .pm4-hero h1{font-size:clamp(39px,12vw,48px);line-height:.98}
-  .pm4-natural .pm4-sub{font-size:16px}
+  .pm4-natural .pm4-hero{padding-top:34px}
+  .pm4-natural .pm4-hero-copy{margin-bottom:24px}
+  .pm4-natural .pm4-hero h1{font-size:clamp(34px,9.5vw,40px);line-height:1}
   .pm4-natural .pm4-stage.pm4-natural-stage{aspect-ratio:4/5;border-radius:18px}
   .pm4-natural .pm4-natural-stage .pm4-stage-photo{object-position:center center}
   .pm4-natural .pm4-natural-caption{align-items:flex-start;flex-direction:column;border-radius:0 0 14px 14px;padding:13px 14px}
-  .pm4-natural .pm4-tabs{justify-content:flex-start}
+  .pm4-natural .pm4-post-visual{margin-top:40px;padding:0 8px}
+  .pm4-natural .pm4-post-visual h2{font-size:clamp(32px,9.5vw,40px)}
+  .pm4-natural .pm4-post-visual .pm4-sub{font-size:16px;margin-top:16px}
+  .pm4-natural .pm4-post-visual .pm4-actions{display:grid;grid-template-columns:1fr;margin-top:20px}
+  .pm4-natural .pm4-post-visual .pm4-primary,
+  .pm4-natural .pm4-post-visual .pm4-secondary{width:100%}
+  .pm4-natural .pm4-tabs{justify-content:flex-start;padding-top:24px}
   .pm4-natural .pm4-active-prompt{font-size:17px;padding:0 8px}
 }
