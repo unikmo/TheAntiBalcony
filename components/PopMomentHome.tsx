@@ -1,27 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Moment = {
   slug: string;
   label: string;
-  screen: string;
   prompt: string;
-  image: string;
 };
 
 const moments: Moment[] = [
-  { slug: "proposal", label: "Proposal", screen: "WILL YOU MARRY ME?", prompt: "Ask it where the whole square can see it.", image: "https://images.pexels.com/photos/3038145/pexels-photo-3038145.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "wedding", label: "Wedding", screen: "THIS IS OUR DAY", prompt: "Put the day you will never forget in lights.", image: "https://images.pexels.com/photos/18047314/pexels-photo-18047314.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "birthday", label: "Birthday", screen: "HAPPY BIRTHDAY", prompt: "For the person who deserves more than another post.", image: "https://images.pexels.com/photos/7337165/pexels-photo-7337165.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "baby", label: "Baby shower", screen: "HELLO, LITTLE ONE", prompt: "Welcome them to the world in the middle of it.", image: "https://images.pexels.com/photos/29324785/pexels-photo-29324785.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "love", label: "I love you", screen: "I LOVE YOU", prompt: "Three words. One impossible-to-ignore screen.", image: "https://images.pexels.com/photos/30531610/pexels-photo-30531610.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "memories", label: "Our memories", screen: "OUR STORY", prompt: "Some memories deserve more than twenty-four hours.", image: "https://images.pexels.com/photos/8848781/pexels-photo-8848781.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "anniversary", label: "Anniversary", screen: "STILL US", prompt: "Mark the years with something that feels like them.", image: "https://images.pexels.com/photos/4015089/pexels-photo-4015089.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "graduation", label: "Graduation", screen: "YOU DID IT", prompt: "Give the achievement a skyline.", image: "https://images.pexels.com/photos/37296595/pexels-photo-37296595.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "achievement", label: "Big win", screen: "THIS IS YOUR MOMENT", prompt: "You earned it. Let it show.", image: "https://images.pexels.com/photos/6250860/pexels-photo-6250860.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
-  { slug: "launch", label: "Launch", screen: "WE'RE LIVE", prompt: "Make going live feel live.", image: "https://images.pexels.com/photos/6913228/pexels-photo-6913228.jpeg?auto=compress&cs=tinysrgb&w=1000&h=1200&fit=crop" },
+  { slug: "proposal", label: "Proposal", prompt: "Ask it where the whole square can see it." },
+  { slug: "wedding", label: "Wedding", prompt: "Put the day you will never forget in lights." },
+  { slug: "birthday", label: "Birthday", prompt: "For the person who deserves more than another post." },
+  { slug: "baby", label: "Baby shower", prompt: "Welcome them to the world in the middle of it." },
+  { slug: "love", label: "I love you", prompt: "Three words. One impossible-to-ignore screen." },
+  { slug: "memories", label: "Our memories", prompt: "Some memories deserve more than twenty-four hours." },
+  { slug: "anniversary", label: "Anniversary", prompt: "Mark the years with something that feels like them." },
+  { slug: "graduation", label: "Graduation", prompt: "Give the achievement a skyline." },
+  { slug: "achievement", label: "Big win", prompt: "You earned it. Let it show." },
+  { slug: "launch", label: "Launch", prompt: "Make going live feel live." },
 ];
 
 const offers = [
@@ -35,21 +33,8 @@ export function PopMomentHome() {
   const [active, setActive] = useState(0);
   const moment = moments[active];
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    moments.forEach(({ image }) => {
-      const preload = new window.Image();
-      preload.src = image;
-    });
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => setActive((value) => (value + 1) % moments.length), 2600);
-    return () => window.clearInterval(timer);
-  }, []);
-
   return (
-    <main className="pm4">
+    <main className="pm4 pm4-natural">
       <header className="pm4-header">
         <Link href="/" className="pm4-brand" aria-label="The Pop Moment home">THE <em>POP</em> MOMENT</Link>
         <nav aria-label="Main navigation">
@@ -63,7 +48,7 @@ export function PopMomentHome() {
       <section className="pm4-hero">
         <div className="pm4-hero-copy">
           <p className="pm4-kicker">THE POP MOMENT · TIMES SQUARE</p>
-          <h1>Celebrate it.<br />Show it. <em>Keep it.</em></h1>
+          <h1>Celebrate it. Show it. <em>Keep it.</em></h1>
           <p className="pm4-sub">Have a pop moment in mind? Put it on a Times Square screen and keep the memory afterwards.</p>
           <div className="pm4-actions">
             <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-primary">Create your Pop Moment</Link>
@@ -73,30 +58,23 @@ export function PopMomentHome() {
         </div>
 
         <div className="pm4-stage-wrap">
-          <div className="pm4-stage pm4-nasdaq-stage">
-            <img className="pm4-stage-photo" src="/antibalcony-nasdaq-unikmo.webp" alt="Nasdaq MarketSite tower in Times Square" />
-            <div className="pm4-billboard" key={moment.slug}>
-              <img src={moment.image} alt="" />
-              <div className="pm4-billboard-shade" />
-              <div className="pm4-billboard-copy pm4-billboard-invite">
-                <small>PROPOSAL · BIRTHDAY · WEDDING · LAUNCH</small>
-                <strong>THIS COULD BE YOUR MOMENT</strong>
-                <span>THE POP MOMENT · TIMES SQUARE</span>
-              </div>
-            </div>
-            <div className="pm4-nasdaq-label">Nasdaq Tower · visual example</div>
-            <div className="pm4-stage-line">
-              <span>{moment.label}</span>
-              <strong>{moment.prompt}</strong>
-            </div>
-            <button className="pm4-arrow pm4-prev" type="button" aria-label="Previous moment" onClick={() => setActive((active - 1 + moments.length) % moments.length)}>←</button>
-            <button className="pm4-arrow pm4-next" type="button" aria-label="Next moment" onClick={() => setActive((active + 1) % moments.length)}>→</button>
+          <div className="pm4-stage pm4-natural-stage">
+            <img
+              className="pm4-stage-photo"
+              src="/api/assets/natural-nasdaq"
+              alt="A proposal displayed naturally across the Nasdaq MarketSite screen in Times Square"
+            />
+          </div>
+          <div className="pm4-natural-caption" aria-label="Times Square visual example">
+            <strong>THIS COULD BE YOUR MOMENT</strong>
+            <span>Proposal · Birthday · Wedding · Launch</span>
           </div>
           <div className="pm4-tabs" id="moments" aria-label="Choose an occasion">
             {moments.map((item, index) => (
               <button type="button" key={item.slug} className={index === active ? "is-active" : ""} onClick={() => setActive(index)}>{item.label}</button>
             ))}
           </div>
+          <p className="pm4-active-prompt">{moment.prompt}</p>
         </div>
       </section>
 
@@ -159,7 +137,7 @@ export function PopMomentHome() {
 
       <footer className="pm4-footer">
         <strong>THE <em>POP</em> MOMENT</strong>
-        <nav><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav>
+        <nav><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@thepopmoment.com">Contact</a></nav>
         <span>© {new Date().getFullYear()}</span>
       </footer>
     </main>
