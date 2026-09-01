@@ -49,12 +49,6 @@ export function PopMomentHome() {
         <div className="pm4-hero-copy">
           <p className="pm4-kicker">THE POP MOMENT · TIMES SQUARE</p>
           <h1>Celebrate it. Show it. <em>Keep it.</em></h1>
-          <p className="pm4-sub">Have a pop moment in mind? Put it on a Times Square screen and keep the memory afterwards.</p>
-          <div className="pm4-actions">
-            <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-primary">Create your Pop Moment</Link>
-            <a href="#moments" className="pm4-secondary">See the moments</a>
-          </div>
-          <p className="pm4-window">Choose your date and a 4-hour window. We handle the exact scheduling.</p>
         </div>
 
         <div className="pm4-stage-wrap">
@@ -69,6 +63,16 @@ export function PopMomentHome() {
             <strong>THIS COULD BE YOUR MOMENT</strong>
             <span>Proposal · Birthday · Wedding · Launch</span>
           </div>
+
+          <div className="pm4-post-visual">
+            <h2>What would you put up there?</h2>
+            <p className="pm4-sub">Have a pop moment in mind? Put it on a Times Square screen and keep the memory afterwards.</p>
+            <div className="pm4-actions">
+              <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-primary">Create your Pop Moment</Link>
+              <a href="#moments" className="pm4-secondary">See the moments</a>
+            </div>
+          </div>
+
           <div className="pm4-tabs" id="moments" aria-label="Choose an occasion">
             {moments.map((item, index) => (
               <button type="button" key={item.slug} className={index === active ? "is-active" : ""} onClick={() => setActive(index)}>{item.label}</button>
