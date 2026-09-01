@@ -18,6 +18,7 @@ import "./pop-moment-v4.css";
 import "./nasdaq-hero.css";
 import "./nasdaq-screen-fit.css";
 import "./hero-conversion.css";
+import "./pop-moment-natural.css";
 import "./admin/admin.css";
 import "./booking.css";
 
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Celebrate it. Show it. Keep it. | The Pop Moment", description: "Your moment in Times Square, with proof you can keep." },
 };
 
-export const viewport: Viewport = { themeColor: "#050505", colorScheme: "dark light" };
+export const viewport: Viewport = { themeColor: "#f7f2e8", colorScheme: "light dark" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" className={`${inter.variable} ${terminal.variable}`}><body><BookingLinkInterceptor />{children}</body></html>;
