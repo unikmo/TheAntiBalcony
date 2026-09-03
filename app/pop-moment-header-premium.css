@@ -2,6 +2,9 @@
    Pop Moment Premium Header - Luxury Animation Suite
    ============================================================================ */
 
+/* Premium Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
+
 /* Premium Easing Functions */
 :root {
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* smooth ease-out */
@@ -80,9 +83,10 @@
 .pm4-brand-text {
   display: inline-flex;
   align-items: baseline;
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   transition: color 0.4s var(--ease-silk);
 }
