@@ -90,7 +90,7 @@ export function MomentBookingForm({
   const [phase, setPhase] = useState<"idle" | "saving" | "uploading" | "reviewing" | "checkout" | "pending">("idle");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const minDate = useMemo(tomorrow, []);
+  const minDate = useMemo(() => tomorrow(), []);
 
   if (checkout === "reserved") {
     return (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { adminAuthConfigured } from "@/lib/admin-auth";
 
 export const metadata: Metadata = { title: "Admin Login | The Pop Moment", robots: { index: false, follow: false } };
@@ -9,7 +10,7 @@ export default async function AdminLogin({ searchParams }: { searchParams: Promi
   return (
     <main className="admin-login-shell">
       <section className="admin-login-card">
-        <a className="admin-wordmark" href="/">THE <em>POP</em> MOMENT</a>
+        <Link className="admin-wordmark" href="/">THE <em>POP</em> MOMENT</Link>
         <p className="admin-eyebrow">OPERATIONS</p>
         <h1>Admin dashboard</h1>
         <p>Orders, payments, screens, curation, proof and delivery in one place.</p>

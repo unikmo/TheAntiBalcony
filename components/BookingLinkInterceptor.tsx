@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function BookingLinkInterceptor() {
+  const router = useRouter();
+
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       const target = event.target instanceof Element ? event.target.closest("a") : null;
@@ -20,12 +23,12 @@ export function BookingLinkInterceptor() {
       if (momentMatch?.[1]) params.set("occasion", momentMatch[1].trim());
 
       event.preventDefault();
-      window.location.assign(`/book${params.size ? `?${params.toString()}` : ""}`);
+      router.push(`/book${params.size ? `?${params.toString()}` : ""}`);
     }
 
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
-  }, []);
+  }, [router]);
 
   return null;
 }

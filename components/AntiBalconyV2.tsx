@@ -45,7 +45,7 @@ export function AntiBalconyV2() {
       <section className="pm-hero" aria-labelledby="pm-title">
         <div className="pm-hero-copy">
           <p className="pm-eyebrow">TIMES SQUARE · NEW YORK</p><h1 id="pm-title">Make your<br />moment <em>pop.</em></h1><h2>Celebrate it. Show it. Keep it.</h2>
-          <p className="pm-lede">Your moment on one of the world's most iconic stages. Big enough to feel unforgettable. Simple enough to book.</p>
+          <p className="pm-lede">Your moment on one of the world&apos;s most iconic stages. Big enough to feel unforgettable. Simple enough to book.</p>
           <div className="pm-hero-actions"><Link href={bookingUrl(moment.label)} className="pm-button">Book your moment</Link><a href="#how" className="pm-button pm-button-ghost">How it works</a></div>
           <p className="pm-promise">Choose the date and a four-hour window. We handle the exact scheduling.</p>
         </div>
