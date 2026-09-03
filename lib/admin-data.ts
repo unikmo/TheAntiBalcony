@@ -2,9 +2,76 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 
 const TS_PRICE: Record<string, number> = { snapshot: 39900, video: 54900 };
 
+type TimesSquareOrder = {
+  id: string;
+  order_ref: string;
+  customer_name: string;
+  startup_name: string | null;
+  email: string;
+  occasion: string;
+  tier: string;
+  event_date: string | null;
+  preferred_window_code: string;
+  alternative_window_code: string | null;
+  any_time_same_day: boolean;
+  status: string;
+  payment_status: string;
+  provider_name: string | null;
+  provider_ref: string | null;
+  provider_moderation_status: string | null;
+  scheduled_window_start: string | null;
+  scheduled_window_end: string | null;
+  capture_provider: string | null;
+  capture_job_id: string | null;
+  deliverable_video_path: string | null;
+  deliverable_image_path: string | null;
+  creative_filename: string | null;
+  creative_review_notes: string | null;
+  failure_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type CardOrder = {
+  id: string;
+  order_ref: string;
+  customer_name: string;
+  email: string;
+  occasion: string;
+  card_count: number;
+  amount_total_cents: number;
+  payment_status: string;
+  status: string;
+  front_path: string | null;
+  back_path: string | null;
+  curation_notes: string | null;
+  customer_feedback: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type AdminDashboardMetrics = {
+  totalOrders: number;
+  paidOrders: number;
+  revenueCents: number;
+  upcoming: number;
+  actionQueue: number;
+  proofQueue: number;
+  delivered: number;
+};
+
+type AdminSystems = {
+  supabase: boolean;
+  stripe: boolean;
+  blindspot: boolean;
+  earthcam: boolean;
+  email: boolean;
+};
+
 export async function getAdminDashboardData() {
   const db = getSupabaseAdmin();
-  const systems = {
+  const systems: AdminSystems = {
     supabase: Boolean(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
     stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),
     blindspot: Boolean(process.env.BLINDSPOT_BOOKING_BRIDGE_URL),
@@ -23,25 +90,25 @@ export async function getAdminDashboardData() {
       .order("created_at", { ascending: false }).limit(150),
   ]);
 
-  const orders = ordersResult.data || [];
-  const cards = cardsResult.data || [];
-  const paidTimesSquare = orders.filter((o: any) => ["paid", "manual_paid"].includes(o.payment_status));
-  const paidCards = cards.filter((o: any) => ["paid", "manual_paid"].includes(o.payment_status));
-  const revenueCents = paidTimesSquare.reduce((sum: number, order: any) => sum + (TS_PRICE[order.tier] || 0), 0)
-    + paidCards.reduce((sum: number, order: any) => sum + Number(order.amount_total_cents || 0), 0);
+  const orders: TimesSquareOrder[] = ordersResult.data || [];
+  const cards: CardOrder[] = cardsResult.data || [];
+  const paidTimesSquare = orders.filter((o) => ["paid", "manual_paid"].includes(o.payment_status));
+  const paidCards = cards.filter((o) => ["paid", "manual_paid"].includes(o.payment_status));
+  const revenueCents = paidTimesSquare.reduce((sum: number, order: TimesSquareOrder) => sum + (TS_PRICE[order.tier] || 0), 0)
+    + paidCards.reduce((sum: number, order: CardOrder) => sum + Number(order.amount_total_cents || 0), 0);
 
   const actionStatuses = new Set(["manual_review", "needs_changes", "failed", "unavailable"]);
   const proofStatuses = new Set(["played", "capture_required", "capture_processing", "capture_ready", "packaging_required", "packaging"]);
   const cardActionStatuses = new Set(["intake_pending", "curation_queue", "curating", "changes_requested", "production"]);
 
-  const metrics = {
+  const metrics: AdminDashboardMetrics = {
     totalOrders: orders.length + cards.length,
     paidOrders: paidTimesSquare.length + paidCards.length,
     revenueCents,
-    upcoming: orders.filter((o: any) => o.event_date && !["delivered", "cancelled", "failed"].includes(o.status)).length,
-    actionQueue: orders.filter((o: any) => actionStatuses.has(o.status)).length + cards.filter((o: any) => cardActionStatuses.has(o.status)).length,
-    proofQueue: orders.filter((o: any) => proofStatuses.has(o.status)).length,
-    delivered: orders.filter((o: any) => o.status === "delivered").length + cards.filter((o: any) => o.status === "delivered").length,
+    upcoming: orders.filter((o) => o.event_date && !["delivered", "cancelled", "failed"].includes(o.status)).length,
+    actionQueue: orders.filter((o) => actionStatuses.has(o.status)).length + cards.filter((o) => cardActionStatuses.has(o.status)).length,
+    proofQueue: orders.filter((o) => proofStatuses.has(o.status)).length,
+    delivered: orders.filter((o) => o.status === "delivered").length + cards.filter((o) => o.status === "delivered").length,
   };
 
   return { configured: true, systems, orders, cards, metrics };

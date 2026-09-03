@@ -191,7 +191,14 @@ export async function markOrderPaymentPending(orderId: string, stripeSessionId: 
   await addOrderEvent(orderId, "stripe_checkout_created", "payment_pending", { stripeSessionId });
 }
 
-async function movePaidOrderToManualReview(order: Record<string, any>, reason: string, metadata: Record<string, unknown> = {}) {
+type OrderRecord = {
+  id: string;
+  email: string;
+  order_ref: string;
+  [key: string]: unknown;
+};
+
+async function movePaidOrderToManualReview(order: OrderRecord, reason: string, metadata: Record<string, unknown> = {}) {
   const db = getSupabaseAdmin();
   if (!db) throw new Error("Booking database is not configured.");
   await db.from("anti_balcony_orders").update({
@@ -201,14 +208,14 @@ async function movePaidOrderToManualReview(order: Record<string, any>, reason: s
   }).eq("id", order.id);
   await addOrderEvent(order.id, "paid_booking_manual_review", "manual_review", { reason, ...metadata });
   await sendFounderEmail({
-    to: order.email,
-    subject: `Payment received — we are securing your Pop Moment · ${order.order_ref}`,
+    to: order.email as string,
+    subject: `Payment received — we are securing your Pop Moment · ${order.order_ref as string}`,
     html: `<p>Your payment is received and your requested date is in our booking queue.</p><p>We are securing the best eligible Times Square placement within your selected same-day flexibility. If an exceptional inventory issue makes fulfillment impossible, we will automatically refund you in full.</p>`,
   });
   return { status: "manual_review" as const };
 }
 
-async function refundMomentPayment(order: Record<string, any>, stripeSessionId: string, reason: string) {
+async function refundMomentPayment(order: OrderRecord, stripeSessionId: string, reason: string) {
   const db = getSupabaseAdmin();
   if (!db) throw new Error("Booking database is not configured.");
   const stripe = getStripe();

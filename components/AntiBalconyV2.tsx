@@ -71,7 +71,7 @@ export function AntiBalconyV2() {
 
       <section className="pm-flow" aria-labelledby="flow-title"><div className="pm-section-head pm-section-head-center"><p>HOW IT WORKS</p><h2 id="flow-title">Three decisions. We handle the media complexity.</h2></div><div className="pm-flow-grid"><article><span>01</span><h3>Choose your moment.</h3><p>Pick the occasion, package, date and preferred part of day.</p></article><article><span>02</span><h3>Send the creative.</h3><p>Upload your image or 15-second vertical video. We validate it before payment.</p></article><article><span>03</span><h3>We show it. You keep it.</h3><p>After payment, we secure the placement, run the proof workflow and deliver your keepsake.</p></article></div></section>
 
-      <section className="pm-final" aria-labelledby="pm-final-title"><div><p>YOUR MOMENT DESERVES THE SPOTLIGHT.</p><h2 id="pm-final-title">Let's make it <em>pop.</em></h2><Link href={bookingUrl()} className="pm-button">Book your moment</Link></div></section>
+      <section className="pm-final" aria-labelledby="pm-final-title"><div><p>YOUR MOMENT DESERVES THE SPOTLIGHT.</p><h2 id="pm-final-title">Let&apos;s make it <em>pop.</em></h2><Link href={bookingUrl()} className="pm-button">Book your moment</Link></div></section>
       <footer className="pm-footer"><div><strong>THE POP MOMENT</strong><span>A PlanetHike Project · Times Square moments with proof you can keep.</span></div><nav aria-label="Footer navigation"><Link href="/imprint">Imprint</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><a href="mailto:hello@antibalcony.com">Contact</a></nav><span>© {new Date().getFullYear()}</span></footer>
     </main>
   );
