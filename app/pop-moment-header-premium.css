@@ -1,0 +1,241 @@
+/* ============================================================================
+   Pop Moment Premium Header - Enhanced Branding & UX
+   ============================================================================ */
+
+/* Header Structure */
+.pm4-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 48px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 16px 40px;
+  background: rgba(5, 5, 5, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(228, 181, 83, 0.15);
+  transition: all 0.3s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+/* Premium Brand Logo */
+.pm4-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0;
+  font-weight: 900;
+  letter-spacing: 0.085em;
+  transition: all 0.3s ease;
+}
+
+.pm4-brand::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #e4b553 0%, #f3d794 100%);
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(228, 181, 83, 0.3);
+  transition: all 0.3s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.pm4-brand:hover::before {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 6px 20px rgba(228, 181, 83, 0.5);
+}
+
+.pm4-brand-text {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pm4-brand em {
+  font-style: normal;
+  color: #e4b553;
+  font-weight: 900;
+  margin: 0 3px;
+  transition: color 0.3s ease;
+}
+
+.pm4-brand:hover em {
+  color: #f3d794;
+  text-shadow: 0 0 10px rgba(228, 181, 83, 0.4);
+}
+
+.pm4-brand:hover {
+  transform: translateX(2px);
+}
+
+/* Navigation */
+.pm4-header nav {
+  display: flex;
+  gap: 40px;
+  justify-self: center;
+}
+
+.pm4-header nav a {
+  color: #b8b2a8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.pm4-header nav a::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #e4b553, #f3d794);
+  transition: width 0.3s cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.pm4-header nav a:hover {
+  color: #fff;
+}
+
+.pm4-header nav a:hover::after {
+  width: 100%;
+}
+
+/* CTA Button */
+.pm4-nav-cta {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e4b553, #f3d794);
+  color: #171512;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.2, 0.75, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(228, 181, 83, 0.25);
+}
+
+.pm4-nav-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.pm4-nav-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(228, 181, 83, 0.4);
+}
+
+.pm4-nav-cta:hover::before {
+  transform: translateX(100%);
+}
+
+.pm4-nav-cta:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .pm4-header {
+    gap: 32px;
+    padding: 14px 28px;
+  }
+
+  .pm4-header nav {
+    gap: 28px;
+  }
+}
+
+@media (max-width: 1050px) {
+  .pm4-header {
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+  }
+
+  .pm4-header nav {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .pm4-header {
+    padding: 12px 18px;
+    gap: 14px;
+  }
+
+  .pm4-brand-text {
+    font-size: 13px;
+    letter-spacing: 0.07em;
+  }
+
+  .pm4-brand::before {
+    width: 20px;
+    height: 20px;
+  }
+
+  .pm4-nav-cta {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 11px;
+  }
+}
+
+/* Dark theme enhancements */
+@media (prefers-color-scheme: dark) {
+  .pm4-brand em {
+    text-shadow: 0 0 8px rgba(228, 181, 83, 0.2);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .pm4-header,
+  .pm4-brand,
+  .pm4-brand::before,
+  .pm4-brand em,
+  .pm4-header nav a,
+  .pm4-header nav a::after,
+  .pm4-nav-cta,
+  .pm4-nav-cta::before {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .pm4-brand:hover::before {
+    transform: none;
+  }
+
+  .pm4-brand:hover {
+    transform: none;
+  }
+
+  .pm4-nav-cta:hover {
+    transform: none;
+  }
+}

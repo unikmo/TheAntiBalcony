@@ -36,7 +36,7 @@ export function PopMomentHome() {
   return (
     <main className="pm4 pm4-natural">
       <header className="pm4-header">
-        <Link href="/" className="pm4-brand" aria-label="The Pop Moment home">THE <em>POP</em> MOMENT</Link>
+        <Link href="/" className="pm4-brand" aria-label="The Pop Moment home"><span className="pm4-brand-text">THE <em>POP</em> MOMENT</span></Link>
         <nav aria-label="Main navigation">
           <a href="#moments">Moments</a>
           <a href="#keep">Keep it</a>
