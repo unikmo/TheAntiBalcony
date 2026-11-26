@@ -45,40 +45,40 @@ export function PopMomentHome() {
         <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-nav-cta">Create your moment</Link>
       </header>
 
-      <section className="pm4-hero pm4-hero-refined">
+      <section className="pm4-hero">
         <div className="pm4-hero-copy">
-          <p className="pm4-kicker">YOUR MOMENT. TIMES SQUARE.</p>
-          <h1>Make your moment <em>unmissable.</em></h1>
-          <p className="pm4-hero-intro">Celebrate on a Times Square screen. Keep the memory forever.</p>
-          <Link href="/book" className="pm4-primary pm4-hero-cta">Create your Pop Moment <span aria-hidden="true">↗</span></Link>
+          <p className="pm4-kicker">THE POP MOMENT · TIMES SQUARE</p>
+          <h1>Celebrate it. Show it. <em>Keep it.</em></h1>
         </div>
-        <figure className="pm4-stage-wrap pm4-hero-visual">
+
+        <div className="pm4-stage-wrap">
           <div className="pm4-stage pm4-natural-stage">
             <img
               className="pm4-stage-photo"
               src="/api/assets/natural-nasdaq"
-              alt="Times Square Nasdaq MarketSite display showing a celebration example"
-              loading="eager"
-              fetchPriority="high"
+              alt="A proposal displayed naturally across the Nasdaq MarketSite screen in Times Square"
             />
           </div>
-          <figcaption className="pm4-hero-image-caption">A moment worth showing. An experience worth keeping. <span>Illustrative display</span></figcaption>
-        </figure>
-      </section>
+          <div className="pm4-natural-caption" aria-label="Times Square visual example">
+            <strong>THIS COULD BE YOUR MOMENT</strong>
+            <span>Proposal · Birthday · Wedding · Launch</span>
+          </div>
 
-      <section className="pm4-occasion-section" id="moments" aria-labelledby="pm4-occasion-title">
-        <div className="pm4-occasion-heading">
-          <p className="pm4-kicker">MAKE IT PERSONAL</p>
-          <h2 id="pm4-occasion-title">What are we celebrating?</h2>
-        </div>
-        <div className="pm4-tabs" aria-label="Choose an occasion">
-          {moments.map((item, index) => (
-            <button type="button" key={item.slug} className={index === active ? "is-active" : ""} onClick={() => setActive(index)} aria-pressed={index === active}>{item.label}</button>
-          ))}
-        </div>
-        <div className="pm4-occasion-detail">
+          <div className="pm4-post-visual">
+            <h2>What would you put up there?</h2>
+            <p className="pm4-sub">Have a pop moment in mind? Put it on a Times Square screen and keep the memory afterwards.</p>
+            <div className="pm4-actions">
+              <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-primary">Create your Pop Moment</Link>
+              <a href="#moments" className="pm4-secondary">See the moments</a>
+            </div>
+          </div>
+
+          <div className="pm4-tabs" id="moments" aria-label="Choose an occasion">
+            {moments.map((item, index) => (
+              <button type="button" key={item.slug} className={index === active ? "is-active" : ""} onClick={() => setActive(index)}>{item.label}</button>
+            ))}
+          </div>
           <p className="pm4-active-prompt">{moment.prompt}</p>
-          <Link href={`/book?occasion=${encodeURIComponent(moment.label)}`} className="pm4-occasion-link">Create this moment <span aria-hidden="true">↗</span></Link>
         </div>
       </section>
 
