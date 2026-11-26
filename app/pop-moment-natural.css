@@ -173,3 +173,126 @@
   .pm4-natural .pm4-tabs{justify-content:flex-start;padding-top:24px}
   .pm4-natural .pm4-active-prompt{font-size:17px;padding:0 8px}
 }
+
+
+/* Refined, image-led homepage hero: a single message and uninterrupted imagery. */
+.pm4-natural .pm4-hero-refined{
+  max-width:1480px;
+  padding:clamp(34px,4vw,64px) 34px 16px;
+}
+.pm4-natural .pm4-hero-refined .pm4-hero-copy{
+  max-width:950px;
+  margin:0 auto clamp(30px,3.8vw,52px);
+  text-align:center;
+}
+.pm4-natural .pm4-hero-refined .pm4-kicker{
+  margin-bottom:18px;
+  color:#776b58;
+  font-size:11px;
+  letter-spacing:.18em;
+}
+.pm4-natural .pm4-hero-refined h1{
+  max-width:940px;
+  margin:0 auto;
+  font-size:clamp(44px,5.5vw,78px);
+  line-height:1.05;
+  letter-spacing:-.05em;
+  text-wrap:balance;
+}
+.pm4-natural .pm4-hero-refined h1 em{color:#a27530}
+.pm4-natural .pm4-hero-intro{
+  margin:20px auto 24px;
+  max-width:600px;
+  color:#645e55;
+  font-size:clamp(15px,1.5vw,18px);
+  line-height:1.6;
+  text-wrap:balance;
+}
+.pm4-natural .pm4-hero-cta{
+  min-height:48px;
+  padding:0 24px;
+  gap:20px;
+  font-size:12px;
+  letter-spacing:.01em;
+}
+.pm4-natural .pm4-hero-visual{
+  max-width:1380px;
+  margin:0 auto;
+}
+.pm4-natural .pm4-hero-visual .pm4-natural-stage{
+  aspect-ratio:2/1;
+  border-radius:12px;
+  box-shadow:0 14px 38px rgba(40,31,18,.12);
+}
+.pm4-natural .pm4-hero-image-caption{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:13px 2px 0;
+  color:#80796e;
+  font-size:11px;
+  letter-spacing:.015em;
+}
+.pm4-natural .pm4-hero-image-caption span{white-space:nowrap}
+.pm4-natural .pm4-occasion-section{
+  max-width:1160px;
+  margin:0 auto;
+  padding:90px 34px 85px;
+  text-align:center;
+}
+.pm4-natural .pm4-occasion-heading h2{
+  margin:0;
+  font-size:clamp(34px,4vw,54px);
+  line-height:1.12;
+  color:#171512;
+}
+.pm4-natural .pm4-occasion-section .pm4-tabs{
+  justify-content:center;
+  flex-wrap:wrap;
+  padding-top:34px;
+  gap:10px;
+}
+.pm4-natural .pm4-occasion-section .pm4-tabs button{
+  font-size:12px;
+  padding:11px 17px;
+  border-radius:999px;
+}
+.pm4-natural .pm4-occasion-detail{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:16px 28px;
+  margin-top:24px;
+}
+.pm4-natural .pm4-occasion-detail .pm4-active-prompt{
+  margin:0;
+  font-size:17px;
+}
+.pm4-natural .pm4-occasion-link{
+  font-size:13px;
+  font-weight:700;
+  text-decoration:underline;
+  text-underline-offset:5px;
+}
+.pm4-natural .pm4-occasion-link:hover{color:#946723}
+@media(max-width:720px){
+  .pm4-natural .pm4-hero-refined{padding:34px 18px 6px}
+  .pm4-natural .pm4-hero-refined .pm4-hero-copy{margin-bottom:26px}
+  .pm4-natural .pm4-hero-refined h1{font-size:clamp(40px,10.5vw,54px);line-height:1.04}
+  .pm4-natural .pm4-hero-intro{margin:15px auto 20px;font-size:15px}
+  .pm4-natural .pm4-hero-cta{width:auto;max-width:100%}
+  .pm4-natural .pm4-hero-visual .pm4-natural-stage{
+    aspect-ratio:4/3;
+    border-radius:10px;
+  }
+  .pm4-natural .pm4-hero-image-caption{font-size:10px;line-height:1.4}
+  .pm4-natural .pm4-occasion-section{padding:66px 18px 64px}
+  .pm4-natural .pm4-occasion-section .pm4-tabs{
+    flex-wrap:nowrap;
+    justify-content:flex-start;
+    padding-top:26px;
+  }
+  .pm4-natural .pm4-occasion-detail{flex-direction:column;gap:14px}
+  .pm4-natural .pm4-occasion-detail .pm4-active-prompt{font-size:16px}
+}
